@@ -62,6 +62,8 @@ namespace Simitone.Client.UI.Screens
         private WeatherType LastWeatherType = WeatherType.Rain;
         private bool LastThunder = false;
         private bool TerrainSnowApplied = false;
+        private float ThunderTimer = 0f;
+        private Random ThunderRandom = new Random();
 
         public bool InLot
         {
@@ -435,60 +437,36 @@ namespace Simitone.Client.UI.Screens
 
             if (!stateChanged) return;
 
-            // Update ambient sounds (TS1 may not have these sound files, so catch errors)
-            if (vm?.Context?.Ambience != null)
+            // Update ambient sounds using custom weather sounds (with fallback if sounds fail)
+            try
             {
-                try
+                if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
                 {
-                    var ambience = vm.Context.Ambience;
+                    // Play rain loop with volume based on intensity
+                    WeatherSounds.PlayRain(currentIntensity);
 
-                    // Rain sounds (activate when rain intensity > 0.1)
-                    if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
+                    // Play thunder occasionally if flag is set
+                    if (currentThunder)
                     {
-                        // Rain loop (continuous)
-                        var rainLoop = ambience.GetAmbienceFromName("LoopRain");
-                        if (rainLoop.HasValue)
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), true);
-
-                        // Rain drops (sporadic, only for medium/heavy rain)
-                        if (currentIntensity > 0.25f)
+                        ThunderTimer -= 1f / 60f; // Assuming 60 FPS
+                        if (ThunderTimer <= 0)
                         {
-                            var rainDrops = ambience.GetAmbienceFromName("WeatherRainDrops");
-                            if (rainDrops.HasValue)
-                                ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), true);
-                        }
-                        else
-                        {
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false);
-                        }
-
-                        // Thunder (when flag is set)
-                        if (currentThunder)
-                        {
-                            var thunder = ambience.GetAmbienceFromName("WeatherLightingThunder");
-                            if (thunder.HasValue)
-                                ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), true);
-                        }
-                        else
-                        {
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                            WeatherSounds.PlayThunder(currentIntensity * 0.8f);
+                            // Random interval between 5-15 seconds
+                            ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
                         }
                     }
-                    else
-                    {
-                        // Not raining - disable all rain sounds
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), false); // Rain loop
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false); // Rain drops
-
-                        // Keep thunder only if still set
-                        if (!currentThunder)
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
-                    }
                 }
-                catch
+                else
                 {
-                    // Sound files not found (TS1 doesn't have TSO ambience files) - silently ignore
+                    // Not raining - stop rain sounds
+                    WeatherSounds.StopRain();
+                    ThunderTimer = 0f;
                 }
+            }
+            catch
+            {
+                // Sound playback failed - silently continue (weather visuals still work)
             }
 
             // Update snow terrain overlay
