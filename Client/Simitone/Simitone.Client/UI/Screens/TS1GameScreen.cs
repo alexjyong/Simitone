@@ -57,6 +57,12 @@ namespace Simitone.Client.UI.Screens
         public UINeighborhoodSelectionPanel TS1NeighPanel;
         public FAMI ActiveFamily;
 
+        // Weather effects state tracking
+        private float LastSoundIntensity = -1;
+        private WeatherType LastWeatherType = WeatherType.Rain;
+        private bool LastThunder = false;
+        private bool TerrainSnowApplied = false;
+
         public bool InLot
         {
             get
@@ -357,6 +363,9 @@ namespace Simitone.Client.UI.Screens
             }
             base.Update(state);
 
+            // Update weather effects (sounds and terrain)
+            UpdateWeatherEffects();
+
             if (state.NewKeys.Contains(Microsoft.Xna.Framework.Input.Keys.F12) && GraphicsModeControl.Mode != GlobalGraphicsMode.Full2D)
             {
                 GraphicsModeControl.ChangeMode((GraphicsModeControl.Mode == GlobalGraphicsMode.Full3D) ? GlobalGraphicsMode.Hybrid2D : GlobalGraphicsMode.Full3D);
@@ -408,6 +417,100 @@ namespace Simitone.Client.UI.Screens
             if (vm != null) vm.Update();
 
             //SaveHouseButton_OnButtonClick(null);
+        }
+
+        private void UpdateWeatherEffects()
+        {
+            if (vm?.Context?.Blueprint?.Weather == null) return;
+
+            var weather = vm.Context.Blueprint.Weather;
+            var currentType = weather.WeatherType;
+            var currentThunder = weather.IsThunder;
+            var currentIntensity = weather.WeatherIntensity;
+
+            // Only update if state has changed
+            bool stateChanged = currentType != LastWeatherType ||
+                              currentThunder != LastThunder ||
+                              Math.Abs(currentIntensity - LastSoundIntensity) > 0.05f;
+
+            if (!stateChanged) return;
+
+            // Update ambient sounds
+            if (vm?.Context?.Ambience != null)
+            {
+                var ambience = vm.Context.Ambience;
+
+                // Rain sounds (activate when rain intensity > 0.1)
+                if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
+                {
+                    // Rain loop (continuous)
+                    var rainLoop = ambience.GetAmbienceFromName("LoopRain");
+                    if (rainLoop.HasValue)
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), true);
+
+                    // Rain drops (sporadic, only for medium/heavy rain)
+                    if (currentIntensity > 0.25f)
+                    {
+                        var rainDrops = ambience.GetAmbienceFromName("WeatherRainDrops");
+                        if (rainDrops.HasValue)
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), true);
+                    }
+                    else
+                    {
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false);
+                    }
+
+                    // Thunder (when flag is set)
+                    if (currentThunder)
+                    {
+                        var thunder = ambience.GetAmbienceFromName("WeatherLightingThunder");
+                        if (thunder.HasValue)
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), true);
+                    }
+                    else
+                    {
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                    }
+                }
+                else
+                {
+                    // Not raining - disable all rain sounds
+                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), false); // Rain loop
+                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false); // Rain drops
+
+                    // Keep thunder only if still set
+                    if (!currentThunder)
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                }
+            }
+
+            // Update snow terrain overlay
+            if (vm?.Context?.Blueprint?.Terrain != null)
+            {
+                if (currentType == WeatherType.Snow && currentIntensity > 0.1f)
+                {
+                    // Apply snow terrain (white grass)
+                    if (!TerrainSnowApplied)
+                    {
+                        vm.Context.Blueprint.Terrain.ForceSnow(0); // 0 = winter/snow
+                        TerrainSnowApplied = true;
+                    }
+                }
+                else
+                {
+                    // Restore normal terrain
+                    if (TerrainSnowApplied)
+                    {
+                        vm.Context.Blueprint.Terrain.ForceSnow(1); // 1 = summer/normal
+                        TerrainSnowApplied = false;
+                    }
+                }
+            }
+
+            // Update tracked state
+            LastWeatherType = currentType;
+            LastThunder = currentThunder;
+            LastSoundIntensity = currentIntensity;
         }
 
         public override void PreDraw(UISpriteBatch batch)
@@ -464,12 +567,6 @@ namespace Simitone.Client.UI.Screens
             vm = new VM(new VMContext(World), Driver, new UIHeadlineRendererProvider());
             vm.ListenBHAVChanges();
             vm.Init();
-
-            // Set VM reference in WeatherController for ambient sound support
-            if (vm.Context?.Blueprint?.Weather != null)
-            {
-                vm.Context.Blueprint.Weather.VM = vm;
-            }
 
             LotControl = new UILotControl(vm, World);
             this.AddAt(0, LotControl);
