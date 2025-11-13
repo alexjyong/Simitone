@@ -1,13 +1,20 @@
 diff --git a/TSOClient/tso.world/Model/WeatherController.cs b/TSOClient/tso.world/Model/WeatherController.cs
-index bfb2e77d..c9806b1b 100644
+index bfb2e77d..8459d87a 100644
 --- a/TSOClient/tso.world/Model/WeatherController.cs
 +++ b/TSOClient/tso.world/Model/WeatherController.cs
-@@ -52,6 +52,15 @@ namespace FSO.LotView.Model
+@@ -1,5 +1,6 @@
+ ﻿using FSO.Common.Rendering;
+ using FSO.LotView.Components;
++using FSO.SimAntics;
+ using Microsoft.Xna.Framework;
+ using System;
+ using System.Collections.Generic;
+@@ -52,6 +53,15 @@ namespace FSO.LotView.Model
          public int LastHour = -1;
          public bool LastEnabled;
  
 +        // VM reference for ambient sound access (set externally after construction)
-+        public FSO.SimAntics.VM VM;
++        public VM VM;
 +
 +        // Track previous state for sound/terrain updates
 +        private float LastSoundIntensity = -1;
@@ -18,7 +25,7 @@ index bfb2e77d..c9806b1b 100644
          private Vector4 LinearToSRGB(Vector4 col)
          {
              return new Vector4(
-@@ -160,12 +169,106 @@ namespace FSO.LotView.Model
+@@ -160,12 +170,106 @@ namespace FSO.LotView.Model
                      Current = null;
                  }
              }
