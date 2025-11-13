@@ -22,6 +22,32 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Apply patches
+      shell: pwsh
+      run: |
+        Write-Host "Applying patches to FreeSO submodule..."
+        $patches = Get-ChildItem -Path . -Filter "*.patch" | Sort-Object Name
+        
+        if ($patches.Count -eq 0) {
+          Write-Host "No patches found to apply"
+          exit 0
+        }
+        
+        cd FreeSO
+        foreach ($patch in $patches) {
+          $patchPath = Join-Path ".." $patch.Name
+          Write-Host "Checking patch: $($patch.Name)"
+          
+          git apply --check $patchPath 2>&1 | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            git apply $patchPath
+            Write-Host "✓ Successfully applied $($patch.Name)"
+          } else {
+            Write-Warning "✗ Patch check failed for $($patch.Name) - may already be applied or no longer needed"
+          }
+        }
+        cd ..
+
     - name: Setup .NET 9
       uses: actions/setup-dotnet@v4
       with:

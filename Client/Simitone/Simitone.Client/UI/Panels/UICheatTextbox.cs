@@ -96,6 +96,14 @@ namespace Simitone.Client.UI.Panels
             shouldHide = true;
             if (string.IsNullOrWhiteSpace(commandString)) return; // a blank textbox should close after hitting enter -- even if a command was never run.
 
+            // Handle weather commands separately (they don't use VMCheatContext)
+            if (trimRepetitions(commandString).StartsWith("weather", StringComparison.OrdinalIgnoreCase))
+            {
+                HandleWeatherCommand(commandString);
+                baseTextbox.CurrentText = "";
+                return;
+            }
+
             var cheat = new VMNetCheatCmd();
             var context = new VMCheatContext();
             var repetitions = getRepetitions(commandString);
@@ -111,7 +119,7 @@ namespace Simitone.Client.UI.Panels
                     context.Amount = (int)VMCheatContext.BudgetCheatPresetAmount.MOTHERLODE;
                     context.CheatBehavior = VMCheatContext.VMCheatType.Budget;
                     break;
-                default: context = parseCommandString(commandString); break;                                       
+                default: context = parseCommandString(commandString); break;
             }
             cheat.Context = context;
             shouldHide = false;
@@ -204,6 +212,70 @@ namespace Simitone.Client.UI.Panels
                 }
             }
             return context;
-        }        
+        }
+
+        /// <summary>
+        /// Handles weather cheat commands
+        /// Commands: weather rain [intensity], weather snow [intensity], weather clear, weather auto
+        /// </summary>
+        private void HandleWeatherCommand(string command)
+        {
+            var parts = command.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length < 2)
+            {
+                FSO.HIT.HITVM.Get().PlaySoundEvent(UISounds.Error);
+                return;
+            }
+
+            string weatherType = parts[1];
+            int intensity = 50; // default intensity
+
+            // Parse optional intensity parameter
+            if (parts.Length >= 3 && int.TryParse(parts[2], out int parsedIntensity))
+            {
+                intensity = Math.Clamp(parsedIntensity, 0, 100);
+            }
+
+            short weatherData = 0;
+
+            switch (weatherType)
+            {
+                case "rain":
+                    // Manual mode (bit 8) + Rain type (0) + intensity
+                    weatherData = (short)((1 << 8) | (0 << 9) | intensity);
+                    break;
+                case "snow":
+                    // Manual mode (bit 8) + Snow type (1) + intensity
+                    weatherData = (short)((1 << 8) | (1 << 9) | intensity);
+                    break;
+                case "hail":
+                    // Manual mode (bit 8) + Hail type (2) + intensity
+                    weatherData = (short)((1 << 8) | (2 << 9) | intensity);
+                    break;
+                case "clear":
+                    // Manual mode with 0 intensity
+                    weatherData = (short)(1 << 8);
+                    break;
+                case "auto":
+                    // Disable manual mode to use automatic weather
+                    weatherData = 0;
+                    break;
+                default:
+                    FSO.HIT.HITVM.Get().PlaySoundEvent(UISounds.Error);
+                    return;
+            }
+
+            // Set weather via Blueprint
+            if (ts1VM?.Context?.Blueprint?.Weather != null)
+            {
+                ts1VM.Context.Blueprint.Weather.SetWeather(weatherData);
+                FSO.HIT.HITVM.Get().PlaySoundEvent(UISounds.Click);
+            }
+            else
+            {
+                FSO.HIT.HITVM.Get().PlaySoundEvent(UISounds.Error);
+            }
+        }
     }
 }
