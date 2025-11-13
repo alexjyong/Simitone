@@ -1,11 +1,14 @@
 diff --git a/TSOClient/tso.world/Model/WeatherController.cs b/TSOClient/tso.world/Model/WeatherController.cs
-index bfb2e77d..94dc9a0d 100644
+index bfb2e77d..c9806b1b 100644
 --- a/TSOClient/tso.world/Model/WeatherController.cs
 +++ b/TSOClient/tso.world/Model/WeatherController.cs
-@@ -52,6 +52,12 @@ namespace FSO.LotView.Model
+@@ -52,6 +52,15 @@ namespace FSO.LotView.Model
          public int LastHour = -1;
          public bool LastEnabled;
  
++        // VM reference for ambient sound access (set externally after construction)
++        public FSO.SimAntics.VM VM;
++
 +        // Track previous state for sound/terrain updates
 +        private float LastSoundIntensity = -1;
 +        private WeatherType LastWeatherType = WeatherType.Rain;
@@ -15,7 +18,7 @@ index bfb2e77d..94dc9a0d 100644
          private Vector4 LinearToSRGB(Vector4 col)
          {
              return new Vector4(
-@@ -160,12 +166,109 @@ namespace FSO.LotView.Model
+@@ -160,12 +169,106 @@ namespace FSO.LotView.Model
                      Current = null;
                  }
              }
@@ -41,13 +44,10 @@ index bfb2e77d..94dc9a0d 100644
 +
 +            if (!stateChanged) return;
 +
-+            // Get VM context for ambient sounds (if available)
-+            var vm = Bp?.VMTS1 ?? Bp?.VM;
-+
-+            // Update ambient sounds
-+            if (vm?.Context?.Ambience != null)
++            // Update ambient sounds (requires VM to be set externally)
++            if (VM?.Context?.Ambience != null)
 +            {
-+                var ambience = vm.Context.Ambience;
++                var ambience = VM.Context.Ambience;
 +
 +                // Rain sounds (activate when rain intensity > 0.1)
 +                if (currentType == WeatherType.Rain && currentIntensity > 0.1f)

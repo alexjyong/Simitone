@@ -465,6 +465,12 @@ namespace Simitone.Client.UI.Screens
             vm.ListenBHAVChanges();
             vm.Init();
 
+            // Set VM reference in WeatherController for ambient sound support
+            if (vm.Context?.Blueprint?.Weather != null)
+            {
+                vm.Context.Blueprint.Weather.VM = vm;
+            }
+
             LotControl = new UILotControl(vm, World);
             this.AddAt(0, LotControl);
 
