@@ -1,3 +1,130 @@
+diff --git a/TSOClient/tso.world/Model/WeatherController.cs b/TSOClient/tso.world/Model/WeatherController.cs
+index bfb2e77d..94dc9a0d 100644
+--- a/TSOClient/tso.world/Model/WeatherController.cs
++++ b/TSOClient/tso.world/Model/WeatherController.cs
+@@ -52,6 +52,12 @@ namespace FSO.LotView.Model
+         public int LastHour = -1;
+         public bool LastEnabled;
+ 
++        // Track previous state for sound/terrain updates
++        private float LastSoundIntensity = -1;
++        private WeatherType LastWeatherType = WeatherType.Rain;
++        private bool LastThunder = false;
++        private bool TerrainSnowApplied = false;
++
+         private Vector4 LinearToSRGB(Vector4 col)
+         {
+             return new Vector4(
+@@ -160,12 +166,109 @@ namespace FSO.LotView.Model
+                     Current = null;
+                 }
+             }
++
++            // Update ambient sounds and terrain based on weather changes
++            UpdateWeatherEffects();
+         }
+ 
+         public void SetWeather(short data) {
+             WeatherData = data;
+         }
+ 
++        private void UpdateWeatherEffects()
++        {
++            // Only update if state has changed
++            var currentType = WeatherType;
++            var currentThunder = IsThunder;
++            var currentIntensity = WeatherIntensity;
++
++            bool stateChanged = currentType != LastWeatherType ||
++                              currentThunder != LastThunder ||
++                              Math.Abs(currentIntensity - LastSoundIntensity) > 0.05f;
++
++            if (!stateChanged) return;
++
++            // Get VM context for ambient sounds (if available)
++            var vm = Bp?.VMTS1 ?? Bp?.VM;
++
++            // Update ambient sounds
++            if (vm?.Context?.Ambience != null)
++            {
++                var ambience = vm.Context.Ambience;
++
++                // Rain sounds (activate when rain intensity > 0.1)
++                if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
++                {
++                    // Rain loop (continuous)
++                    var rainLoop = ambience.GetAmbienceFromName("LoopRain");
++                    if (rainLoop.HasValue)
++                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), true);
++
++                    // Rain drops (sporadic, only for medium/heavy rain)
++                    if (currentIntensity > 0.25f)
++                    {
++                        var rainDrops = ambience.GetAmbienceFromName("WeatherRainDrops");
++                        if (rainDrops.HasValue)
++                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), true);
++                    }
++                    else
++                    {
++                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false);
++                    }
++
++                    // Thunder (when flag is set)
++                    if (currentThunder)
++                    {
++                        var thunder = ambience.GetAmbienceFromName("WeatherLightingThunder");
++                        if (thunder.HasValue)
++                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), true);
++                    }
++                    else
++                    {
++                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
++                    }
++                }
++                else
++                {
++                    // Not raining - disable all rain sounds
++                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), false); // Rain loop
++                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false); // Rain drops
++
++                    // Keep thunder only if still set
++                    if (!currentThunder)
++                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
++                }
++            }
++
++            // Update snow terrain overlay
++            if (Bp?.Terrain != null)
++            {
++                if (currentType == WeatherType.Snow && currentIntensity > 0.1f)
++                {
++                    // Apply snow terrain (white grass)
++                    if (!TerrainSnowApplied)
++                    {
++                        Bp.Terrain.ForceSnow(0); // 0 = winter/snow
++                        TerrainSnowApplied = true;
++                    }
++                }
++                else
++                {
++                    // Restore normal terrain
++                    if (TerrainSnowApplied)
++                    {
++                        Bp.Terrain.ForceSnow(1); // 1 = summer/normal
++                        TerrainSnowApplied = false;
++                    }
++                }
++            }
++
++            // Update tracked state
++            LastWeatherType = currentType;
++            LastThunder = currentThunder;
++            LastSoundIntensity = currentIntensity;
++        }
++
+         private int GetAutoWeatherIntensity(DateTime time)
+         {
+             if (FinaleUtils.IsFinale())
 diff --git a/TSOClient/tso.world/World.cs b/TSOClient/tso.world/World.cs
 index c2b1e7f7..1a482828 100644
 --- a/TSOClient/tso.world/World.cs

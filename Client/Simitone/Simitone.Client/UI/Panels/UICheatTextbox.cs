@@ -216,7 +216,7 @@ namespace Simitone.Client.UI.Panels
 
         /// <summary>
         /// Handles weather cheat commands
-        /// Commands: weather rain [intensity], weather snow [intensity], weather clear, weather auto
+        /// Commands: weather rain [intensity], weather snow [intensity], weather storm [intensity], weather clear, weather auto
         /// </summary>
         private void HandleWeatherCommand(string command)
         {
@@ -244,6 +244,13 @@ namespace Simitone.Client.UI.Panels
                 case "rain":
                     // Manual mode (bit 8) + Rain type (0) + intensity
                     weatherData = (short)((1 << 8) | (0 << 9) | intensity);
+                    break;
+                case "storm":
+                case "thunder":
+                    // Manual mode (bit 8) + Thunder (bit 11) + Rain type (0) + intensity
+                    // Default to 75% intensity for storms if not specified
+                    if (parts.Length < 3) intensity = 75;
+                    weatherData = (short)((1 << 8) | (1 << 11) | (0 << 9) | intensity);
                     break;
                 case "snow":
                     // Manual mode (bit 8) + Snow type (1) + intensity
