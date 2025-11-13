@@ -435,52 +435,59 @@ namespace Simitone.Client.UI.Screens
 
             if (!stateChanged) return;
 
-            // Update ambient sounds
+            // Update ambient sounds (TS1 may not have these sound files, so catch errors)
             if (vm?.Context?.Ambience != null)
             {
-                var ambience = vm.Context.Ambience;
-
-                // Rain sounds (activate when rain intensity > 0.1)
-                if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
+                try
                 {
-                    // Rain loop (continuous)
-                    var rainLoop = ambience.GetAmbienceFromName("LoopRain");
-                    if (rainLoop.HasValue)
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), true);
+                    var ambience = vm.Context.Ambience;
 
-                    // Rain drops (sporadic, only for medium/heavy rain)
-                    if (currentIntensity > 0.25f)
+                    // Rain sounds (activate when rain intensity > 0.1)
+                    if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
                     {
-                        var rainDrops = ambience.GetAmbienceFromName("WeatherRainDrops");
-                        if (rainDrops.HasValue)
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), true);
+                        // Rain loop (continuous)
+                        var rainLoop = ambience.GetAmbienceFromName("LoopRain");
+                        if (rainLoop.HasValue)
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), true);
+
+                        // Rain drops (sporadic, only for medium/heavy rain)
+                        if (currentIntensity > 0.25f)
+                        {
+                            var rainDrops = ambience.GetAmbienceFromName("WeatherRainDrops");
+                            if (rainDrops.HasValue)
+                                ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), true);
+                        }
+                        else
+                        {
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false);
+                        }
+
+                        // Thunder (when flag is set)
+                        if (currentThunder)
+                        {
+                            var thunder = ambience.GetAmbienceFromName("WeatherLightingThunder");
+                            if (thunder.HasValue)
+                                ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), true);
+                        }
+                        else
+                        {
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                        }
                     }
                     else
                     {
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false);
-                    }
+                        // Not raining - disable all rain sounds
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), false); // Rain loop
+                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false); // Rain drops
 
-                    // Thunder (when flag is set)
-                    if (currentThunder)
-                    {
-                        var thunder = ambience.GetAmbienceFromName("WeatherLightingThunder");
-                        if (thunder.HasValue)
-                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), true);
-                    }
-                    else
-                    {
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                        // Keep thunder only if still set
+                        if (!currentThunder)
+                            ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
                     }
                 }
-                else
+                catch
                 {
-                    // Not raining - disable all rain sounds
-                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde0bc1ad), false); // Rain loop
-                    ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xde19bb31), false); // Rain drops
-
-                    // Keep thunder only if still set
-                    if (!currentThunder)
-                        ambience.SetAmbience(ambience.GetAmbienceFromGUID(0xfdd887b5), false);
+                    // Sound files not found (TS1 doesn't have TSO ambience files) - silently ignore
                 }
             }
 
@@ -492,7 +499,10 @@ namespace Simitone.Client.UI.Screens
                     // Apply snow terrain (white grass)
                     if (!TerrainSnowApplied)
                     {
-                        vm.Context.Blueprint.Terrain.ForceSnow(0); // 0 = winter/snow
+                        var terrain = vm.Context.Blueprint.Terrain;
+                        terrain.ForceSnow(0); // 0 = winter/snow
+                        terrain.UpdateLotType(); // Update color arrays
+                        terrain.TerrainDirty = true; // Trigger terrain regeneration
                         TerrainSnowApplied = true;
                     }
                 }
@@ -501,7 +511,10 @@ namespace Simitone.Client.UI.Screens
                     // Restore normal terrain
                     if (TerrainSnowApplied)
                     {
-                        vm.Context.Blueprint.Terrain.ForceSnow(1); // 1 = summer/normal
+                        var terrain = vm.Context.Blueprint.Terrain;
+                        terrain.ForceSnow(1); // 1 = summer/normal
+                        terrain.UpdateLotType(); // Update color arrays
+                        terrain.TerrainDirty = true; // Trigger terrain regeneration
                         TerrainSnowApplied = false;
                     }
                 }
