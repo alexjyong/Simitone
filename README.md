@@ -78,7 +78,23 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 
 Want to compile Simitone yourself? Follow these steps.
 
-## Prerequisites
+## Easy Mode: Use GitHub Actions
+
+Don't want to install .NET locally? Just fork this repo and run the build workflow:
+
+1. Fork this repository on GitHub
+2. Go to the **Actions** tab in your fork
+3. Click **"Build Simitone"** in the left sidebar
+4. Click **"Run workflow"** → Choose **Release** → Click **"Run workflow"**
+5. Wait ~5 minutes, then download the build artifact from the workflow run
+
+No local setup required! GitHub's runners handle everything.
+
+## Local Build
+
+If you want to build locally:
+
+### Prerequisites
 
 1. **Git** (version 2.13 or later)
    - Download: https://git-scm.com/downloads
@@ -93,9 +109,9 @@ Want to compile Simitone yourself? Follow these steps.
 
 4. **The Sims: Complete Collection** or **The Sims: Legacy Collection** (to run the compiled game)
 
-## Build Steps
+### Build Steps
 
-### 1. Clone and Initialize Submodules
+#### 1. Clone and Initialize Submodules
 
 ```pwsh
 git clone https://github.com/alexjyong/Simitone.git
@@ -105,7 +121,7 @@ git submodule update --init --recursive
 
 The submodule step downloads FreeSO (the core simulation engine). This may take a few minutes.
 
-### 2. Run Protobuild (Optional)
+#### 2. Run Protobuild (Optional)
 
 ```pwsh
 cd FreeSO/Other/libs/FSOMonoGame/
@@ -115,7 +131,7 @@ cd ../../../..
 
 **Note**: This step may fail on some systems - that's okay! The build can still succeed without it.
 
-### 3. Restore Dependencies
+#### 3. Restore Dependencies
 
 ```pwsh
 # Restore Simitone dependencies (required)
@@ -130,7 +146,7 @@ dotnet restore
 cd ../../..
 ```
 
-### 4. Build
+#### 4. Build
 
 ```pwsh
 # Release build (optimized, recommended)
@@ -140,7 +156,7 @@ dotnet build Client/Simitone/Simitone.sln -c Release --no-restore
 dotnet build Client/Simitone/Simitone.sln -c Debug --no-restore
 ```
 
-### 5. Run
+#### 5. Run
 
 Find your compiled executable at:
 ```pwsh
@@ -152,7 +168,7 @@ Or run directly:
 dotnet run --project Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c Release
 ```
 
-## Troubleshooting
+### Troubleshooting
 
 **"FreeSO folder is empty"**
 
@@ -166,7 +182,7 @@ The FreeSO submodule wasn't initialized. Check that `FreeSO/TSOClient/` has cont
 **"Unable to locate the .NET SDK"**
 Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with `dotnet --version`.
 
-## Development
+### Development
 
 For code modifications:
 - Use Visual Studio 2022 or VS Code with C# extension
