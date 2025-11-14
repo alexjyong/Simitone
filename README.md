@@ -80,19 +80,18 @@ Want to compile Simitone yourself? Follow these steps.
 
 ## Easy Mode: Use GitHub Actions
 
-Don't want to install .NET locally? Just fork this repo and run the build workflow:
+Don't want to mess with command prompt and stuff? Just fork this repo and run the build workflow:
 
 1. Fork this repository on GitHub
-2. Go to the **Actions** tab in your fork
+2. Go to the **Actions** tab in your fork (you may be prompted to activate actions)
 3. Click **"Build Simitone"** in the left sidebar
-4. Click **"Run workflow"** → Choose **Release** → Click **"Run workflow"**
-5. Wait ~5 minutes, then download the build artifact from the workflow run
+4. Click **"Run workflow"** -> Choose **Release** -> Click **"Run workflow"**
+5. Wait ~4-5 minutes or so, refresh the job page, and you should see the release artifact.
 
-No local setup required! GitHub's runners handle everything.
 
-## Local Build
+## Local Build (Windows Only)
 
-If you want to build locally:
+If you rather do it by hand, read the instructions below
 
 ### Prerequisites
 
@@ -168,7 +167,7 @@ Or run directly:
 dotnet run --project Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c Release
 ```
 
-### Troubleshooting
+## Troubleshooting
 
 **"FreeSO folder is empty"**
 
@@ -181,12 +180,6 @@ The FreeSO submodule wasn't initialized. Check that `FreeSO/TSOClient/` has cont
 
 **"Unable to locate the .NET SDK"**
 Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with `dotnet --version`.
-
-### Development
-
-For code modifications:
-- Use Visual Studio 2022 or VS Code with C# extension
-- Open `Client/Simitone/Simitone.sln`
 
 # Why is it called Simitone?
 
