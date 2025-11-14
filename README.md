@@ -181,6 +181,12 @@ The FreeSO submodule wasn't initialized. Check that `FreeSO/TSOClient/` has cont
 **"Unable to locate the .NET SDK"**
 Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with `dotnet --version`.
 
+# Contributing
+
+If you do wanna contribute, I do recommend sending your PRs to [upstream](https://github.com/riperiperi/Simitone). They will be brought down here once merged.
+
+If upstream is ever dead (but this is still active) and/or you can't/won't contribute to upstream for whatever reason, *make all your PRs against the `[alex-main](https://github.com/alexjyong/Simitone/tree/alex-main)` branch, as this branch is just for gathering up changes and updates that aren't available in upstream and packaging them for folks to enjoy. Don't make changes from this branch please.
+
 # Why is it called Simitone?
 
 Simitone -> Semitone -> musical term -> C# -> a note
