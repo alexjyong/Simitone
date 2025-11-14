@@ -329,7 +329,6 @@ namespace Simitone.Client.UI.Panels.Desktop
             var nofocus = state.InputManager.GetFocus() == null; // Only process shortcuts when no text input has focus
             if (Game.InLot)
             {
-                // F1-F4 shortcuts should also respect text input focus
                 if (nofocus && keys.Contains(Keys.F1) && !LiveButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.LIVE);
                 if (nofocus && keys.Contains(Keys.F2) && !BuyButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUY);
                 if (nofocus && keys.Contains(Keys.F3) && !BuildButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUILD);

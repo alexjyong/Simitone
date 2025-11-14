@@ -430,75 +430,63 @@ namespace Simitone.Client.UI.Screens
             var currentThunder = weather.IsThunder;
             var currentIntensity = weather.WeatherIntensity;
 
-            // Only update if state has changed
             bool stateChanged = currentType != LastWeatherType ||
                               currentThunder != LastThunder ||
                               Math.Abs(currentIntensity - LastSoundIntensity) > 0.05f;
 
             if (!stateChanged) return;
 
-            // Update ambient sounds using custom weather sounds (with fallback if sounds fail)
             try
             {
                 if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
                 {
-                    // Play rain loop with volume based on intensity
                     WeatherSounds.PlayRain(currentIntensity);
 
-                    // Play thunder occasionally if flag is set
                     if (currentThunder)
                     {
-                        ThunderTimer -= 1f / 60f; // Assuming 60 FPS
+                        ThunderTimer -= 1f / 60f;
                         if (ThunderTimer <= 0)
                         {
                             WeatherSounds.PlayThunder(currentIntensity * 0.8f);
-                            // Random interval between 5-15 seconds
                             ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
                         }
                     }
                 }
                 else
                 {
-                    // Not raining - stop rain sounds
                     WeatherSounds.StopRain();
                     ThunderTimer = 0f;
                 }
             }
-            catch
-            {
-                // Sound playback failed - silently continue (weather visuals still work)
-            }
+            catch { }
 
-            // Update snow terrain overlay
             if (vm?.Context?.Blueprint?.Terrain != null)
             {
                 if (currentType == WeatherType.Snow && currentIntensity > 0.1f)
                 {
-                    // Apply snow terrain (white grass)
+                    // if it's snowing, make the grass snowy
                     if (!TerrainSnowApplied)
                     {
                         var terrain = vm.Context.Blueprint.Terrain;
-                        terrain.ForceSnow(0); // 0 = winter/snow
-                        terrain.UpdateLotType(); // Update color arrays
-                        terrain.TerrainDirty = true; // Trigger terrain regeneration
+                        terrain.ForceSnow(0);
+                        terrain.UpdateLotType();
+                        terrain.TerrainDirty = true;
                         TerrainSnowApplied = true;
                     }
                 }
                 else
-                {
-                    // Restore normal terrain
+                {   // remove it when it stops #TODO, don't do this on snow vacation lots
                     if (TerrainSnowApplied)
                     {
                         var terrain = vm.Context.Blueprint.Terrain;
-                        terrain.ForceSnow(1); // 1 = summer/normal
-                        terrain.UpdateLotType(); // Update color arrays
-                        terrain.TerrainDirty = true; // Trigger terrain regeneration
+                        terrain.ForceSnow(1);
+                        terrain.UpdateLotType();
+                        terrain.TerrainDirty = true;
                         TerrainSnowApplied = false;
                     }
                 }
             }
 
-            // Update tracked state
             LastWeatherType = currentType;
             LastThunder = currentThunder;
             LastSoundIntensity = currentIntensity;

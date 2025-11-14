@@ -214,10 +214,6 @@ namespace Simitone.Client.UI.Panels
             return context;
         }
 
-        /// <summary>
-        /// Handles weather cheat commands
-        /// Commands: weather rain [intensity], weather snow [intensity], weather storm [intensity], weather clear, weather auto
-        /// </summary>
         private void HandleWeatherCommand(string command)
         {
             var parts = command.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -229,9 +225,8 @@ namespace Simitone.Client.UI.Panels
             }
 
             string weatherType = parts[1];
-            int intensity = 50; // default intensity
+            int intensity = 50;
 
-            // Parse optional intensity parameter
             if (parts.Length >= 3 && int.TryParse(parts[2], out int parsedIntensity))
             {
                 intensity = Math.Clamp(parsedIntensity, 0, 100);
@@ -242,30 +237,23 @@ namespace Simitone.Client.UI.Panels
             switch (weatherType)
             {
                 case "rain":
-                    // Manual mode (bit 8) + Rain type (0) + intensity
                     weatherData = (short)((1 << 8) | (0 << 9) | intensity);
                     break;
                 case "storm":
                 case "thunder":
-                    // Manual mode (bit 8) + Thunder (bit 11) + Rain type (0) + intensity
-                    // Default to 75% intensity for storms if not specified
                     if (parts.Length < 3) intensity = 75;
                     weatherData = (short)((1 << 8) | (1 << 11) | (0 << 9) | intensity);
                     break;
                 case "snow":
-                    // Manual mode (bit 8) + Snow type (1) + intensity
                     weatherData = (short)((1 << 8) | (1 << 9) | intensity);
                     break;
                 case "hail":
-                    // Manual mode (bit 8) + Hail type (2) + intensity
                     weatherData = (short)((1 << 8) | (2 << 9) | intensity);
                     break;
                 case "clear":
-                    // Manual mode with 0 intensity
                     weatherData = (short)(1 << 8);
                     break;
                 case "auto":
-                    // Disable manual mode to use automatic weather
                     weatherData = 0;
                     break;
                 default:
@@ -273,7 +261,6 @@ namespace Simitone.Client.UI.Panels
                     return;
             }
 
-            // Set weather via Blueprint
             if (ts1VM?.Context?.Blueprint?.Weather != null)
             {
                 ts1VM.Context.Blueprint.Weather.SetWeather(weatherData);
