@@ -93,9 +93,50 @@ Don't want to mess with command prompt and stuff? Just fork this repo and run th
 
 ## Local Build (Windows Only)
 
-If you rather do it by hand, read the instructions below
+### Quick Build (Automated Script)
 
-### Prerequisites
+For a streamlined build experience, use the included PowerShell script:
+
+**Note**: If the script opens in an editor instead of running, Windows is blocking PowerShell scripts. Use one of these methods:
+
+```pwsh
+# Option 1: Bypass policy **just** for this one script
+powershell -ExecutionPolicy Bypass -File .\build.ps1
+
+# Option 2: Unblock the script file once (then use .\build.ps1 normally)
+Unblock-File .\build.ps1
+```
+
+```pwsh
+# Basic build (this will use release configuration!!)
+.\build.ps1
+```
+
+List of options you can use with the script
+```pwsh
+.\build.ps1 -Configuration Debug     # Build in Debug mode
+.\build.ps1 -Clean                   # Clean Simitone artifacts before building (obvs, you won't need this on first run)
+.\build.ps1 -CleanAll                # Deep clean (includes FreeSO submodule and its submodules!)
+.\build.ps1 -Run                     # Build and run immediately
+.\build.ps1 -Clean -Run              # Clean, build, and run
+
+# Advanced options
+.\build.ps1 -SkipSubmodules          # Skip submodule initialization
+.\build.ps1 -SkipRestore             # Skip dependency restoration
+```
+
+The script will:
+1. Check if prerequisites are installed (Git, .NET SDK)
+2. Initialize submodules (if needed)
+3. Restore dependencies
+4. Build the project
+5. Show you where the executable is located
+
+### Manual Build (Step-by-Step)
+
+If you'd rather do it by hand to understand each step, or for whatever reason, read the instructions below:
+
+#### Prerequisites
 
 1. **Git** (version 2.13 or later)
    - Download: https://git-scm.com/downloads
@@ -112,7 +153,7 @@ If you rather do it by hand, read the instructions below
 
 ### Build Steps
 
-#### 1. Clone and Initialize Submodules
+##### 1. Clone and Initialize Submodules
 
 ```pwsh
 git clone https://github.com/alexjyong/Simitone.git
@@ -122,7 +163,7 @@ git submodule update --init --recursive
 
 The submodule step downloads FreeSO (the core simulation engine). This may take a few minutes.
 
-#### 2. Run Protobuild (Optional)
+##### 2. Run Protobuild (Optional)
 
 ```pwsh
 cd FreeSO\Other\libs\FSOMonoGame\
@@ -130,9 +171,9 @@ cd FreeSO\Other\libs\FSOMonoGame\
 cd ..\..\..\..
 ```
 
-**Note**: This step may fail on some systems - that's okay! The build can still succeed without it.
+**Note**: This step may fail on some systems, but that's okay, the build can still succeed without it.
 
-#### 3. Restore Dependencies
+##### 3. Restore Dependencies
 
 ```pwsh
 # Restore Simitone dependencies (required)
@@ -147,7 +188,7 @@ dotnet restore
 cd ..\..\..
 ```
 
-#### 4. Build
+##### 4. Build
 
 ```pwsh
 # Release build (optimized, recommended)
@@ -157,7 +198,7 @@ dotnet build Client\Simitone\Simitone.sln -c Release --no-restore
 dotnet build Client\Simitone\Simitone.sln -c Debug --no-restore
 ```
 
-#### 5. Run
+##### 5. Run
 
 Find your compiled executable at:
 ```pwsh
@@ -170,6 +211,28 @@ dotnet run --project Client\Simitone\Simitone.Windows\Simitone.Windows.csproj -c
 ```
 
 Note on first run, it may take a few moments to fire up.
+
+### Cleaning Build Artifacts
+
+To start fresh and remove all build artifacts:
+
+```pwsh
+# Clean using the build script
+.\build.ps1 -Clean
+
+# Or manually delete build folders
+Remove-Item -Recurse -Force Client\Simitone\Simitone.Windows\bin, Client\Simitone\Simitone.Windows\obj
+Remove-Item -Recurse -Force Client\Simitone\Simitone.Client\bin, Client\Simitone\Simitone.Client\obj
+
+# For a complete clean (including FreeSO projects)
+Get-ChildItem -Path . -Include bin,obj -Recurse -Directory | Remove-Item -Recurse -Force
+```
+
+This is useful when:
+- Switching between Debug and Release builds
+- Troubleshooting build issues
+- Build artifacts are corrupted
+- You want to verify a clean build works
 
 ## Troubleshooting
 
