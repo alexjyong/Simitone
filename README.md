@@ -10,7 +10,7 @@ Alternative C# Windows Frontend for The Sims 1, based off of FreeSO. http://free
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
-NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. While all objects run, many of them have bugs that can make certain lot types unplayable. For current development progress, see [this issue.](https://github.com/riperiperi/Simitone/issues/8)
+NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. While all objects run, many of them have bugs that can make certain lot types unplayable. For current development progress, see [this issue.](https://github.com/riperiperi/Simitone/issues/8)
 
 *Only for Desktop Windows.* Other platforms cannot be officially supported.
 
@@ -125,9 +125,9 @@ The submodule step downloads FreeSO (the core simulation engine). This may take 
 #### 2. Run Protobuild (Optional)
 
 ```pwsh
-cd FreeSO/Other/libs/FSOMonoGame/
-./protobuild.exe --generate
-cd ../../../..
+cd FreeSO\Other\libs\FSOMonoGame\
+.\Protobuild.exe --generate
+cd ..\..\..\..
 ```
 
 **Note**: This step may fail on some systems - that's okay! The build can still succeed without it.
@@ -136,38 +136,40 @@ cd ../../../..
 
 ```pwsh
 # Restore Simitone dependencies (required)
-dotnet restore Client/Simitone/Simitone.sln
+dotnet restore Client\Simitone\Simitone.sln
 
 # Restore FreeSO dependencies (recommended)
-dotnet restore FreeSO/TSOClient/FreeSO.sln
+dotnet restore FreeSO\TSOClient\FreeSO.sln
 
 # Restore Roslyn/JIT dependencies (optional, for -jit support)
-cd FreeSO/TSOClient/FSO.SimAntics.JIT.Roslyn/
+cd FreeSO\TSOClient\FSO.SimAntics.JIT.Roslyn\
 dotnet restore
-cd ../../..
+cd ..\..\..
 ```
 
 #### 4. Build
 
 ```pwsh
 # Release build (optimized, recommended)
-dotnet build Client/Simitone/Simitone.sln -c Release --no-restore
+dotnet build Client\Simitone\Simitone.sln -c Release --no-restore
 
 # Or Debug build (includes debugging symbols)
-dotnet build Client/Simitone/Simitone.sln -c Debug --no-restore
+dotnet build Client\Simitone\Simitone.sln -c Debug --no-restore
 ```
 
 #### 5. Run
 
 Find your compiled executable at:
 ```pwsh
-Client/Simitone/Simitone.Windows/bin/Release/net9.0-windows/Simitone.exe
+Client\Simitone\Simitone.Windows\bin\Release\net9.0-windows\Simitone.exe
 ```
 
 Or run directly:
 ```pwsh
-dotnet run --project Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c Release
+dotnet run --project Client\Simitone\Simitone.Windows\Simitone.Windows.csproj -c Release
 ```
+
+Note on first run, it may take a few moments to fire up.
 
 ## Troubleshooting
 
@@ -181,7 +183,60 @@ git submodule update --init --recursive --force
 The FreeSO submodule wasn't initialized. Check that `FreeSO/TSOClient/` has content, then re-run step 1.
 
 **"Unable to locate the .NET SDK"**
-Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with `dotnet --version`.
+Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with `dotnet --info`.
+
+You should see something like this:
+```pwsh
+dotnet --info
+.NET SDK:  #this is the important part!!!!!
+ Version:           9.0.307
+ Commit:            3bc3012cf9
+ Workload version:  9.0.300-manifests.7913fe7a
+ MSBuild version:   17.14.28+09c1be848
+
+Runtime Environment:
+ OS Name:     Windows
+ OS Version:  10.0.26100
+ OS Platform: Windows
+ RID:         win-x64
+ Base Path:   C:\Program Files\dotnet\sdk\9.0.307\
+
+.NET workloads installed:
+There are no installed workloads to display.
+Configured to use loose manifests when installing new manifests.
+
+Host:
+  Version:      9.0.11
+  Architecture: x64
+  Commit:       fa7cdded37
+
+.NET SDKs installed:
+  9.0.307 [C:\Program Files\dotnet\sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 9.0.10 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 9.0.11 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 9.0.10 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.NETCore.App 9.0.11 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+  Microsoft.WindowsDesktop.App 9.0.10 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+  Microsoft.WindowsDesktop.App 9.0.11 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+
+Other architectures found:
+  None
+
+Environment variables:
+  Not set
+
+global.json file:
+  Not found
+
+Learn more:
+  https://aka.ms/dotnet/info
+
+Download .NET:
+  https://aka.ms/dotnet/download
+
+```
 
 # Contributing
 
