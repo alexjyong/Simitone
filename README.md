@@ -66,13 +66,15 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 
   Optional Command-Line Arguments
 
-  - -dx / -gl - Force DirectX or OpenGL rendering
-  - -3d - Enable 3D mode in the game (can be toggled on or off with F12)
-  - -jit - Enable JIT compilation for SimAntics (can elpthe game run faster at the expense of more start up time)
-  - -ide - Launch Volcanic object editor
-  - -lang <code> - Set language
-  - -hz <rate> - Set refresh rate
-  - -nosound - Disable audio
+  ```pwsh
+  -dx / -gl # Force DirectX or OpenGL rendering
+  -3d # Enable 3D mode in the game (can be toggled on or off with F12)
+  -jit # Enable JIT compilation for SimAntics (can elpthe game run faster at the expense of more start up time)
+  -ide # Launch Volcanic object editor
+  -lang <code> # Set language
+  -hz <rate> # Set refresh rate
+  -nosound # Disable audio
+  ```
 
 # Building from Source
 
