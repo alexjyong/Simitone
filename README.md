@@ -1,7 +1,7 @@
 ![image](https://user-images.githubusercontent.com/6294155/29047328-2bb60b54-7bc3-11e7-8d88-cee5309495ed.png)
 
 # Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
-# This is not affliated with the Simitone Team
+# This is not affliated with the Simitone Team!!
 
 [Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download](https://github.com/alexjyong/Simitone/releases/download/v0.8.12-forked/SimitoneWindows-Release.zip)
 
