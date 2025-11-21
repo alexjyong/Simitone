@@ -27,54 +27,54 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO)
 
-  # How to Install
+# How to Install
 
-  ## Prerequisites
-  - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
-  - Windows (I've only tested this with 10/11)
-  - [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
+## Prerequisites
+- **The Sims: Complete Collection** or **The Sims: Legacy Collection**
+- Windows (I've only tested this with 10/11)
+- [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
-  ## Quick Install
+## Quick Install
 
-  1. **Download** the [latest release](https://github.com/alexjyong/Simitone/releases/latest/)
-  2. **Extract** the ZIP to your preferred location
-  3. **Run** `Simitone.exe`
+1. **Download** the [latest release](https://github.com/alexjyong/Simitone/releases/latest/)
+2. **Extract** the ZIP to your preferred location
+3. **Run** `Simitone.exe`
 
-  Simitone will automatically detect your Sims 1 installation by checking:
-  - Relative path (`../The Sims/`)
-  - Windows Registry (`HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims`)
-  - Steam libraries (reads Steam registry, parses libraryfolders.vdf and app manifests)
-  - Default install location (`C:\Program Files (x86)\Maxis\The Sims\`)
+Simitone will automatically detect your Sims 1 installation by checking:
+- Relative path (`../The Sims/`)
+- Windows Registry (`HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims`)
+- Steam libraries (reads Steam registry, parses libraryfolders.vdf and app manifests)
+- Default install location (`C:\Program Files (x86)\Maxis\The Sims\`)
 
-  If none of these are options for you or working, see "Manual Path Configuration" below.
+If none of these are options for you or working, see "Manual Path Configuration" below.
 
-  ## Manual Path Configuration
+## Manual Path Configuration
 
-  If auto-detection fails or you have a custom install location:
+If auto-detection fails or you have a custom install location:
 
-  **Command-line override example:**
-  ```bash
-  Simitone.exe -path"C:\Your\Custom\Path\The Sims\"
-  ```
+**Command-line override example:**
+```bash
+Simitone.exe -path"C:\Your\Custom\Path\The Sims\"
+```
 
-  Portable installation:
-  Place The Sims files in ../The Sims/ relative to Simitone.exe (e.g., if Simitone is in D:\Games\Simitone\, put The Sims in D:\Games\The Sims\)
+Portable installation:
+Place The Sims files in ../The Sims/ relative to Simitone.exe (e.g., if Simitone is in D:\Games\Simitone\, put The Sims in D:\Games\The Sims\)
 
-  User data location:
-  Configuration and save files are stored in:
-  %USERPROFILE%\Documents\Simitone\
+User data location:
+Configuration and save files are stored in:
+%USERPROFILE%\Documents\Simitone\
 
-  Optional Command-Line Arguments
+Optional Command-Line Arguments
 
-  ```pwsh
-  -dx / -gl # Force DirectX or OpenGL rendering
-  -3d # Enable 3D mode in the game (can be toggled on or off with F12)
-  -jit # Enable JIT compilation for SimAntics (can elpthe game run faster at the expense of more start up time)
-  -ide # Launch Volcanic object editor
-  -lang <code> # Set language
-  -hz <rate> # Set refresh rate
-  -nosound # Disable audio
-  ```
+```pwsh
+-dx / -gl # Force DirectX or OpenGL rendering
+-3d # Enable 3D mode in the game (can be toggled on or off with F12)
+-jit # Enable JIT compilation for SimAntics (can elpthe game run faster at the expense of more start up time)
+-ide # Launch Volcanic object editor
+-lang <code> # Set language
+-hz <rate> # Set refresh rate
+-nosound # Disable audio
+```
 
 # Building from Source
 
