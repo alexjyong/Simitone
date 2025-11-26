@@ -31,6 +31,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 
 ## Prerequisites
 - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
+  - You will also have to play through the lots first on vanilla TS1 in order for certain things like taxi menu to load properly on the phones. Not too sure why this is happening.
 - Windows (I've only tested this with 10/11)
 - [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
