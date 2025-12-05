@@ -108,8 +108,9 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 Unblock-File .\build.ps1
 ```
 
+Or in powershell directly
 ```pwsh
-# Basic build (this will use release configuration!!)
+# Basic build (this will use release configuration, not debug configuration.)
 .\build.ps1
 ```
 
