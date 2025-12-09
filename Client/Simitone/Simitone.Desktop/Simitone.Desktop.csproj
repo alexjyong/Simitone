@@ -55,10 +55,9 @@
   </PropertyGroup>
 
   <Target Name="CopyMonoGameDLLs" AfterTargets="Build">
-    <!-- Remove root MonoGame.Framework.dll if it exists -->
-    <Delete Files="$(OutputPath)MonoGame.Framework.dll" ContinueOnError="true" />
-
-    <!-- For Desktop (cross-platform), we only need DesktopGL -->
+    <!-- For Desktop (cross-platform), we use DesktopGL (OpenGL) -->
+    <!-- Keep MonoGame.Framework.dll in root for direct loading -->
+    <!-- Also copy to subdirectories for MonogameLinker compatibility -->
     <MakeDir Directories="$(OutputPath)Monogame/Linux" />
     <MakeDir Directories="$(OutputPath)Monogame/MacOS" />
     <MakeDir Directories="$(OutputPath)Monogame/WindowsGL" />
@@ -68,7 +67,7 @@
       <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/net8.0/MonoGame.Framework.dll" />
     </ItemGroup>
     
-    <!-- Copy DesktopGL to all three directories (they all use the same OpenGL assembly) -->
+    <!-- Copy DesktopGL to subdirectories (for MonogameLinker assembly resolution) -->
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/Linux" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/MacOS" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/WindowsGL" SkipUnchangedFiles="true" />
