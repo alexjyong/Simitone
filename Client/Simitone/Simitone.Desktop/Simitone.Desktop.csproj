@@ -8,14 +8,7 @@
     <RootNamespace>Simitone.Windows</RootNamespace>
     <AssemblyName>Simitone</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <!-- Enable System.Drawing.Common on Unix (requires libgdiplus) -->
-    <EnableUnixSupport>true</EnableUnixSupport>
   </PropertyGroup>
-
-  <!-- Enable System.Drawing on Unix platforms -->
-  <ItemGroup>
-    <RuntimeHostConfigurationOption Include="System.Drawing.EnableUnixSupport" Value="true" />
-  </ItemGroup>
 
   <!-- Link source files from Simitone.Windows (except Program.cs which we override) -->
   <ItemGroup>
@@ -33,7 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.9" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>
 
   <ItemGroup>

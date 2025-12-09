@@ -167,14 +167,7 @@ echo ""
 if [[ "$(uname)" == "Linux" ]]; then
     MISSING_DEPS=()
     
-    # Check for libgdiplus
-    if ! ldconfig -p | grep -q libgdiplus; then
-        MISSING_DEPS+=("libgdiplus")
-    else
-        echo "✓ libgdiplus found"
-    fi
-    
-    # Check for OpenAL
+    # Check for OpenAL (required for audio)
     if ! ldconfig -p | grep -q libopenal; then
         MISSING_DEPS+=("libopenal")
     else
@@ -191,9 +184,6 @@ if [[ "$(uname)" == "Linux" ]]; then
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             for dep in "${MISSING_DEPS[@]}"; do
                 case "$dep" in
-                    libgdiplus)
-                        install_package "libgdiplus" "libgdiplus" "libgdiplus" "mono-libgdiplus"
-                        ;;
                     libopenal)
                         install_package "libopenal1" "openal-soft" "openal" "openal-soft"
                         ;;
@@ -208,18 +198,8 @@ if [[ "$(uname)" == "Linux" ]]; then
     fi
 fi
 
-# Check and install dependencies on macOS
+# Check dependencies on macOS
 if [[ "$(uname)" == "Darwin" ]]; then
-    if ! brew list mono-libgdiplus &> /dev/null 2>&1; then
-        echo "libgdiplus not found (required for image loading)"
-        read -p "Would you like to install it now? (Y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            brew install mono-libgdiplus
-        fi
-    else
-        echo "✓ libgdiplus found"
-    fi
     # OpenAL is included with macOS
     echo "✓ OpenAL (built-in on macOS)"
 fi
