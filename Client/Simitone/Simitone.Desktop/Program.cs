@@ -240,20 +240,14 @@ namespace Simitone.Windows
         {
             // Use ImageSharp for cross-platform image loading
             // System.Drawing.Common has issues with libgdiplus on Linux
+            //
+            // Windows GDI+ loads images as BGRA in memory (called "ARGB" confusingly)
+            // then applies RGB->BGR swap, resulting in RGBA in memory.
+            // We load directly as RGBA to match that final result.
             using (var image = Image.Load<Rgba32>(str))
             {
                 var data = new byte[image.Width * image.Height * 4];
                 image.CopyPixelDataTo(data);
-                
-                // Swap R and B channels (RGBA -> BGRA) to match Windows behavior
-                // The Windows version uses an RGB->BGR color matrix transformation
-                for (int i = 0; i < data.Length; i += 4)
-                {
-                    byte temp = data[i];       // R
-                    data[i] = data[i + 2];     // R = B
-                    data[i + 2] = temp;        // B = R
-                }
-                
                 return new Tuple<byte[], int, int>(data, image.Width, image.Height);
             }
         }

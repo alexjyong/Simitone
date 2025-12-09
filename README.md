@@ -20,7 +20,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO)
+- *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 
 # Why is it called Simitone?
 
@@ -31,15 +31,20 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 # Platform Support
 
 ## Windows
-Use `Simitone.Windows` - download from [releases](https://github.com/riperiperi/Simitone/releases/latest/).
+
+Download from [releases](https://github.com/riperiperi/Simitone/releases/latest/)
+**User data location:** `Documents\Simitone\`
 
 ## Linux / macOS
+
 Use `Simitone.Desktop` which uses OpenGL via MonoGame DesktopGL.
 
 ### Quick Start (Linux)
 ```bash
-# Install dependencies
-sudo apt install libgdiplus libopenal1  # Ubuntu/Debian
+# Install dependencies (OpenAL for audio)
+sudo apt install libopenal1  # Ubuntu/Debian
+sudo dnf install openal-soft  # Fedora
+sudo pacman -S openal         # Arch
 
 # Build
 ./build-linux.sh
@@ -48,6 +53,20 @@ sudo apt install libgdiplus libopenal1  # Ubuntu/Debian
 cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 ./Simitone -path"/path/to/The Sims/"
 ```
+
+### Quick Start (macOS)
+```bash
+# Build
+./build-linux.sh
+
+# Run
+cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
+./Simitone -path"/path/to/The Sims/"
+```
+
+**User data location:**
+- Linux: `~/.local/share/Simitone/` (or `~/Documents/Simitone/`)
+- macOS: `~/Documents/Simitone/`
 
 ### The Sims 1 Installation
 Simitone reads The Sims 1 game files directly - they're platform-agnostic (IFF, BMP, WAV formats). You can use:
