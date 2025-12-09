@@ -77,21 +77,37 @@ if ! command -v dotnet &> /dev/null; then
     if [[ "$(uname)" == "Darwin" ]]; then
         echo "Install .NET 9.0 SDK with:"
         echo "  brew install dotnet-sdk"
-        read -p "Install now? (y/N) " -n 1 -r
+        read -p "Install now? (Y/n) " -n 1 -r
         echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             brew install dotnet-sdk
         else
             exit 1
         fi
     else
-        echo "Install .NET 9.0 SDK from: https://dotnet.microsoft.com/download/dotnet/9.0"
+        echo "Install .NET 9.0 SDK using the official Microsoft install script."
         echo ""
-        echo "On Ubuntu/Debian:"
-        echo "  wget https://packages.microsoft.com/config/ubuntu/\$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb"
-        echo "  sudo dpkg -i packages-microsoft-prod.deb"
-        echo "  sudo apt update && sudo apt install -y dotnet-sdk-9.0"
-        exit 1
+        read -p "Would you like to install now? (Y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            echo "Downloading and running Microsoft .NET install script..."
+            curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+            chmod +x /tmp/dotnet-install.sh
+            /tmp/dotnet-install.sh --channel 9.0 --install-dir "$HOME/.dotnet"
+            rm /tmp/dotnet-install.sh
+            
+            # Add to PATH for this session
+            export DOTNET_ROOT="$HOME/.dotnet"
+            export PATH="$DOTNET_ROOT:$PATH"
+            
+            echo ""
+            echo "NOTE: To make .NET 9.0 permanent, add these lines to your ~/.bashrc or ~/.profile:"
+            echo "  export DOTNET_ROOT=\"\$HOME/.dotnet\""
+            echo "  export PATH=\"\$DOTNET_ROOT:\$PATH\""
+            echo ""
+        else
+            exit 1
+        fi
     fi
 fi
 

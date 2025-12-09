@@ -121,7 +121,31 @@ namespace Simitone.Windows
             {
                 FSOEnvironment.ContentDir = "Content/";
                 FSOEnvironment.GFXContentDir = "Content/" + (useDX ? "DX/" : "OGL/");
-                FSOEnvironment.UserDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone/").Replace('\\', '/');
+                
+                // Get user directory - handle Linux where MyDocuments may be empty
+                string userDir;
+                var myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (!string.IsNullOrEmpty(myDocs))
+                {
+                    userDir = Path.Combine(myDocs, "Simitone/");
+                }
+                else
+                {
+                    // Fallback for Linux: use ~/.local/share/Simitone or ~/Simitone
+                    var localShare = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    if (!string.IsNullOrEmpty(localShare))
+                    {
+                        userDir = Path.Combine(localShare, "Simitone/");
+                    }
+                    else
+                    {
+                        // Ultimate fallback: ~/Simitone
+                        userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Simitone/");
+                    }
+                }
+                userDir = userDir.Replace('\\', '/');
+                
+                FSOEnvironment.UserDir = userDir;
                 Directory.CreateDirectory(FSOEnvironment.UserDir);
                 FSOEnvironment.Linux = linux;
                 FSOEnvironment.DirectX = useDX;
@@ -176,9 +200,17 @@ namespace Simitone.Windows
                 }
                 else
                 {
-                    var assemblyPath = Path.Combine(MonogameLinker.AssemblyDir, args.Name.Substring(0, name.IndexOf(',')) + ".dll");
-                    var assembly = Assembly.LoadFrom(assemblyPath);
-                    return assembly;
+                    var assemblyName = args.Name.Substring(0, name.IndexOf(',')) + ".dll";
+                    // Use absolute path based on application base directory
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    var assemblyPath = Path.Combine(baseDir, MonogameLinker.AssemblyDir, assemblyName);
+                    
+                    if (File.Exists(assemblyPath))
+                    {
+                        var assembly = Assembly.LoadFrom(assemblyPath);
+                        return assembly;
+                    }
+                    return null;
                 }
             }
             catch (Exception)

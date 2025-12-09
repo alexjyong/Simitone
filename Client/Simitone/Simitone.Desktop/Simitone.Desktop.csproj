@@ -64,7 +64,8 @@
     <MakeDir Directories="$(OutputPath)Monogame/WindowsGL" />
     
     <ItemGroup>
-      <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/**/MonoGame.Framework.dll" />
+      <!-- MonoGame DesktopGL ships a net8.0 build that works with net9.0 -->
+      <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/net8.0/MonoGame.Framework.dll" />
     </ItemGroup>
     
     <!-- Copy DesktopGL to all three directories (they all use the same OpenGL assembly) -->
