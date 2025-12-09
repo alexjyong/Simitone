@@ -55,9 +55,10 @@ namespace Simitone.Windows
 
             FSOEnvironment.Args = string.Join(" ", args);
 
-            foreach (var arg in args)
+            for (int i = 0; i < args.Length; i++)
             {
-                if (arg[0] == '-')
+                var arg = args[i];
+                if (arg.Length > 0 && arg[0] == '-')
                 {
                     var cmd = arg.Substring(1);
                     if (cmd.StartsWith("lang"))
@@ -100,8 +101,16 @@ namespace Simitone.Windows
                             case "nosound":
                                 FSOEnvironment.NoSound = true;
                                 break;
-                            case string s when s.StartsWith("path"): //The Sims path
-                                path = s.Length > 4 ? s.Substring(4).Trim('"').Replace('\\', '/') + "/" : path;
+                            case "path": // -path "/the/path" (space-separated)
+                                if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                                {
+                                    path = args[++i].Trim('"').Replace('\\', '/');
+                                    if (!path.EndsWith("/")) path += "/";
+                                }
+                                break;
+                            case string s when s.StartsWith("path"): // -path"/the/path" (concatenated)
+                                path = s.Substring(4).Trim('"').Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
                                 break;
                         }
                     }
