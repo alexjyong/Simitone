@@ -2,14 +2,14 @@
 
 [Latest Pre-release](https://github.com/riperiperi/Simitone/releases/latest/) | [Download](https://github.com/riperiperi/Simitone/releases/latest/download/SimitoneWindows.zip)
 
-Alternative C# Windows Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
+Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
+
+**Supported Platforms:** Windows, Linux, macOS
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
 NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. While all objects run, many of them have bugs that can make certain lot types unplayable. For current development progress, see [this issue.](https://github.com/riperiperi/Simitone/issues/8)
-
-*Only for Desktop Windows.* Other platforms cannot be officially supported.
 
 # Purpose
 
@@ -27,3 +27,33 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 Simitone -> Semitone -> musical term -> C# -> a note
 
 Further questions can be directed at my PR manager, uh, ... burglar cop.
+
+# Platform Support
+
+## Windows
+Use `Simitone.Windows` - download from [releases](https://github.com/riperiperi/Simitone/releases/latest/).
+
+## Linux / macOS
+Use `Simitone.Desktop` which uses OpenGL via MonoGame DesktopGL.
+
+### Quick Start (Linux)
+```bash
+# Install dependencies
+sudo apt install libgdiplus libopenal1  # Ubuntu/Debian
+
+# Build
+./build-linux.sh
+
+# Run (point to your The Sims installation)
+cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
+./Simitone -path"/path/to/The Sims/"
+```
+
+### The Sims 1 Installation
+Simitone reads The Sims 1 game files directly - they're platform-agnostic (IFF, BMP, WAV formats). You can use:
+- A Windows installation via Wine/Proton
+- Steam Play/Proton: `~/.steam/steam/steamapps/common/The Sims/`
+- Wine prefix: `~/.wine/drive_c/Program Files/Maxis/The Sims/`
+- WSL (accessing Windows): `/mnt/c/Program Files (x86)/Maxis/The Sims/`
+
+For detailed instructions, see [docs/LINUX_MACOS_SUPPORT.md](docs/LINUX_MACOS_SUPPORT.md).

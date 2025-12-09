@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Simitone.Windows</RootNamespace>
+    <AssemblyName>Simitone</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <!-- Enable System.Drawing.Common on Unix (requires libgdiplus) -->
+    <EnableUnixSupport>true</EnableUnixSupport>
+  </PropertyGroup>
+
+  <!-- Enable System.Drawing on Unix platforms -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Drawing.EnableUnixSupport" Value="true" />
+  </ItemGroup>
+
+  <!-- Link source files from Simitone.Windows (except Program.cs which we override) -->
+  <ItemGroup>
+    <Compile Include="..\Simitone.Windows\GameStartProxy.cs" Link="GameStartProxy.cs" />
+    <Compile Include="..\Simitone.Windows\GameLocator\*.cs" Link="GameLocator\%(Filename)%(Extension)" />
+    <Compile Include="..\Simitone.Windows\Utils\*.cs" Link="Utils\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Embedded resources from Windows project -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\Simitone.Windows\Icon.bmp" Link="Icon.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\FreeSO\Other\libs\MSDFData\MSDFData.csproj" />
+    <!-- FSO.IDE is Windows-only (Windows Forms), not included in cross-platform build -->
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.SimAntics.JIT\FSO.SimAntics.JIT.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.UI\FSO.UI.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.client\FSO.Client.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.common\FSO.Common.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.files\FSO.Files.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.simantics\FSO.SimAntics.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.world\FSO.LotView.csproj" />
+    <ProjectReference Include="..\Simitone.Client\Simitone.Client.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NuGetGlobalPackages Condition=" '$(OS)' == 'Windows_NT' ">$(USERPROFILE)\.nuget\packages</NuGetGlobalPackages>
+    <NuGetGlobalPackages Condition=" '$(OS)' != 'Windows_NT' ">$(HOME)/.nuget/packages</NuGetGlobalPackages>
+  </PropertyGroup>
+
+  <Target Name="CopyMonoGameDLLs" AfterTargets="Build">
+    <!-- Remove root MonoGame.Framework.dll if it exists -->
+    <Delete Files="$(OutputPath)MonoGame.Framework.dll" ContinueOnError="true" />
+
+    <!-- For Desktop (cross-platform), we only need DesktopGL -->
+    <MakeDir Directories="$(OutputPath)Monogame/Linux" />
+    <MakeDir Directories="$(OutputPath)Monogame/MacOS" />
+    <MakeDir Directories="$(OutputPath)Monogame/WindowsGL" />
+    
+    <ItemGroup>
+      <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/**/MonoGame.Framework.dll" />
+    </ItemGroup>
+    
+    <!-- Copy DesktopGL to all three directories (they all use the same OpenGL assembly) -->
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/Linux" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/MacOS" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/WindowsGL" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
