@@ -5,15 +5,25 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG="${1:-Release}"
-PUBLISH="${2:-}"
 
-# Normalize configuration name
-if [[ "${CONFIG,,}" == "debug" ]]; then
-    CONFIG="Debug"
-else
-    CONFIG="Release"
-fi
+# Default values
+CONFIG="Release"
+PUBLISH=""
+
+# Parse arguments (order-independent)
+for arg in "$@"; do
+    case "$arg" in
+        --publish)
+            PUBLISH="--publish"
+            ;;
+        debug|Debug)
+            CONFIG="Debug"
+            ;;
+        release|Release)
+            CONFIG="Release"
+            ;;
+    esac
+done
 
 echo "========================================"
 echo "  Simitone Linux/macOS Build Script"
@@ -232,38 +242,39 @@ echo ""
 echo "Step 2: Building Simitone.Desktop ($CONFIG)..."
 dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c "$CONFIG" --no-restore
 
-if [[ "$PUBLISH" == "--publish" ]]; then
-    echo ""
-    echo "Step 3: Publishing self-contained build..."
+# currently broken disabling for now.
+# if [[ "$PUBLISH" == "--publish" ]]; then
+#     echo ""
+#     echo "Step 3: Publishing self-contained build..."
     
-    # Detect architecture
-    ARCH="$(uname -m)"
-    if [[ "$ARCH" == "x86_64" ]]; then
-        RID_ARCH="x64"
-    elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-        RID_ARCH="arm64"
-    else
-        RID_ARCH="x64"
-    fi
+#     # Detect architecture
+#     ARCH="$(uname -m)"
+#     if [[ "$ARCH" == "x86_64" ]]; then
+#         RID_ARCH="x64"
+#     elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+#         RID_ARCH="arm64"
+#     else
+#         RID_ARCH="x64"
+#     fi
     
-    # Detect OS
-    if [[ "$(uname)" == "Darwin" ]]; then
-        RID="osx-$RID_ARCH"
-    else
-        RID="linux-$RID_ARCH"
-    fi
+#     # Detect OS
+#     if [[ "$(uname)" == "Darwin" ]]; then
+#         RID="osx-$RID_ARCH"
+#     else
+#         RID="linux-$RID_ARCH"
+#     fi
     
-    echo "Runtime Identifier: $RID"
+#     echo "Runtime Identifier: $RID"
     
-    dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-        -c "$CONFIG" \
-        -r "$RID" \
-        --self-contained true \
-        -o "publish/$RID"
+#     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+#         -c "$CONFIG" \
+#         -r "$RID" \
+#         --self-contained true \
+#         -o "publish/$RID"
     
-    echo ""
-    echo "Published to: $SCRIPT_DIR/publish/$RID"
-fi
+#     echo ""
+#     echo "Published to: $SCRIPT_DIR/publish/$RID"
+# fi
 
 echo ""
 echo "========================================"
