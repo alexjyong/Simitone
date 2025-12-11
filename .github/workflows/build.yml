@@ -91,7 +91,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgdiplus libopenal1
+        sudo apt-get install -y libopenal1
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
@@ -121,31 +121,35 @@ jobs:
     #     path: publish/linux-x64/
     #     if-no-files-found: error
 
-  # build-macos:
-  #   if: ${{ inputs.build_macos }}
-  #   runs-on: macos-latest
-  #   name: Build macOS
+  build-macos:
+    if: ${{ inputs.build_macos }}
+    runs-on: macos-latest
+    name: Build macOS
 
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #     with:
-  #       submodules: recursive
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-  #   - name: Setup .NET 9
-  #     uses: actions/setup-dotnet@v4
-  #     with:
-  #       dotnet-version: '9.0.x'
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
 
-  #   - name: Install dependencies
-  #     run: |
-  #       brew install mono-libgdiplus
 
-  #   - name: Restore dependencies
-  #     run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
+    - name: Restore dependencies
+      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
 
-  #   - name: Build macOS
-  #     run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
+    - name: Build macOS
+      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-macOS-x64-${{ inputs.configuration || 'Release' }}
+        path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
+        if-no-files-found: error
 
     # - name: Publish macOS Intel (self-contained)
     #   run: |
