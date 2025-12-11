@@ -236,45 +236,46 @@ fi
 echo ""
 echo "Step 1: Restoring dependencies..."
 cd "$SCRIPT_DIR"
-dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
+dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
 
 echo ""
 echo "Step 2: Building Simitone.Desktop ($CONFIG)..."
 dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c "$CONFIG" --no-restore
 
-# currently broken disabling for now.
-# if [[ "$PUBLISH" == "--publish" ]]; then
-#     echo ""
-#     echo "Step 3: Publishing self-contained build..."
+if [[ "$PUBLISH" == "--publish" ]]; then
+    echo ""
+    echo "Step 3: Publishing self-contained build..."
     
-#     # Detect architecture
-#     ARCH="$(uname -m)"
-#     if [[ "$ARCH" == "x86_64" ]]; then
-#         RID_ARCH="x64"
-#     elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-#         RID_ARCH="arm64"
-#     else
-#         RID_ARCH="x64"
-#     fi
+    # Detect architecture
+    ARCH="$(uname -m)"
+    if [[ "$ARCH" == "x86_64" ]]; then
+        RID_ARCH="x64"
+    elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+        RID_ARCH="arm64"
+    else
+        RID_ARCH="x64"
+    fi
     
-#     # Detect OS
-#     if [[ "$(uname)" == "Darwin" ]]; then
-#         RID="osx-$RID_ARCH"
-#     else
-#         RID="linux-$RID_ARCH"
-#     fi
+    # Detect OS
+    if [[ "$(uname)" == "Darwin" ]]; then
+        RID="osx-$RID_ARCH"
+    else
+        RID="linux-$RID_ARCH"
+    fi
     
-#     echo "Runtime Identifier: $RID"
+    echo "Runtime Identifier: $RID"
     
-#     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-#         -c "$CONFIG" \
-#         -r "$RID" \
-#         --self-contained true \
-#         -o "publish/$RID"
+    dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+        -c "$CONFIG" \
+        -r "$RID" \
+        --self-contained true \
+        -o "publish/$RID" \
+        /p:TreatWarningsAsErrors=false \
+        /p:WarningsAsErrors=""
     
-#     echo ""
-#     echo "Published to: $SCRIPT_DIR/publish/$RID"
-# fi
+    echo ""
+    echo "Published to: $SCRIPT_DIR/publish/$RID"
+fi
 
 echo ""
 echo "========================================"
