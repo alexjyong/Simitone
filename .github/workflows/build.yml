@@ -106,20 +106,23 @@ jobs:
         path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
         if-no-files-found: error
 
-    # - name: Publish Linux (self-contained)
-    #   run: |
-    #     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-    #       -c ${{ inputs.configuration || 'Release' }} \
-    #       -r linux-x64 \
-    #       --self-contained true \
-    #       -o publish/linux-x64
+    - name: Publish Linux (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r linux-x64 \
+          --self-contained true \
+          -o publish/linux-x64
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors="" \
 
-    # - name: Upload Linux artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: Simitone-Linux-x64-${{ inputs.configuration || 'Release' }}
-    #     path: publish/linux-x64/
-    #     if-no-files-found: error
+
+    - name: Upload Self-Contained Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-Linux-x64-${{ inputs.configuration || 'Release' }}
+        path: publish/linux-x64/
+        if-no-files-found: error
 
   build-macos:
     if: ${{ inputs.build_macos }}
