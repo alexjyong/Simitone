@@ -19,10 +19,10 @@ on:
         description: 'Build Linux'
         type: boolean
         default: true
-      # build_macos:
-      #   description: 'Build macOS'
-      #   type: boolean
-      #   default: true
+      build_macos:
+        description: 'Build macOS'
+        type: boolean
+        default: true
 
 jobs:
   build-windows:
