@@ -47,6 +47,30 @@ detect_package_manager() {
     fi
 }
 
+# Update package manager index (run once before installations)
+update_package_index() {
+    local pm=$(detect_package_manager)
+    
+    case "$pm" in
+        apt)
+            echo "Updating package index..."
+            sudo apt-get update
+            ;;
+        dnf)
+            echo "Updating package index..."
+            sudo dnf check-update || true
+            ;;
+        pacman)
+            echo "Updating package index..."
+            sudo pacman -Sy
+            ;;
+        brew)
+            echo "Updating package index..."
+            brew update
+            ;;
+    esac
+}
+
 # Install a package using the detected package manager
 install_package() {
     local pkg_apt="$1"
@@ -192,6 +216,7 @@ if [[ "$(uname)" == "Linux" ]]; then
         read -p "Would you like to install them now? (Y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            update_package_index
             for dep in "${MISSING_DEPS[@]}"; do
                 case "$dep" in
                     libopenal)
