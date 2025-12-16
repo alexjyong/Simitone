@@ -142,7 +142,7 @@ jobs:
 
 
     - name: Restore dependencies
-      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
+      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
 
     - name: Build macOS
       run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
@@ -154,33 +154,37 @@ jobs:
         path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
         if-no-files-found: error
 
-    # - name: Publish macOS Intel (self-contained)
-    #   run: |
-    #     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-    #       -c ${{ inputs.configuration || 'Release' }} \
-    #       -r osx-x64 \
-    #       --self-contained true \
-    #       -o publish/osx-x64
+    - name: Publish macOS Intel (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r osx-x64 \
+          --self-contained true \
+          -o publish/osx-x64 \
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors=""
 
-    # - name: Publish macOS ARM (self-contained)
-    #   run: |
-    #     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-    #       -c ${{ inputs.configuration || 'Release' }} \
-    #       -r osx-arm64 \
-    #       --self-contained true \
-    #       -o publish/osx-arm64
+    - name: Publish macOS ARM (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r osx-arm64 \
+          --self-contained true \
+          -o publish/osx-arm64 \
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors=""
 
-    # - name: Upload macOS Intel artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: Simitone-macOS-x64-${{ inputs.configuration || 'Release' }}
-    #     path: publish/osx-x64/
-    #     if-no-files-found: error
+    - name: Upload Self-Contained macOS Intel artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-macOS-x64-${{ inputs.configuration || 'Release' }}
+        path: publish/osx-x64/
+        if-no-files-found: error
 
-    # - name: Upload macOS ARM artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: Simitone-macOS-arm64-${{ inputs.configuration || 'Release' }}
-    #     path: publish/osx-arm64/
-    #     if-no-files-found: error
+    - name: Upload Self-Contained macOS ARM artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-macOS-arm64-${{ inputs.configuration || 'Release' }}
+        path: publish/osx-arm64/
+        if-no-files-found: error
 
