@@ -51,8 +51,9 @@ namespace Simitone.Client
             if (!FSOEnvironment.SoftwareKeyboard)
             {
                 Graphics.SynchronizeWithVerticalRetrace = true;
-                Graphics.PreferredBackBufferWidth = GlobalSettings.Default.GraphicsWidth;
-                Graphics.PreferredBackBufferHeight = GlobalSettings.Default.GraphicsHeight;
+                // Apply DPI scaling to buffer size (matches TSOGame pattern)
+                Graphics.PreferredBackBufferWidth = (int)(GlobalSettings.Default.GraphicsWidth * FSOEnvironment.DPIScaleFactor);
+                Graphics.PreferredBackBufferHeight = (int)(GlobalSettings.Default.GraphicsHeight * FSOEnvironment.DPIScaleFactor);
                 Graphics.HardwareModeSwitch = false;
                 Graphics.ApplyChanges();
             }
@@ -73,7 +74,12 @@ namespace Simitone.Client
         bool newChange = false;
         void Window_ClientSizeChanged(object sender, EventArgs e)
         {
-            if (newChange || !GlobalSettings.Default.Windowed || FSOEnvironment.SoftwareKeyboard) return;
+            // Debug logging for WSLg resize troubleshooting
+            Console.WriteLine($"[Resize] Size: {Window.ClientBounds.Width}x{Window.ClientBounds.Height}, " +
+                             $"Windowed: {GlobalSettings.Default.Windowed}, DPI: {FSOEnvironment.DPIScaleFactor}");
+
+            // Remove SoftwareKeyboard check - not needed for desktop
+            if (newChange || !GlobalSettings.Default.Windowed) return;
             if (Window.ClientBounds.Width == 0 || Window.ClientBounds.Height == 0) return;
             newChange = true;
             var width = Math.Max(1, Window.ClientBounds.Width);
@@ -89,6 +95,11 @@ namespace Simitone.Client
             if (uiLayer?.CurrentUIScreen == null) return;
 
             uiLayer.SpriteBatch.ResizeBuffer(GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight);
+
+            // Store logical dimensions for UI (matches TSOGame.cs pattern)
+            GlobalSettings.Default.GraphicsWidth = (int)(width / FSOEnvironment.DPIScaleFactor);
+            GlobalSettings.Default.GraphicsHeight = (int)(height / FSOEnvironment.DPIScaleFactor);
+
             uiLayer.CurrentUIScreen.GameResized();
         }
 
