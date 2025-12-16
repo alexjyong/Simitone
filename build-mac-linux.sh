@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build script for Simitone on Linux/macOS/WSL
-# Usage: ./build-linux.sh [debug|release] [--publish]
+# Usage: ./build-mac-linux.sh [debug|release] [--publish]
 
 set -e
 

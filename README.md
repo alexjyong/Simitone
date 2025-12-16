@@ -35,9 +35,13 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 Download from [releases](https://github.com/riperiperi/Simitone/releases/latest/)
 **User data location:** `Documents\Simitone\`
 
-## Linux / macOS
+## Linux / macOS (note at time of writing, macOS is currently untested)
 
-Use `Simitone.Desktop` which uses OpenGL via MonoGame DesktopGL.
+Download self-contained release from [releases](https://github.com/riperiperi/Simitone/releases/latest/) for your operating system
+
+Extract it, and from within in the extracted directory in your terminal, run `./Simitone -path"/fully/qualified/path/to/The Sims/"
+
+If you rather build from source, keep reading.
 
 ### Quick Start (Linux)
 ```bash
@@ -47,21 +51,21 @@ sudo dnf install openal-soft  # Fedora
 sudo pacman -S openal         # Arch
 
 # Build
-./build-linux.sh
+./build-mac-linux.sh
 
 # Run (point to your The Sims installation)
 cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
-./Simitone -path"/path/to/The Sims/"
+./Simitone -path"/fully/qualified/path/to/The Sims/"
 ```
 
 ### Quick Start (macOS)
 ```bash
 # Build
-./build-linux.sh
+./build-mac-linux.sh
 
 # Run
 cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
-./Simitone -path"/path/to/The Sims/"
+./Simitone -path"/fully/qualified/path/to/The Sims/"
 ```
 
 **User data location:**
@@ -74,5 +78,3 @@ Simitone reads The Sims 1 game files directly - they're platform-agnostic (IFF, 
 - Steam Play/Proton: `~/.steam/steam/steamapps/common/The Sims/`
 - Wine prefix: `~/.wine/drive_c/Program Files/Maxis/The Sims/`
 - WSL (accessing Windows): `/mnt/c/Program Files (x86)/Maxis/The Sims/`
-
-For detailed instructions, see [docs/LINUX_MACOS_SUPPORT.md](docs/LINUX_MACOS_SUPPORT.md).
