@@ -13,9 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Icon.bmp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <Content Include="Icon.ico" />
   </ItemGroup>
 
@@ -35,6 +32,7 @@
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.simantics\FSO.SimAntics.csproj" />
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.world\FSO.LotView.csproj" />
     <ProjectReference Include="..\Simitone.Client\Simitone.Client.csproj" />
+    <ProjectReference Include="..\Simitone.Shared\Simitone.Shared.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

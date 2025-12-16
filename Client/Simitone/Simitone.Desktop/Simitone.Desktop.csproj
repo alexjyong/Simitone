@@ -14,20 +14,6 @@
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <!-- Link source files from Simitone.Windows (except Program.cs which we override) -->
-  <ItemGroup>
-    <Compile Include="..\Simitone.Windows\GameStartProxy.cs" Link="GameStartProxy.cs" />
-    <Compile Include="..\Simitone.Windows\GameLocator\*.cs" Link="GameLocator\%(Filename)%(Extension)" />
-    <Compile Include="..\Simitone.Windows\Utils\*.cs" Link="Utils\%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <!-- Embedded resources from Windows project -->
-  <ItemGroup>
-    <EmbeddedResource Include="..\Simitone.Windows\Icon.bmp" Link="Icon.bmp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
@@ -44,6 +30,7 @@
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.simantics\FSO.SimAntics.csproj" />
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.world\FSO.LotView.csproj" />
     <ProjectReference Include="..\Simitone.Client\Simitone.Client.csproj" />
+    <ProjectReference Include="..\Simitone.Shared\Simitone.Shared.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
