@@ -23,6 +23,7 @@ using FSO.SimAntics;
 using MSDFData;
 using FSO.LotView.Model;
 using Simitone.Client.UI.Panels;
+using System.IO;
 
 namespace Simitone.Client
 {
@@ -222,6 +223,64 @@ namespace Simitone.Client
         }
 
         /// <summary>
+        /// Sets the window icon for Linux/macOS platforms.
+        /// Attempts to load Icon.bmp from multiple locations.
+        /// </summary>
+        void SetWindowIcon()
+        {
+            try
+            {
+                // Get window handle using reflection (MonoGame DesktopGL)
+                var handleProperty = this.Window.GetType().GetProperty("Handle");
+                if (handleProperty == null)
+                {
+                    Console.WriteLine("Warning: Could not get window handle for icon");
+                    return;
+                }
+
+                var windowHandle = (IntPtr)handleProperty.GetValue(this.Window);
+                if (windowHandle == IntPtr.Zero)
+                {
+                    Console.WriteLine("Warning: Window handle is null");
+                    return;
+                }
+
+                // Try to find Icon.bmp in common locations
+                string iconPath = null;
+                var possiblePaths = new[]
+                {
+                    "Icon.bmp",                    // Current directory
+                    "../Icon.bmp",                 // Parent directory
+                    "../../Icon.bmp",              // Two levels up
+                    "../../../Icon.bmp",           // Three levels up
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icon.bmp")
+                };
+
+                foreach (var path in possiblePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        iconPath = path;
+                        break;
+                    }
+                }
+
+                if (iconPath != null)
+                {
+                    Simitone.Client.Utils.IconLoader.SetWindowIcon(windowHandle, iconPath);
+                }
+                else
+                {
+                    Console.WriteLine("Warning: Icon.bmp not found in any expected location");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Failed to set window icon: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
         /// </summary>
@@ -290,6 +349,13 @@ namespace Simitone.Client
                 this.IsMouseVisible = true;
                 if (!FSOEnvironment.SoftwareKeyboard) AddTextInput();
                 this.Window.Title = "Simitone";
+
+                // Set window icon on Linux/macOS (Windows uses Icon.ico from project settings)
+                if (GameFacade.Linux)
+                {
+                    SetWindowIcon();
+                }
+
                 HasUpdated = true;
                 GameFacade.Screens = uiLayer;
                 GameController.EnterLoading();
