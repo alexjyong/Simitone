@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Simitone.Windows.GameLocator
 {
-    interface ILocator
+    public interface ILocator
     {
         string FindTheSimsOnline();
         string FindTheSims1();

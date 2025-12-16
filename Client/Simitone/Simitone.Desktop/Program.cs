@@ -111,6 +111,10 @@ namespace Simitone.Windows
             
             useDX = MonogameLinker.Link(useDX);
 
+            // Load DPI scale factor from config.ini (follows FreeSO TSOGame pattern)
+            // Users can customize via config.ini: DPIScaleFactor=1.25 for 125% scaling
+            FSOEnvironment.DPIScaleFactor = GlobalSettings.Default.DPIScaleFactor;
+
             FSO.Files.ImageLoaderHelpers.BitmapFunction = BitmapReader;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
