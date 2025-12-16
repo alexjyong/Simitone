@@ -250,10 +250,13 @@ namespace Simitone.Client
                 var possiblePaths = new[]
                 {
                     "Icon.bmp",                    // Current directory
+                    "Resources/Icon.bmp",          // Resources subdirectory
                     "../Icon.bmp",                 // Parent directory
+                    "../Resources/Icon.bmp",       // Parent Resources subdirectory
                     "../../Icon.bmp",              // Two levels up
                     "../../../Icon.bmp",           // Three levels up
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icon.bmp")
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Icon.bmp"),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Icon.bmp")
                 };
 
                 foreach (var path in possiblePaths)
