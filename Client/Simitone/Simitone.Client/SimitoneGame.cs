@@ -62,6 +62,12 @@ namespace Simitone.Client
 
             Thread.CurrentThread.Name = "Game";
 
+            // Set window icon early for Linux/macOS (Windows uses Icon.ico from project settings)
+            // This needs to happen before the window is shown for some window managers
+            if (GameFacade.Linux)
+            {
+                SetWindowIcon();
+            }
         }
 
         bool newChange = false;
@@ -183,6 +189,12 @@ namespace Simitone.Client
             base.Screen.Layers.Add(SceneMgr);
             base.Screen.Layers.Add(uiLayer);
             GameFacade.LastUpdateState = base.Screen.State;
+
+            // Try setting icon again after full initialization (for window managers that need it)
+            if (GameFacade.Linux)
+            {
+                SetWindowIcon();
+            }
 
             if (!GlobalSettings.Default.Windowed && !GameFacade.GraphicsDeviceManager.IsFullScreen)
             {
@@ -352,13 +364,6 @@ namespace Simitone.Client
                 this.IsMouseVisible = true;
                 if (!FSOEnvironment.SoftwareKeyboard) AddTextInput();
                 this.Window.Title = "Simitone";
-
-                // Set window icon on Linux/macOS (Windows uses Icon.ico from project settings)
-                if (GameFacade.Linux)
-                {
-                    SetWindowIcon();
-                }
-
                 HasUpdated = true;
                 GameFacade.Screens = uiLayer;
                 GameController.EnterLoading();
