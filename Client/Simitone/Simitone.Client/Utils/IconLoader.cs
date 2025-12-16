@@ -171,15 +171,8 @@ namespace Simitone.Client.Utils
                         if (surface != IntPtr.Zero)
                         {
                             // Set the window icon
-                            Console.WriteLine($"Created SDL surface: {surface} (size: {image.Width}x{image.Height})");
                             SDL_SetWindowIcon(window, surface);
-                            Console.WriteLine($"Called SDL_SetWindowIcon(window={window}, surface={surface})");
                             SDL_FreeSurface(surface);
-                            Console.WriteLine($"Window icon set successfully from: {iconPath}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Warning: Failed to create SDL surface for icon (returned null pointer)");
                         }
                     }
                     finally

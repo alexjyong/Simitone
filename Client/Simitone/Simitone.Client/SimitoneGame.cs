@@ -251,7 +251,6 @@ namespace Simitone.Client
                 }
 
                 var windowHandle = (IntPtr)handleProperty.GetValue(this.Window);
-                Console.WriteLine($"Window handle obtained: {windowHandle}");
                 if (windowHandle == IntPtr.Zero)
                 {
                     Console.WriteLine("Warning: Window handle is null");
@@ -277,7 +276,6 @@ namespace Simitone.Client
                     if (File.Exists(path))
                     {
                         iconPath = path;
-                        Console.WriteLine($"Found icon at: {iconPath}");
                         break;
                     }
                 }
