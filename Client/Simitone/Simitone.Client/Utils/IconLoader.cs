@@ -13,10 +13,23 @@ namespace Simitone.Client.Utils
     /// </summary>
     public static class IconLoader
     {
-        private const string SDL2_LIB = "SDL2";
+        // Determine SDL2 library name based on platform
+        private static readonly string SDL2_LIB = GetSDL2LibraryName();
 
-        [DllImport(SDL2_LIB, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr SDL_CreateRGBSurfaceFrom(
+        private static string GetSDL2LibraryName()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return "libSDL2-2.0.so.0";
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return "libSDL2.dylib";
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return "SDL2.dll";
+            else
+                return "SDL2"; // Fallback
+        }
+
+        [DllImport("libSDL2-2.0.so.0", EntryPoint = "SDL_CreateRGBSurfaceFrom", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr SDL_CreateRGBSurfaceFrom_Linux(
             IntPtr pixels,
             int width,
             int height,
@@ -27,11 +40,86 @@ namespace Simitone.Client.Utils
             uint Bmask,
             uint Amask);
 
-        [DllImport(SDL2_LIB, CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SDL_FreeSurface(IntPtr surface);
+        [DllImport("libSDL2.dylib", EntryPoint = "SDL_CreateRGBSurfaceFrom", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr SDL_CreateRGBSurfaceFrom_macOS(
+            IntPtr pixels,
+            int width,
+            int height,
+            int depth,
+            int pitch,
+            uint Rmask,
+            uint Gmask,
+            uint Bmask,
+            uint Amask);
 
-        [DllImport(SDL2_LIB, CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SDL_SetWindowIcon(IntPtr window, IntPtr icon);
+        [DllImport("SDL2.dll", EntryPoint = "SDL_CreateRGBSurfaceFrom", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr SDL_CreateRGBSurfaceFrom_Windows(
+            IntPtr pixels,
+            int width,
+            int height,
+            int depth,
+            int pitch,
+            uint Rmask,
+            uint Gmask,
+            uint Bmask,
+            uint Amask);
+
+        private static IntPtr SDL_CreateRGBSurfaceFrom(
+            IntPtr pixels,
+            int width,
+            int height,
+            int depth,
+            int pitch,
+            uint Rmask,
+            uint Gmask,
+            uint Bmask,
+            uint Amask)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return SDL_CreateRGBSurfaceFrom_Linux(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return SDL_CreateRGBSurfaceFrom_macOS(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
+            else
+                return SDL_CreateRGBSurfaceFrom_Windows(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
+        }
+
+        [DllImport("libSDL2-2.0.so.0", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_FreeSurface_Linux(IntPtr surface);
+
+        [DllImport("libSDL2.dylib", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_FreeSurface_macOS(IntPtr surface);
+
+        [DllImport("SDL2.dll", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_FreeSurface_Windows(IntPtr surface);
+
+        private static void SDL_FreeSurface(IntPtr surface)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                SDL_FreeSurface_Linux(surface);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                SDL_FreeSurface_macOS(surface);
+            else
+                SDL_FreeSurface_Windows(surface);
+        }
+
+        [DllImport("libSDL2-2.0.so.0", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_SetWindowIcon_Linux(IntPtr window, IntPtr icon);
+
+        [DllImport("libSDL2.dylib", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_SetWindowIcon_macOS(IntPtr window, IntPtr icon);
+
+        [DllImport("SDL2.dll", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_SetWindowIcon_Windows(IntPtr window, IntPtr icon);
+
+        private static void SDL_SetWindowIcon(IntPtr window, IntPtr icon)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                SDL_SetWindowIcon_Linux(window, icon);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                SDL_SetWindowIcon_macOS(window, icon);
+            else
+                SDL_SetWindowIcon_Windows(window, icon);
+        }
 
         /// <summary>
         /// Sets the window icon for Linux/macOS using SDL2.
