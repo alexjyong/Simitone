@@ -49,12 +49,15 @@
     <ItemGroup>
       <!-- MonoGame DesktopGL ships a net8.0 build that works with net9.0 -->
       <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/net8.0/MonoGame.Framework.dll" />
+      
+      <ImageSharpDLL Include="$(NuGetGlobalPackages)/sixlabors.imagesharp/3.1.11/lib/net6.0/SixLabors.ImageSharp.dll" />
     </ItemGroup>
     
     <!-- Copy DesktopGL to subdirectories (for MonogameLinker assembly resolution) -->
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/Linux" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/MacOS" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/WindowsGL" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ImageSharpDLL)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
   <!-- Exclude server executables and duplicate content from publish to avoid NETSDK1152 errors -->

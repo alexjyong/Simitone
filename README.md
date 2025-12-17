@@ -45,10 +45,10 @@ If you rather build from source, keep reading.
 
 ### Quick Start (Linux)
 ```bash
-# Install dependencies (OpenAL for audio)
-sudo apt install libopenal1  # Ubuntu/Debian
-sudo dnf install openal-soft  # Fedora
-sudo pacman -S openal         # Arch
+# Install runtime dependencies
+sudo apt install libsdl2-2.0-0 libopenal1  # Ubuntu/Debian/WSL
+sudo dnf install SDL2 openal-soft          # Fedora
+sudo pacman -S sdl2 openal                 # Arch
 
 # Build
 ./build-mac-linux.sh
@@ -60,6 +60,9 @@ cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 
 ### Quick Start (macOS)
 ```bash
+# Install runtime dependencies
+brew install sdl2
+
 # Build
 ./build-mac-linux.sh
 

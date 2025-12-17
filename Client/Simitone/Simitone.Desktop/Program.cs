@@ -28,11 +28,21 @@ namespace Simitone.Windows
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             Directory.SetCurrentDirectory(baseDir);
-            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
-
+            
             OperatingSystem os = Environment.OSVersion;
             PlatformID pid = os.Platform;
             bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
+            
+            // Set MonoGame assembly directory BEFORE setting up AssemblyResolve
+            // This ensures non-self-contained builds can find MonoGame.Framework.dll
+            if (linux && Directory.Exists("/Users"))
+                MonogameLinker.AssemblyDir = "Monogame/MacOS/";
+            else if (linux)
+                MonogameLinker.AssemblyDir = "Monogame/Linux/";
+            else
+                MonogameLinker.AssemblyDir = "./"; // Windows will be set by MonogameLinker.Link()
+            
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
             string userDir;
             var myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
