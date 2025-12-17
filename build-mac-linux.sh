@@ -201,6 +201,13 @@ echo ""
 if [[ "$(uname)" == "Linux" ]]; then
     MISSING_DEPS=()
     
+    # Check for SDL2 (required for MonoGame)
+    if ! ldconfig -p | grep -q libSDL2-2.0.so.0; then
+        MISSING_DEPS+=("libsdl2")
+    else
+        echo "✓ SDL2 found"
+    fi
+    
     # Check for OpenAL (required for audio)
     if ! ldconfig -p | grep -q libopenal; then
         MISSING_DEPS+=("libopenal")
@@ -219,6 +226,9 @@ if [[ "$(uname)" == "Linux" ]]; then
             update_package_index
             for dep in "${MISSING_DEPS[@]}"; do
                 case "$dep" in
+                    libsdl2)
+                        install_package "libsdl2-2.0-0" "SDL2" "sdl2" "sdl2"
+                        ;;
                     libopenal)
                         install_package "libopenal1" "openal-soft" "openal" "openal-soft"
                         ;;
@@ -235,6 +245,19 @@ fi
 
 # Check dependencies on macOS
 if [[ "$(uname)" == "Darwin" ]]; then
+    # Check for SDL2 (required for MonoGame)
+    if ! brew list sdl2 &> /dev/null; then
+        echo ""
+        echo "SDL2 not found. SDL2 is required for MonoGame."
+        read -p "Would you like to install SDL2 now? (Y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            brew install sdl2
+        fi
+    else
+        echo "✓ SDL2 found"
+    fi
+    
     # OpenAL is included with macOS
     echo "✓ OpenAL (built-in on macOS)"
 fi

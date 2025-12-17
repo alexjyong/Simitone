@@ -10,7 +10,6 @@
     <FileAlignment>512</FileAlignment>
     <!-- Suppress NU1605 (package downgrade) errors from FreeSO submodule dependencies -->
     <NoWarn>$(NoWarn);NU1605</NoWarn>
-    <!-- Don't publish satellite assemblies/frameworks that we don't need -->
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
@@ -21,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\FreeSO\Other\libs\MSDFData\MSDFData.csproj" />
-    <!-- FSO.IDE is Windows-only (Windows Forms), not included in cross-platform build -->
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.SimAntics.JIT\FSO.SimAntics.JIT.csproj" />
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.UI\FSO.UI.csproj" />
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.client\FSO.Client.csproj" />
@@ -49,12 +47,15 @@
     <ItemGroup>
       <!-- MonoGame DesktopGL ships a net8.0 build that works with net9.0 -->
       <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/net8.0/MonoGame.Framework.dll" />
+      
+      <ImageSharpDLL Include="$(NuGetGlobalPackages)/sixlabors.imagesharp/3.1.11/lib/net6.0/SixLabors.ImageSharp.dll" />
     </ItemGroup>
     
     <!-- Copy DesktopGL to subdirectories (for MonogameLinker assembly resolution) -->
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/Linux" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/MacOS" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/WindowsGL" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ImageSharpDLL)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
   <!-- Exclude server executables and duplicate content from publish to avoid NETSDK1152 errors -->

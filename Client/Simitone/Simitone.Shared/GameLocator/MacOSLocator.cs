@@ -19,7 +19,9 @@ namespace Simitone.Windows.GameLocator
             string localDir = @"../The Sims/";
             if (File.Exists(Path.Combine(localDir, "GameData", "Behavior.iff"))) return localDir;
 
-            return "game1/";
+            if (File.Exists(Path.Combine("game1/", "GameData", "Behavior.iff"))) return "game1/";
+            
+            return null;
         }
     }
 }

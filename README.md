@@ -35,20 +35,22 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 Download from [releases](https://github.com/riperiperi/Simitone/releases/latest/)
 **User data location:** `Documents\Simitone\`
 
-## Linux / macOS (note at time of writing, macOS is currently untested)
+## Linux / macOS (note at time of writing, macOS is currently untested. HELP WANTED!)
 
 Download self-contained release from [releases](https://github.com/riperiperi/Simitone/releases/latest/) for your operating system
 
-Extract it, and from within in the extracted directory in your terminal, run `./Simitone -path"/fully/qualified/path/to/The Sims/"
+Extract it, and from within in the extracted directory in your terminal, run `./Simitone -path"/fully/qualified/path/to/The Sims/" (note that there is no space between -path and the" and THIS IS INTENTIONAL)
+
+(After doing this once, this will update your config.ini file (See below for more information and location) with the path, and you won't need to run using the -path argument.
 
 If you rather build from source, keep reading.
 
 ### Quick Start (Linux)
 ```bash
-# Install dependencies (OpenAL for audio)
-sudo apt install libopenal1  # Ubuntu/Debian
-sudo dnf install openal-soft  # Fedora
-sudo pacman -S openal         # Arch
+# Install runtime dependencies
+sudo apt install libsdl2-2.0-0 libopenal1  # Ubuntu/Debian/WSL
+sudo dnf install SDL2 openal-soft          # Fedora
+sudo pacman -S sdl2 openal                 # Arch
 
 # Build
 ./build-mac-linux.sh
@@ -58,8 +60,12 @@ cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 ./Simitone -path"/fully/qualified/path/to/The Sims/"
 ```
 
-### Quick Start (macOS)
+### Quick Start (macOS) 
+(Currently at the time of writing, this is completely untested. Help wanted!)
 ```bash
+# Install runtime dependencies
+brew install sdl2
+
 # Build
 ./build-mac-linux.sh
 
@@ -78,3 +84,46 @@ Simitone reads The Sims 1 game files directly - they're platform-agnostic (IFF, 
 - Steam Play/Proton: `~/.steam/steam/steamapps/common/The Sims/`
 - Wine prefix: `~/.wine/drive_c/Program Files/Maxis/The Sims/`
 - WSL (accessing Windows): `/mnt/c/Program Files (x86)/Maxis/The Sims/`
+
+### Specifying The Sims 1 Path
+
+Simitone checks for The Sims 1 installation in this priority order:
+
+1. **Command line argument** (highest priority):
+   ```bash
+   ./Simitone -path"/path/to/The Sims/"
+   ```
+
+2. **config.ini setting** (persistent preference):
+   Edit `config.ini` in your user data directory (see locations above) and set:
+   ```ini
+   TS1HybridPath=/fully/qualified/path/to/Sims1/installation
+   ```
+   After setting this once, you can run Simitone without the `-path` argument.
+
+3. **Auto-detection** (fallback):
+   - Linux: Checks `~/.steam/steam/steamapps/common/The Sims/` and Wine paths
+   - Windows: Checks registry and Steam install locations
+   - macOS: Checks relative paths
+
+**Note:** On first run, you'll need to use `-path` or let auto-detection find it. Once found, the path is saved to config.ini automatically.
+
+### Troubleshooting (Linux/macOS)
+
+**"Could not load file or assembly 'MonoGame.Framework'"**
+- This usually means you're missing SDL2. Either use the self-contained build, or install it:
+  ```bash
+  sudo apt install libsdl2-2.0-0  # Ubuntu/Debian/WSL
+  sudo dnf install SDL2           # Fedora
+  sudo pacman -S sdl2             # Arch
+  brew install sdl2               # macOS
+  ```
+
+**"Could not find The Sims 1 installation"**
+- Use `-path` argument to specify location
+- Or add `TS1HybridPath=/path/to/sims/` to `config.ini`
+- Check that `GameData/Behavior.iff` exists in your Sims directory
+
+**Non-self-contained build missing DLLs**
+- Non-self-contained builds require SDL2 and OpenAL installed system-wide
+- Self-contained builds (from releases) include everything and don't need system dependencies
