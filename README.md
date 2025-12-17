@@ -5,7 +5,7 @@
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
 
-**Supported Platforms:** Windows, Linux, macOS
+**Supported Platforms:** Windows, Linux. MacOS needs testing!
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
