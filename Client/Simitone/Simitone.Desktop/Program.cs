@@ -32,9 +32,33 @@ namespace Simitone.Windows
 
             OperatingSystem os = Environment.OSVersion;
             PlatformID pid = os.Platform;
+            bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
+
+            string userDir;
+            var myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (!string.IsNullOrEmpty(myDocs))
+            {
+                userDir = Path.Combine(myDocs, "Simitone/");
+            }
+            else
+            {
+                // fallback for Linux: use ~/.local/share/Simitone or ~/Simitone
+                var localShare = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                if (!string.IsNullOrEmpty(localShare))
+                {
+                    userDir = Path.Combine(localShare, "Simitone/");
+                }
+                else
+                {
+                    // fallback to home if nothing else ~/Simitone
+                    userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Simitone/");
+                }
+            }
+            userDir = userDir.Replace('\\', '/');
+            FSOEnvironment.UserDir = userDir;
+            Directory.CreateDirectory(FSOEnvironment.UserDir);
 
             ILocator gameLocator;
-            bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
             if (linux && Directory.Exists("/Users"))
                 gameLocator = new MacOSLocator();
             else if (linux)
@@ -42,9 +66,21 @@ namespace Simitone.Windows
             else
                 gameLocator = new WindowsLocator();
 
-            // Default to OpenGL on all platforms for the Desktop build
+            // default to OpenGL on all platforms for the Desktop build
             var useDX = false;
-            var path = gameLocator.FindTheSims1();
+            
+            // path priority: 1. Command line (set later), 2. config.ini, 3. Auto-detect
+            string path = null;
+            var configPath = GlobalSettings.Default.TS1HybridPath;
+            if (!string.IsNullOrEmpty(configPath) && configPath != "D:/Games/The Sims/" && 
+                File.Exists(Path.Combine(configPath, "GameData", "Behavior.iff")))
+            {
+                path = configPath;
+            }
+            if (path == null)
+            {
+                path = gameLocator.FindTheSims1();
+            }
 
             FSOEnvironment.Enable3D = false;
             bool ide = false;
@@ -100,8 +136,12 @@ namespace Simitone.Windows
                             case "nosound":
                                 FSOEnvironment.NoSound = true;
                                 break;
-                            case string s when s.StartsWith("path"): //The Sims path
-                                path = s.Length > 4 ? s.Substring(4).Trim('"').Replace('\\', '/') + "/" : path;
+                            case string s when s.StartsWith("path"): //The Sims path (highest priority)
+                                if (s.Length > 4)
+                                {
+                                    path = s.Substring(4).Trim('"').Replace('\\', '/');
+                                    if (!path.EndsWith("/")) path += "/";
+                                }
                                 break;
                         }
                     }
@@ -111,8 +151,8 @@ namespace Simitone.Windows
             
             useDX = MonogameLinker.Link(useDX);
 
-            // Load DPI scale factor from config.ini (follows FreeSO TSOGame pattern)
-            // Users can customize via config.ini: DPIScaleFactor=1.25 for 125% scaling
+            // load DPI scale factor from config.ini 
+            // users can customize via config.ini: (e.g. DPIScaleFactor=1.25 for 125% scaling)
             FSOEnvironment.DPIScaleFactor = GlobalSettings.Default.DPIScaleFactor;
 
             FSO.Files.ImageLoaderHelpers.BitmapFunction = BitmapReader;
@@ -125,32 +165,6 @@ namespace Simitone.Windows
             {
                 FSOEnvironment.ContentDir = "Content/";
                 FSOEnvironment.GFXContentDir = "Content/" + (useDX ? "DX/" : "OGL/");
-                
-                // Get user directory - handle Linux where MyDocuments may be empty
-                string userDir;
-                var myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                if (!string.IsNullOrEmpty(myDocs))
-                {
-                    userDir = Path.Combine(myDocs, "Simitone/");
-                }
-                else
-                {
-                    // Fallback for Linux: use ~/.local/share/Simitone or ~/Simitone
-                    var localShare = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                    if (!string.IsNullOrEmpty(localShare))
-                    {
-                        userDir = Path.Combine(localShare, "Simitone/");
-                    }
-                    else
-                    {
-                        // Ultimate fallback: ~/Simitone
-                        userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Simitone/");
-                    }
-                }
-                userDir = userDir.Replace('\\', '/');
-                
-                FSOEnvironment.UserDir = userDir;
-                Directory.CreateDirectory(FSOEnvironment.UserDir);
                 FSOEnvironment.Linux = linux;
                 FSOEnvironment.DirectX = useDX;
                 FSOEnvironment.GameThread = Thread.CurrentThread;
