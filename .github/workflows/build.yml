@@ -91,7 +91,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libopenal1
+        sudo apt-get install -y libsdl2-2.0-0 libopenal1
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
@@ -140,6 +140,9 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    - name: Install dependencies
+      run: |
+        brew install sdl2
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
