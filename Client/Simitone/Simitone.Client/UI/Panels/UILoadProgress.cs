@@ -68,7 +68,6 @@ namespace Simitone.Client.UI.Panels
         public override void Update(UpdateState state)
         {
             var targElem = (int)Math.Ceiling(OverallPercent * Divisors.Length);
-            Console.WriteLine(targElem);
             if (targElem > ActiveElem && CanFireNext)
             {
                 //fire the next

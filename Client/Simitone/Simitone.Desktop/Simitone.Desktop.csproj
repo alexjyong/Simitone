@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Simitone.Windows</RootNamespace>
+    <AssemblyName>Simitone</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <!-- Suppress NU1605 (package downgrade) errors from FreeSO submodule dependencies -->
+    <NoWarn>$(NoWarn);NU1605</NoWarn>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\FreeSO\Other\libs\MSDFData\MSDFData.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.SimAntics.JIT\FSO.SimAntics.JIT.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.UI\FSO.UI.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.client\FSO.Client.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.common\FSO.Common.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.files\FSO.Files.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.simantics\FSO.SimAntics.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.world\FSO.LotView.csproj" />
+    <ProjectReference Include="..\Simitone.Client\Simitone.Client.csproj" />
+    <ProjectReference Include="..\Simitone.Shared\Simitone.Shared.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NuGetGlobalPackages Condition=" '$(OS)' == 'Windows_NT' ">$(USERPROFILE)\.nuget\packages</NuGetGlobalPackages>
+    <NuGetGlobalPackages Condition=" '$(OS)' != 'Windows_NT' ">$(HOME)/.nuget/packages</NuGetGlobalPackages>
+  </PropertyGroup>
+
+  <Target Name="CopyMonoGameDLLs" AfterTargets="Build">
+    <!-- For Desktop (cross-platform), we use DesktopGL (OpenGL) -->
+    <!-- Keep MonoGame.Framework.dll in root for direct loading -->
+    <!-- Also copy to subdirectories for MonogameLinker compatibility -->
+    <MakeDir Directories="$(OutputPath)Monogame/Linux" />
+    <MakeDir Directories="$(OutputPath)Monogame/MacOS" />
+    <MakeDir Directories="$(OutputPath)Monogame/WindowsGL" />
+    
+    <ItemGroup>
+      <!-- MonoGame DesktopGL ships a net8.0 build that works with net9.0 -->
+      <MGDesktopGL Include="$(NuGetGlobalPackages)/monogame.framework.desktopgl/3.8.4/lib/net8.0/MonoGame.Framework.dll" />
+      
+      <ImageSharpDLL Include="$(NuGetGlobalPackages)/sixlabors.imagesharp/3.1.11/lib/net6.0/SixLabors.ImageSharp.dll" />
+    </ItemGroup>
+    
+    <!-- Copy DesktopGL to subdirectories (for MonogameLinker assembly resolution) -->
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/Linux" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/MacOS" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame/WindowsGL" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ImageSharpDLL)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Exclude server executables and duplicate content from publish to avoid NETSDK1152 errors -->
+  <Target Name="RemoveConflictingPublishFiles" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <!-- Remove server executable outputs (watchdog, api.core) -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" 
+                             Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('FSO.Server.Updater')) or 
+                                        $([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('FSO.Server.Api.Core'))" />
+      <!-- Remove duplicate TEX_1.png from tso.content (keep the one from Simitone.Client) -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" 
+                             Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('tso.content')) and 
+                                        $([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('TEX_1.png'))" />
+    </ItemGroup>
+  </Target>
+
+</Project>

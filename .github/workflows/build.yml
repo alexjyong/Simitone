@@ -11,10 +11,24 @@ on:
         options:
           - Release
           - Debug
+      build_windows:
+        description: 'Build Windows'
+        type: boolean
+        default: true
+      build_linux:
+        description: 'Build Linux'
+        type: boolean
+        default: true
+      build_macos:
+        description: 'Build macOS'
+        type: boolean
+        default: true
 
 jobs:
-  build:
+  build-windows:
+    if: ${{ inputs.build_windows }}
     runs-on: windows-latest
+    name: Build Windows
 
     steps:
     - name: Checkout code
@@ -48,12 +62,132 @@ jobs:
         dotnet restore
       continue-on-error: true
 
-    - name: Build
-      run: dotnet build Client/Simitone/Simitone.sln -c ${{ inputs.configuration || 'Release' }} --no-restore
+    - name: Build Windows
+      run: dotnet build Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
 
-    - name: Upload build artifacts
+    - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: SimitoneWindows-${{ inputs.configuration || 'Release' }}
+        name: Simitone-Windows-${{ inputs.configuration || 'Release' }}
         path: Client/Simitone/Simitone.Windows/bin/${{ inputs.configuration || 'Release' }}/net9.0-windows/
         if-no-files-found: error
+
+  build-linux:
+    if: ${{ inputs.build_linux }}
+    runs-on: ubuntu-latest
+    name: Build Linux
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsdl2-2.0-0 libopenal1
+
+    - name: Restore dependencies
+      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
+
+    - name: Build Linux
+      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-Linux-x64-${{ inputs.configuration || 'Release' }}
+        path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
+        if-no-files-found: error
+
+    - name: Publish Linux (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r linux-x64 \
+          --self-contained true \
+          -o publish/linux-x64 \
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors=""
+
+
+    - name: Upload Self-Contained Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-Linux-x64-${{ inputs.configuration || 'Release' }}
+        path: publish/linux-x64/
+        if-no-files-found: error
+
+  build-macos:
+    if: ${{ inputs.build_macos }}
+    runs-on: macos-latest
+    name: Build macOS
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install dependencies
+      run: |
+        brew install sdl2
+
+    - name: Restore dependencies
+      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
+
+    - name: Build macOS
+      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-macOS-x64-${{ inputs.configuration || 'Release' }}
+        path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
+        if-no-files-found: error
+
+    - name: Publish macOS Intel (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r osx-x64 \
+          --self-contained true \
+          -o publish/osx-x64 \
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors=""
+
+    - name: Publish macOS ARM (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
+          -c ${{ inputs.configuration || 'Release' }} \
+          -r osx-arm64 \
+          --self-contained true \
+          -o publish/osx-arm64 \
+          /p:TreatWarningsAsErrors=false \
+          /p:WarningsAsErrors=""
+
+    - name: Upload Self-Contained macOS Intel artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-macOS-x64-${{ inputs.configuration || 'Release' }}
+        path: publish/osx-x64/
+        if-no-files-found: error
+
+    - name: Upload Self-Contained macOS ARM artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simitone-SelfContained-macOS-arm64-${{ inputs.configuration || 'Release' }}
+        path: publish/osx-arm64/
+        if-no-files-found: error
+

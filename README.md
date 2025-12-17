@@ -5,16 +5,14 @@
 
 [Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download](https://github.com/alexjyong/Simitone/releases/download/v0.8.12-forked/SimitoneWindows-Release.zip)
 
-Alternative C# Windows Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
+Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
+
+**Supported Platforms:** Windows, Linux. MacOS needs testing!
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
 NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. While all objects run, many of them have bugs that can make certain lot types unplayable. For current development progress, see [this issue.](https://github.com/riperiperi/Simitone/issues/8)
-
-*Only for Desktop Windows.* Other platforms cannot be officially supported.
-
-(For Mac, and Linux, [you might be able to get this to work with Wine](https://appdb.winehq.org/objectManager.php?sClass=version&iId=8696), but you're on your own for support. (although if someone has a good guide, feel free to share)
 
 # Purpose
 
@@ -25,17 +23,17 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO)
+- *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 
 # How to Install
 
 ## Prerequisites
 - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
   - You will also have to play through the lots first on vanilla TS1 in order for certain things like taxi menu to load properly on the phones. Not too sure why this is happening.
-- Windows (I've only tested this with 10/11)
-- [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
+- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS _might_ work but is currently untested!)
+- For Windows [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
-## Quick Install
+## Quick Install Windows
 
 1. **Download** the [latest release](https://github.com/alexjyong/Simitone/releases/latest/)
 2. **Extract** the ZIP to your preferred location
@@ -65,7 +63,52 @@ User data location:
 Configuration and save files are stored in:
 %USERPROFILE%\Documents\Simitone\
 
-Optional Command-Line Arguments
+
+## Quick Install Linux / macOS (Note at time of writing, macOS is currently untested. HELP WANTED!)
+
+Download **self-contained release** from [releases](https://github.com/alexjyong/Simitone/releases/latest/) for your operating system
+
+Extract it, and from within in the extracted directory in your terminal, run
+
+```bash
+./Simitone -path"/fully/qualified/path/to/The Sims/" #(note that there is no space between -path and the" and THIS IS INTENTIONAL)
+```
+
+(After doing this once, this will update your config.ini file (See below for more information and location) with the path, and you won't need to run using the -path argument.
+
+
+### The Sims 1 Installation
+Simitone reads The Sims 1 game files directly - However, the code has been tested with the Windows installaion. You can use:
+- A Windows installation via Wine/Proton
+- Steam Play/Proton: `~/.steam/steam/steamapps/common/The Sims/`
+- Wine prefix: `~/.wine/drive_c/Program Files/Maxis/The Sims/`
+- WSL (accessing Windows): `/mnt/c/Program Files (x86)/Maxis/The Sims/`
+
+### Specifying The Sims 1 Path
+
+Simitone checks for The Sims 1 installation in this priority order:
+
+1. **Command line argument** (highest priority):
+   ```bash
+   ./Simitone -path"/path/to/The Sims/"
+   ```
+
+2. **config.ini setting** (persistent preference):
+   Edit `config.ini` in your user data directory (see locations above) and set:
+   ```ini
+   TS1HybridPath=/fully/qualified/path/to/Sims1/installation
+   ```
+   After setting this once, you can run Simitone without the `-path` argument.
+
+3. **Auto-detection** (fallback):
+   - Linux: Checks `~/.steam/steam/steamapps/common/The Sims/` and Wine paths
+   - Windows: Checks registry and Steam install locations
+   - macOS: Checks relative paths
+
+**Note:** On first run, you'll need to use `-path` or let auto-detection find it. Once found, the path is saved to config.ini automatically.
+
+
+### Optional Command-Line Arguments (for all platforms)
 
 ```pwsh
 -dx / -gl # Force DirectX or OpenGL rendering
@@ -88,13 +131,15 @@ Don't want to mess with command prompt and stuff? Just fork this repo and run th
 1. Fork this repository on GitHub
 2. Go to the **Actions** tab in your fork (you may be prompted to activate actions)
 3. Click **"Build Simitone"** in the left sidebar
-4. Click **"Run workflow"** -> Choose **Release** -> Click **"Run workflow"**
+4. Click **"Run workflow"** -> Choose **Release** -> Pick which platforms you want to build with -> Click **"Run workflow"**
 5. Wait ~4-5 minutes or so, refresh the job page, and you should see the release artifact.
 
 
-## Local Build (Windows Only)
+## Local Build
 
-### Quick Build (Automated Script)
+### Windows 
+
+#### Quick Build (Automated Script)
 
 For a streamlined build experience, use the included PowerShell script:
 
@@ -134,11 +179,11 @@ The script will:
 4. Build the project
 5. Show you where the executable is located
 
-### Manual Build (Step-by-Step)
+#### Manual Build (Step-by-Step)
 
 If you'd rather do it by hand to understand each step, or for whatever reason, read the instructions below:
 
-#### Prerequisites
+##### Prerequisites
 
 1. **Git** (version 2.13 or later)
    - Download: https://git-scm.com/downloads
@@ -153,7 +198,7 @@ If you'd rather do it by hand to understand each step, or for whatever reason, r
 
 4. **The Sims: Complete Collection** or **The Sims: Legacy Collection** (to run the compiled game)
 
-### Build Steps
+#### Build Steps
 
 ##### 1. Clone and Initialize Submodules
 
@@ -235,6 +280,35 @@ This is useful when:
 - Troubleshooting build issues
 - Build artifacts are corrupted
 - You want to verify a clean build works
+
+
+### Building from Source (Linux/MacOS) (Note that running the game on MacOS is untested!)
+```bash
+# Install runtime dependencies
+sudo apt install libsdl2-2.0-0 libopenal1  # Ubuntu/Debian/WSL
+sudo dnf install SDL2 openal-soft          # Fedora
+sudo pacman -S sdl2 openal                 # Arch
+brew install sdl2                          # macOS
+
+# Build
+./build-mac-linux.sh
+
+# Optional (build a self-contained release, which doesn't rely on the machine having dependencies installed)
+./build-mac-linux.sh --publish
+
+# Run (point to your The Sims installation)
+cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
+./Simitone -path"/fully/qualified/path/to/The Sims/"
+
+#if you made a self-contained release, you can run it like so
+
+publish/$os_platform/Simitone -path"/fully/qualified/path/to/The Sims/"
+```
+
+
+**User data location:**
+- Linux: `~/.local/share/Simitone/` (or `~/Documents/Simitone/`)
+- macOS: `~/Documents/Simitone/`
 
 ## Troubleshooting
 
