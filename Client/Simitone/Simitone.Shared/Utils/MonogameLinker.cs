@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Simitone.Windows.Utils
 {
-    class MonogameLinker
+    public class MonogameLinker
     {
         //detects OS and copies the correct version of monogame into the parent directory.
         //there is probably a better way to do this that doesn't mess with multiple clients
