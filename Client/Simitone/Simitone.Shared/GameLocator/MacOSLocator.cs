@@ -8,18 +8,20 @@ namespace Simitone.Windows.GameLocator
         public string FindTheSimsOnline()
         {
             return "";
+            //string localDir = @"../The Sims Online/TSOClient/";
+            //if (File.Exists(Path.Combine(localDir, "tuning.dat"))) return localDir;
+
+            //return string.Format("{0}/Documents/The Sims Online/TSOClient/", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         }
 
         public string FindTheSims1()
         {
-            // check relative directory first (portable install)
             string localDir = @"../The Sims/";
             if (File.Exists(Path.Combine(localDir, "GameData", "Behavior.iff"))) return localDir;
 
-            // check fallback directory
             if (File.Exists(Path.Combine("game1/", "GameData", "Behavior.iff"))) return "game1/";
             
-            return null; // Not found
+            return null;
         }
     }
 }

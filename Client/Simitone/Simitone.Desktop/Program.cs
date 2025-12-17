@@ -33,14 +33,12 @@ namespace Simitone.Windows
             PlatformID pid = os.Platform;
             bool linux = pid == PlatformID.MacOSX || pid == PlatformID.Unix;
             
-            // Set MonoGame assembly directory BEFORE setting up AssemblyResolve
-            // This ensures non-self-contained builds can find MonoGame.Framework.dll
             if (linux && Directory.Exists("/Users"))
                 MonogameLinker.AssemblyDir = "Monogame/MacOS/";
             else if (linux)
                 MonogameLinker.AssemblyDir = "Monogame/Linux/";
             else
-                MonogameLinker.AssemblyDir = "./"; // Windows will be set by MonogameLinker.Link()
+                MonogameLinker.AssemblyDir = "./";
             
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
@@ -190,7 +188,6 @@ namespace Simitone.Windows
                 GlobalSettings.Default.ComplexShaders = true;
                 GlobalSettings.Default.EnableTransitions = true;
 
-                // FSO.IDE (Volcanic) is not available on Linux/macOS - it requires Windows Forms
                 if (ide)
                 {
                     Console.WriteLine("Warning: Volcanic IDE is not available on this platform.");
