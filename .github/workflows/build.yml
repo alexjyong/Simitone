@@ -171,6 +171,8 @@ jobs:
       run: |
         cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/SDL/MacOS/Universal/libSDL2-2.0.0.dylib publish/osx-x64/
         cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/openal-soft/MacOS/Universal/libopenal.1.dylib publish/osx-x64/
+        # Copy SDL2 with both names (IconLoader.cs looks for libSDL2.dylib, MonoGame looks for libSDL2-2.0.0.dylib)
+        cp publish/osx-x64/libSDL2-2.0.0.dylib publish/osx-x64/libSDL2.dylib
         chmod +w publish/osx-x64/*.dylib
         xattr -cr publish/osx-x64/*.dylib || true
 
@@ -195,6 +197,8 @@ jobs:
         fi
         cp $BREW_PREFIX/opt/sdl2/lib/libSDL2-2.0.0.dylib publish/osx-arm64/
         cp $BREW_PREFIX/opt/openal-soft/lib/libopenal.1.dylib publish/osx-arm64/
+        # Copy SDL2 with both names (IconLoader.cs looks for libSDL2.dylib, MonoGame looks for libSDL2-2.0.0.dylib)
+        cp publish/osx-arm64/libSDL2-2.0.0.dylib publish/osx-arm64/libSDL2.dylib
         chmod +w publish/osx-arm64/*.dylib
         xattr -cr publish/osx-arm64/*.dylib || true
 
