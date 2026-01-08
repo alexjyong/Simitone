@@ -167,6 +167,11 @@ jobs:
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
 
+    - name: Bundle native libraries for Intel
+      run: |
+        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/SDL/MacOS/Universal/libSDL2-2.0.0.dylib publish/osx-x64/
+        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/openal-soft/MacOS/Universal/libopenal.1.dylib publish/osx-x64/
+
     - name: Publish macOS ARM (self-contained)
       run: |
         dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
@@ -176,6 +181,11 @@ jobs:
           -o publish/osx-arm64 \
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
+
+    - name: Bundle native libraries for ARM
+      run: |
+        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/SDL/MacOS/Universal/libSDL2-2.0.0.dylib publish/osx-arm64/
+        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/openal-soft/MacOS/Universal/libopenal.1.dylib publish/osx-arm64/
 
     - name: Upload Self-Contained macOS Intel artifacts
       uses: actions/upload-artifact@v4
