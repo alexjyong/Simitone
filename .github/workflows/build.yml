@@ -142,7 +142,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew install sdl2
+        brew install sdl2 openal-soft
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
@@ -171,6 +171,8 @@ jobs:
       run: |
         cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/SDL/MacOS/Universal/libSDL2-2.0.0.dylib publish/osx-x64/
         cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/openal-soft/MacOS/Universal/libopenal.1.dylib publish/osx-x64/
+        chmod +w publish/osx-x64/*.dylib
+        xattr -cr publish/osx-x64/*.dylib || true
 
     - name: Publish macOS ARM (self-contained)
       run: |
@@ -184,8 +186,17 @@ jobs:
 
     - name: Bundle native libraries for ARM
       run: |
-        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/SDL/MacOS/Universal/libSDL2-2.0.0.dylib publish/osx-arm64/
-        cp FreeSO/Other/libs/FSOMonoGame/ThirdParty/Dependencies/openal-soft/MacOS/Universal/libopenal.1.dylib publish/osx-arm64/
+        # Use Homebrew libraries for ARM (submodule dylibs don't have ARM64 support)
+        # GitHub ARM runners use /opt/homebrew, Intel runners use /usr/local
+        if [ -f /opt/homebrew/opt/sdl2/lib/libSDL2-2.0.0.dylib ]; then
+          BREW_PREFIX="/opt/homebrew"
+        else
+          BREW_PREFIX="/usr/local"
+        fi
+        cp $BREW_PREFIX/opt/sdl2/lib/libSDL2-2.0.0.dylib publish/osx-arm64/
+        cp $BREW_PREFIX/opt/openal-soft/lib/libopenal.1.dylib publish/osx-arm64/
+        chmod +w publish/osx-arm64/*.dylib
+        xattr -cr publish/osx-arm64/*.dylib || true
 
     - name: Upload Self-Contained macOS Intel artifacts
       uses: actions/upload-artifact@v4
