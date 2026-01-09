@@ -15,7 +15,7 @@ namespace Simitone.Windows.GameLocator
         {
             // Form settings
             this.Text = "The Sims Installation Configured";
-            this.Size = new Size(600, 500);
+            this.Size = new Size(600, 550);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
