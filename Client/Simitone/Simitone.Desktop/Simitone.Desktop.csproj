@@ -11,11 +11,33 @@
     <!-- Suppress NU1605 (package downgrade) errors from FreeSO submodule dependencies -->
     <NoWarn>$(NoWarn);NU1605</NoWarn>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    
+    <!-- Runtime identifiers for self-contained publishing -->
+    <RuntimeIdentifiers>linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    
+    <!-- Enable native dependency copying for self-contained builds -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+  </ItemGroup>
+  
+  <!-- Platform-specific Eto.Forms backends -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.4" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.4" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <PackageReference Include="Eto.Platform.Mac64" Version="2.8.4" />
   </ItemGroup>
 
   <ItemGroup>

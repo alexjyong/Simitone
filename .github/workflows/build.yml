@@ -91,7 +91,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-2.0-0 libopenal1
+        sudo apt-get install -y libsdl2-2.0-0 libopenal1 libgtk-3-0 libgtk-3-dev libglib2.0-0 libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libatk1.0-0
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
@@ -113,8 +113,25 @@ jobs:
           -r linux-x64 \
           --self-contained true \
           -o publish/linux-x64 \
+          -p:PublishSingleFile=false \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
+    
+    - name: Create Linux launcher script
+      run: |
+        cat > publish/linux-x64/Simitone.sh << 'EOF'
+        #!/bin/bash
+        # Get the directory where the script is located
+        DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        
+        # Set library path to include GTK dependencies
+        export LD_LIBRARY_PATH="$DIR:$LD_LIBRARY_PATH"
+        
+        # Run Simitone
+        exec "$DIR/Simitone" "$@"
+        EOF
+        chmod +x publish/linux-x64/Simitone.sh
 
 
     - name: Upload Self-Contained Linux artifacts
@@ -164,8 +181,25 @@ jobs:
           -r osx-x64 \
           --self-contained true \
           -o publish/osx-x64 \
+          -p:PublishSingleFile=false \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
+    
+    - name: Create macOS Intel launcher script
+      run: |
+        cat > publish/osx-x64/Simitone.command << 'EOF'
+        #!/bin/bash
+        # Get the directory where the script is located
+        DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        
+        # Set library path to include native dependencies
+        export DYLD_LIBRARY_PATH="$DIR:$DYLD_LIBRARY_PATH"
+        
+        # Run Simitone
+        exec "$DIR/Simitone" "$@"
+        EOF
+        chmod +x publish/osx-x64/Simitone.command
 
     - name: Publish macOS ARM (self-contained)
       run: |
@@ -174,8 +208,25 @@ jobs:
           -r osx-arm64 \
           --self-contained true \
           -o publish/osx-arm64 \
+          -p:PublishSingleFile=false \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
+    
+    - name: Create macOS ARM launcher script
+      run: |
+        cat > publish/osx-arm64/Simitone.command << 'EOF'
+        #!/bin/bash
+        # Get the directory where the script is located
+        DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+        
+        # Set library path to include native dependencies
+        export DYLD_LIBRARY_PATH="$DIR:$DYLD_LIBRARY_PATH"
+        
+        # Run Simitone
+        exec "$DIR/Simitone" "$@"
+        EOF
+        chmod +x publish/osx-arm64/Simitone.command
 
     - name: Upload Self-Contained macOS Intel artifacts
       uses: actions/upload-artifact@v4

@@ -9,5 +9,10 @@ namespace Simitone.Windows.GameLocator
     {
         string FindTheSimsOnline();
         string FindTheSims1();
+        
+        /// <summary>
+        /// Gets all detected The Sims 1 installations
+        /// </summary>
+        List<(string description, string path, TS1InstallationType type)> GetAllTheSims1Installations();
     }
 }

@@ -14,6 +14,7 @@ namespace Simitone.Windows.GameLocator
         Portable,
         Steam,
         Registry,
+        Wine,
         Unknown
     }
 

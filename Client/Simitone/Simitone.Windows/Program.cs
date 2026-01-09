@@ -3,6 +3,7 @@ using FSO.Common;
 using FSO.LotView;
 using Simitone.Client;
 using Simitone.Windows.GameLocator;
+using Simitone.Windows.UI;
 using Simitone.Windows.Utils;
 using System;
 using System.Drawing;
@@ -12,7 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
+using Eto.Forms;
 
 namespace Simitone.Windows
 {
@@ -129,13 +130,13 @@ namespace Simitone.Windows
                         
                         if (installations.Count == 0)
                         {
+                            var app = new Application(Eto.Platform.Detect);
                             MessageBox.Show(
                                 "No installation of The Sims was detected.\n\n" +
                                 "Please install The Sims or use the -path command line argument to specify the installation directory.\n\n" +
                                 "Example: Simitone.exe -path\"C:\\Program Files\\Maxis\\The Sims\"",
                                 "The Sims Not Found",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error
+                                MessageBoxType.Error
                             );
                             return;
                         }
@@ -144,13 +145,14 @@ namespace Simitone.Windows
                         bool hasExistingSaves = Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "UserData/"));
                         if (hasExistingSaves)
                         {
+                            var app = new Application(Eto.Platform.Detect);
                             var result = MessageBox.Show(
                                 "Existing Simitone save data was detected.\n\n" +
                                 "If you select a different installation type than before, your saves may not be compatible.\n\n" +
                                 "Do you want to continue with installation selection?",
                                 "Existing Saves Detected",
                                 MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning
+                                MessageBoxType.Warning
                             );
                             
                             if (result == DialogResult.No)
@@ -158,56 +160,56 @@ namespace Simitone.Windows
                                 return;
                             }
                         }
-
-                        string selectedInstallType = "";
                         
                         if (installations.Count == 1)
                         {
                             // Only one installation found, use it automatically
                             path = installations[0].path;
-                            selectedInstallType = installations[0].description;
-                            GlobalSettings.Default.TS1IsSteamInstall = (installations[0].type == Simitone.Windows.GameLocator.TS1InstallationType.Steam);
+                            bool isSteam = installations[0].type == TS1InstallationType.Steam;
+                            SaveInstallationConfig(path, isSteam);
+                            
+                            // Show info dialog
+                            string savesPath = isSteam
+                                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                             "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
+                                : Path.Combine(path, "UserData");
+                            string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
+                            
+                            var app = new Application(Eto.Platform.Detect);
+                            var infoDialog = new InstallationInfoDialog(path, savesPath, simitoneSavesPath, isSteam);
+                            infoDialog.ShowModal();
                         }
                         else
                         {
                             // Multiple installations, show selector
-                            using (var selector = new Simitone.Windows.GameLocator.InstallationSelector(installations))
+                            var installInfos = installations
+                                .Select(i => new InstallationInfo(i.description, i.path, i.type))
+                                .ToList();
+
+                            var app = new Application(Eto.Platform.Detect);
+                            var dialog = new InstallationSelectorDialog(installInfos);
+                            var result = dialog.ShowModal();
+
+                            if (result != null)
                             {
-                                if (selector.ShowDialog() == DialogResult.OK)
-                                {
-                                    path = selector.SelectedPath;
-                                    selectedInstallType = installations.Find(i => i.path == path).description;
-                                    GlobalSettings.Default.TS1IsSteamInstall = (selector.SelectedType == Simitone.Windows.GameLocator.TS1InstallationType.Steam);
-                                }
-                                else
-                                {
-                                    // User cancelled
-                                    return;
-                                }
+                                path = result.Path;
+                                SaveInstallationConfig(result.Path, result.IsSteam);
+                                
+                                // Show info dialog using the existing app instance
+                                string savesPath = result.IsSteam
+                                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                                 "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
+                                    : Path.Combine(result.Path, "UserData");
+                                string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
+                                
+                                var infoDialog = new InstallationInfoDialog(result.Path, savesPath, simitoneSavesPath, result.IsSteam);
+                                infoDialog.ShowModal();
                             }
-                        }
-
-                        // Mark as configured and save
-                        GlobalSettings.Default.TS1InstallationConfigured = true;
-                        GlobalSettings.Default.StartupPath = path;
-                        GlobalSettings.Default.TS1HybridPath = path;
-                        GlobalSettings.Default.Save();
-
-                        // Show information dialog
-                        string savesPath = GlobalSettings.Default.TS1IsSteamInstall
-                            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
-                                         "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
-                            : Path.Combine(path, "UserData");
-                        
-                        string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
-
-                        using (var infoDialog = new Simitone.Windows.GameLocator.InstallationInfoDialog(
-                            selectedInstallType,
-                            path,
-                            savesPath,
-                            simitoneSavesPath))
-                        {
-                            infoDialog.ShowDialog();
+                            else
+                            {
+                                // User cancelled
+                                return;
+                            }
                         }
                     }
                     else
@@ -218,13 +220,14 @@ namespace Simitone.Windows
                         // Validate the path still exists
                         if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, "GameData", "Behavior.iff")))
                         {
+                            var app = new Application(Eto.Platform.Detect);
                             var result = MessageBox.Show(
                                 $"The configured installation path is no longer valid:\n{path}\n\n" +
                                 "Would you like to reconfigure your installation?\n\n" +
                                 "Click Yes to select a new installation, or No to exit.",
                                 "Installation Not Found",
                                 MessageBoxButtons.YesNo,
-                                MessageBoxIcon.Warning
+                                MessageBoxType.Warning
                             );
                             
                             if (result == DialogResult.Yes)
@@ -236,8 +239,7 @@ namespace Simitone.Windows
                                 MessageBox.Show(
                                     "Configuration has been reset. Please restart Simitone to select your installation.",
                                     "Configuration Reset",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information
+                                    MessageBoxType.Information
                                 );
                             }
                             
@@ -406,6 +408,18 @@ namespace Simitone.Windows
             }
 
             return newBmp;
+        }
+
+        /// <summary>
+        /// Save installation configuration to settings
+        /// </summary>
+        private static void SaveInstallationConfig(string path, bool isSteam)
+        {
+            GlobalSettings.Default.TS1HybridPath = path;
+            GlobalSettings.Default.TS1IsSteamInstall = isSteam;
+            GlobalSettings.Default.TS1InstallationConfigured = true;
+            GlobalSettings.Default.StartupPath = path;
+            GlobalSettings.Default.Save();
         }
     }
 #endif
