@@ -14,10 +14,6 @@
     
     <!-- Runtime identifiers for self-contained publishing -->
     <RuntimeIdentifiers>linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
-    
-    <!-- Enable native dependency copying for self-contained builds -->
-    <PublishSingleFile>false</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,14 +22,8 @@
   </ItemGroup>
   
   <!-- Platform-specific Eto.Forms backends -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.4" />
-    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
-  </ItemGroup>
-  
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
     <PackageReference Include="Eto.Platform.Gtk" Version="2.8.4" />
-    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
   </ItemGroup>
   
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
