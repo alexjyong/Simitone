@@ -167,23 +167,47 @@ namespace Simitone.Windows
 
                     if (installations.Count == 0)
                     {
-                        // No installations found - show error message
-                        Console.WriteLine("Error: Could not find The Sims 1 installation.");
-                        Console.WriteLine("Please use the -path argument to specify the location:");
-                        Console.WriteLine("  ./Simitone -path\"/path/to/The Sims/\"");
-                        Console.WriteLine();
-                        Console.WriteLine("Common locations:");
-                        if (linux && Directory.Exists("/Users"))
+                        // No installations found - show GUI to allow browsing
+                        Console.WriteLine("No installations auto-detected. Opening selection dialog...");
+                        
+                        try
                         {
-                            Console.WriteLine("  Steam: ~/Library/Application Support/Steam/steamapps/common/The Sims/");
-                            Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            var app = new Application(Eto.Platform.Detect);
+                            var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
+                            var result = dialog.ShowModal();
+
+                            if (result != null)
+                            {
+                                path = result.Path;
+                                SaveInstallationConfig(result.Path, result.IsSteam);
+                                Console.WriteLine($"Selected: {result.Path}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Installation selection cancelled.");
+                                Environment.Exit(0);
+                            }
                         }
-                        else if (linux)
+                        catch (Exception ex)
                         {
-                            Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
-                            Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            // GUI failed, show console error
+                            Console.WriteLine("GUI unavailable. Could not find The Sims 1 installation.");
+                            Console.WriteLine("Please use the -path argument to specify the location:");
+                            Console.WriteLine("  ./Simitone -path\"/path/to/The Sims/\"");
+                            Console.WriteLine();
+                            Console.WriteLine("Common locations:");
+                            if (linux && Directory.Exists("/Users"))
+                            {
+                                Console.WriteLine("  Steam: ~/Library/Application Support/Steam/steamapps/common/The Sims/");
+                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            }
+                            else if (linux)
+                            {
+                                Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
+                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            }
+                            Environment.Exit(1);
                         }
-                        Environment.Exit(1);
                     }
                     else if (installations.Count == 1)
                     {

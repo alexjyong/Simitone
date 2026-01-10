@@ -130,18 +130,37 @@ namespace Simitone.Windows
                         
                         if (installations.Count == 0)
                         {
+                            // No installations found - show empty selector so user can browse
                             var app = new Application(Eto.Platform.Detect);
-                            MessageBox.Show(
-                                "No installation of The Sims was detected.\n\n" +
-                                "Please install The Sims or use the -path command line argument to specify the installation directory.\n\n" +
-                                "Example: Simitone.exe -path\"C:\\Program Files\\Maxis\\The Sims\"",
-                                "The Sims Not Found",
-                                MessageBoxType.Error
-                            );
-                            return;
-                        }
+                            var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
+                            var result = dialog.ShowModal();
 
-                        // Check if user already has Simitone saves
+                            if (result != null)
+                            {
+                                path = result.Path;
+                                SaveInstallationConfig(result.Path, result.IsSteam);
+                                
+                                // Show info dialog
+                                string savesPath = result.IsSteam
+                                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                                 "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
+                                    : Path.Combine(result.Path, "UserData");
+                                string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
+                                
+                                var infoDialog = new InstallationInfoDialog(result.Path, savesPath, simitoneSavesPath, result.IsSteam);
+                                infoDialog.ShowModal();
+                            }
+                            else
+                            {
+                                // User cancelled
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            // Installations found - continue with existing logic
+                        
+                            // Check if user already has Simitone saves
                         bool hasExistingSaves = Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "UserData/"));
                         if (hasExistingSaves)
                         {
@@ -210,6 +229,7 @@ namespace Simitone.Windows
                                 // User cancelled
                                 return;
                             }
+                        }
                         }
                     }
                     else
