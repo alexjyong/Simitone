@@ -13,13 +13,6 @@
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <!-- RuntimeIdentifiers required by Eto.Platform.Mac64, but only set on macOS to avoid self-contained conflicts -->
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
-    <!-- Prevent self-contained enforcement that causes NETSDK1150 with FreeSO server projects -->
-    <SelfContained>false</SelfContained>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
