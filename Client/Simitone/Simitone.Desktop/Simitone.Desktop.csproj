@@ -11,9 +11,6 @@
     <!-- Suppress NU1605 (package downgrade) errors from FreeSO submodule dependencies -->
     <NoWarn>$(NoWarn);NU1605</NoWarn>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    
-    <!-- Runtime identifiers for self-contained publishing -->
-    <RuntimeIdentifiers>linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
