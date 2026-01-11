@@ -16,6 +16,8 @@
   <!-- RuntimeIdentifiers required by Eto.Platform.Mac64, but only set on macOS to avoid self-contained conflicts -->
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
     <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
+    <!-- Prevent self-contained enforcement that causes NETSDK1150 with FreeSO server projects -->
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
