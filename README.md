@@ -52,7 +52,7 @@ On first launch, Simitone will automatically scan for The Sims 1 installations:
 **Installation Selector:**
 - If **one installation** is found → automatically configured
 - If **multiple installations** are found → shows a selection dialog with details
-- If **no installations** are found → displays error with instructions
+- If **no installations** are found → displays prompt to select installation manually
 
 The selector will show:
 - Installation type (Registry, Steam, or Portable)
