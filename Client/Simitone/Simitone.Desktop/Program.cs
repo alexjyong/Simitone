@@ -178,9 +178,11 @@ namespace Simitone.Windows
 
                             if (result != null)
                             {
-                                path = result.Path;
-                                SaveInstallationConfig(result.Path, result.IsSteam);
-                                Console.WriteLine($"Selected: {result.Path}");
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
+                                Console.WriteLine($"Selected: {path}");
                             }
                             else
                             {
@@ -235,9 +237,11 @@ namespace Simitone.Windows
 
                             if (result != null)
                             {
-                                path = result.Path;
-                                SaveInstallationConfig(result.Path, result.IsSteam);
-                                Console.WriteLine($"Selected: {result.Path}");
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
+                                Console.WriteLine($"Selected: {path}");
                             }
                             else
                             {

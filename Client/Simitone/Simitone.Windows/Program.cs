@@ -137,8 +137,10 @@ namespace Simitone.Windows
 
                             if (result != null)
                             {
-                                path = result.Path;
-                                SaveInstallationConfig(result.Path, result.IsSteam);
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
                                 
                                 // Show info dialog
                                 string savesPath = result.IsSteam
@@ -147,7 +149,7 @@ namespace Simitone.Windows
                                     : Path.Combine(result.Path, "UserData");
                                 string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
                                 
-                                var infoDialog = new InstallationInfoDialog(result.Path, savesPath, simitoneSavesPath, result.IsSteam);
+                                var infoDialog = new InstallationInfoDialog(path, savesPath, simitoneSavesPath, result.IsSteam);
                                 infoDialog.ShowModal();
                             }
                             else
@@ -211,8 +213,10 @@ namespace Simitone.Windows
 
                             if (result != null)
                             {
-                                path = result.Path;
-                                SaveInstallationConfig(result.Path, result.IsSteam);
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
                                 
                                 // Show info dialog using the existing app instance
                                 string savesPath = result.IsSteam
@@ -221,7 +225,7 @@ namespace Simitone.Windows
                                     : Path.Combine(result.Path, "UserData");
                                 string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
                                 
-                                var infoDialog = new InstallationInfoDialog(result.Path, savesPath, simitoneSavesPath, result.IsSteam);
+                                var infoDialog = new InstallationInfoDialog(path, savesPath, simitoneSavesPath, result.IsSteam);
                                 infoDialog.ShowModal();
                             }
                             else
