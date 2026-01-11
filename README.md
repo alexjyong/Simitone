@@ -3,7 +3,7 @@
 # Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
-[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download](https://github.com/alexjyong/Simitone/releases/download/v0.8.12-forked/SimitoneWindows-Release.zip)
+[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.14-forked/SimitoneWindows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.14-forked/Simitone-SelfContained-Linux-x64-Release.zip) 
 
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
@@ -39,29 +39,70 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 2. **Extract** the ZIP to your preferred location
 3. **Run** `Simitone.exe`
 
-Simitone will automatically detect your Sims 1 installation by checking:
-- Relative path (`../The Sims/`)
-- Windows Registry (`HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims`)
-- Steam libraries (reads Steam registry, parses libraryfolders.vdf and app manifests)
-- Default install location (`C:\Program Files (x86)\Maxis\The Sims\`)
+### First-Time Setup
 
-If none of these are options for you or working, see "Manual Path Configuration" below.
+On first launch, Simitone will automatically scan for The Sims 1 installations:
+
+**Automatic Detection Checks:**
+- Portable install (relative path `../The Sims/`)
+- Windows Registry (`HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims`)
+- Steam installation (via Steam registry and libraryfolders.vdf)
+- Default install (`C:\Program Files (x86)\Maxis\The Sims\`)
+
+**Installation Selector:**
+- If **one installation** is found → automatically configured
+- If **multiple installations** are found → shows a selection dialog with details
+- If **no installations** are found → displays error with instructions
+
+The selector will show:
+- Installation type (Registry, Steam, or Portable)
+- Full installation path
+- Detection of Steam version (important for save file location)
+
+After selection, Simitone creates a configuration dialog showing:
+- Game installation path
+- Where The Sims 1 save files are located
+- Where Simitone save files will be stored
+
+### User Data Location
+
+Configuration and save files are stored in:
+```
+%USERPROFILE%\Documents\Simitone\
+```
+
+This includes:
+- `config.ini` - Game settings and installation path
+- `UserData/` - Your Simitone save files and families
+
+**Note:** Simitone uses separate save files from The Sims 1. Your original saves remain untouched.
 
 ## Manual Path Configuration
 
-If auto-detection fails or you have a custom install location:
+If you need to bypass auto-detection or reconfigure:
 
-**Command-line override example:**
+**Command-line override:**
 ```bash
+# Specify custom installation path (bypasses auto-detection)
 Simitone.exe -path"C:\Your\Custom\Path\The Sims\"
 ```
 
-Portable installation:
-Place The Sims files in ../The Sims/ relative to Simitone.exe (e.g., if Simitone is in D:\Games\Simitone\, put The Sims in D:\Games\The Sims\)
+**Portable installation:**
+Place The Sims files in `../The Sims/` relative to Simitone.exe (e.g., if Simitone is in `D:\Games\Simitone\`, put The Sims in `D:\Games\The Sims\`)
 
-User data location:
-Configuration and save files are stored in:
-%USERPROFILE%\Documents\Simitone\
+**To reconfigure/change installation:**
+Edit `%USERPROFILE%\Documents\Simitone\config.ini` and set:
+```ini
+TS1InstallationConfigured=false
+```
+Then restart Simitone to see the installation selector again.
+
+**Manual config.ini settings:**
+```ini
+TS1HybridPath=C:\Your\Path\To\The Sims\
+TS1IsSteamInstall=false
+TS1InstallationConfigured=true
+```
 
 
 ## Quick Install Linux / macOS (Note at time of writing, macOS is currently untested. HELP WANTED!)
@@ -110,14 +151,24 @@ Simitone checks for The Sims 1 installation in this priority order:
 
 ### Optional Command-Line Arguments (for all platforms)
 
-```pwsh
--dx / -gl # Force DirectX or OpenGL rendering
--3d # Enable 3D mode in the game (can be toggled on or off with F12)
--jit # Enable JIT compilation for SimAntics (can elpthe game run faster at the expense of more start up time)
--ide # Launch Volcanic object editor
--lang <code> # Set language
--hz <rate> # Set refresh rate
--nosound # Disable audio
+**Installation & Path:**
+```bash
+-path"<path>"    # Specify custom Sims 1 installation path (no space between -path and quote)
+```
+
+**Graphics & Performance:**
+```bash
+-dx / -gl        # Force DirectX or OpenGL rendering
+-3d              # Enable 3D mode in the game (can be toggled on or off with F12)
+-jit             # Enable JIT compilation for SimAntics (faster gameplay, slower startup)
+-hz <rate>       # Set refresh rate
+```
+
+**Other Options:**
+```bash
+-ide             # Launch Volcanic object editor
+-lang <code>     # Set language
+-nosound         # Disable audio
 ```
 
 # Building from Source

@@ -91,7 +91,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-2.0-0 libopenal1
+        sudo apt-get install -y libsdl2-2.0-0 libopenal1 libgtk-3-0 libgtk-3-dev libglib2.0-0 libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libatk1.0-0
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
@@ -145,10 +145,10 @@ jobs:
         brew install sdl2
 
     - name: Restore dependencies
-      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=""
+      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -r osx-x64 /p:TreatWarningsAsErrors=false /p:WarningsAsErrors="" /p:NoWarn=NU1605
 
     - name: Build macOS
-      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
+      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} -r osx-x64 --no-restore /p:TreatWarningsAsErrors=false /p:WarningsAsErrors="" /p:NoWarn=NU1605
 
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v4

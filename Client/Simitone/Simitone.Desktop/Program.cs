@@ -3,6 +3,7 @@ using FSO.Common;
 using FSO.LotView;
 using Simitone.Client;
 using Simitone.Windows.GameLocator;
+using Simitone.Windows.UI;
 using Simitone.Windows.Utils;
 using System;
 using System.IO;
@@ -12,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Eto.Forms;
 
 namespace Simitone.Windows
 {
@@ -78,16 +80,13 @@ namespace Simitone.Windows
             var useDX = false;
             
             // path priority: 1. Command line (set later), 2. config.ini, 3. Auto-detect
-            string path = null;
+            string? path = null;
+            bool pathProvidedViaCommandLine = false;
             var configPath = GlobalSettings.Default.TS1HybridPath;
             if (!string.IsNullOrEmpty(configPath) && configPath != "D:/Games/The Sims/" && 
                 File.Exists(Path.Combine(configPath, "GameData", "Behavior.iff")))
             {
                 path = configPath;
-            }
-            if (path == null)
-            {
-                path = gameLocator.FindTheSims1();
             }
 
             FSOEnvironment.Enable3D = false;
@@ -149,6 +148,7 @@ namespace Simitone.Windows
                                 {
                                     path = s.Substring(4).Trim('"').Replace('\\', '/');
                                     if (!path.EndsWith("/")) path += "/";
+                                    pathProvidedViaCommandLine = true;
                                 }
                                 break;
                         }
@@ -156,6 +156,127 @@ namespace Simitone.Windows
                 }
             }
             #endregion
+
+            // If no path provided via command line, check if we need to configure installation
+            if (!pathProvidedViaCommandLine)
+            {
+                // Check if installation has already been configured
+                if (!GlobalSettings.Default.TS1InstallationConfigured || string.IsNullOrEmpty(path))
+                {
+                    var installations = gameLocator.GetAllTheSims1Installations();
+
+                    if (installations.Count == 0)
+                    {
+                        // No installations found - show GUI to allow browsing
+                        Console.WriteLine("No installations auto-detected. Opening selection dialog...");
+                        
+                        try
+                        {
+                            var app = new Application(Eto.Platform.Detect);
+                            var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
+                            var result = dialog.ShowModal();
+
+                            if (result != null)
+                            {
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
+                                Console.WriteLine($"Selected: {path}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Installation selection cancelled.");
+                                Environment.Exit(0);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // GUI failed, show console error
+                            Console.WriteLine("GUI unavailable. Could not find The Sims 1 installation.");
+                            Console.WriteLine("Please use the -path argument to specify the location:");
+                            Console.WriteLine("  ./Simitone -path\"/path/to/The Sims/\"");
+                            Console.WriteLine();
+                            Console.WriteLine("Common locations:");
+                            if (linux && Directory.Exists("/Users"))
+                            {
+                                Console.WriteLine("  Steam: ~/Library/Application Support/Steam/steamapps/common/The Sims/");
+                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            }
+                            else if (linux)
+                            {
+                                Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
+                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                            }
+                            Environment.Exit(1);
+                        }
+                    }
+                    else if (installations.Count == 1)
+                    {
+                        // Single installation - auto-select
+                        path = installations[0].path;
+                        var isSteam = installations[0].type == TS1InstallationType.Steam;
+                        Console.WriteLine($"Auto-detected installation: {installations[0].description}");
+                        Console.WriteLine($"Path: {path}");
+                        SaveInstallationConfig(path, isSteam);
+                    }
+                    else
+                    {
+                        // Multiple installations - show GUI selector
+                        var installInfos = installations
+                            .Select(i => new InstallationInfo(i.description, i.path, i.type))
+                            .ToList();
+
+                        Console.WriteLine($"Found {installations.Count} installations. Showing selection dialog...");
+                        
+                        try
+                        {
+                            var app = new Application(Eto.Platform.Detect);
+                            var dialog = new InstallationSelectorDialog(installInfos);
+                            var result = dialog.ShowModal();
+
+                            if (result != null)
+                            {
+                                // Normalize path - ensure it ends with /
+                                path = result.Path.Replace('\\', '/');
+                                if (!path.EndsWith("/")) path += "/";
+                                SaveInstallationConfig(path, result.IsSteam);
+                                Console.WriteLine($"Selected: {path}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Installation selection cancelled.");
+                                Environment.Exit(0);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // GUI failed, fall back to console selection
+                            Console.WriteLine("GUI unavailable, using console selection:");
+                            Console.WriteLine();
+                            for (int i = 0; i < installations.Count; i++)
+                            {
+                                Console.WriteLine($"[{i + 1}] {installations[i].description}");
+                                Console.WriteLine($"    {installations[i].path}");
+                            }
+                            Console.WriteLine();
+                            Console.Write($"Select installation (1-{installations.Count}): ");
+                            
+                            if (int.TryParse(Console.ReadLine(), out int choice) && choice >= 1 && choice <= installations.Count)
+                            {
+                                path = installations[choice - 1].path;
+                                SaveInstallationConfig(path, installations[choice - 1].type == TS1InstallationType.Steam);
+                                Console.WriteLine($"Selected: {path}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid selection.");
+                                Environment.Exit(1);
+                            }
+                        }
+                    }
+                }
+            }
             
             useDX = MonogameLinker.Link(useDX);
 
@@ -212,6 +333,17 @@ namespace Simitone.Windows
                 Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
                 Environment.Exit(1);
             }
+        }
+
+        /// <summary>
+        /// Save installation configuration to settings
+        /// </summary>
+        private static void SaveInstallationConfig(string path, bool isSteam)
+        {
+            GlobalSettings.Default.TS1HybridPath = path;
+            GlobalSettings.Default.TS1IsSteamInstall = isSteam;
+            GlobalSettings.Default.TS1InstallationConfigured = true;
+            GlobalSettings.Default.Save();
         }
 
         private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)

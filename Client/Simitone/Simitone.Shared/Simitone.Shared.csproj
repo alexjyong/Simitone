@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
+    <RootNamespace>Simitone.Windows</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,9 @@
 
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
+    
+    <!-- Eto.Forms core - platform backends loaded at runtime -->
+    <PackageReference Include="Eto.Forms" Version="2.8.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -215,6 +215,13 @@ if [[ "$(uname)" == "Linux" ]]; then
         echo "✓ OpenAL found"
     fi
     
+    # Check for GTK3 (required for Eto.Forms GUI)
+    if ! ldconfig -p | grep -q libgtk-3.so.0; then
+        MISSING_DEPS+=("libgtk3")
+    else
+        echo "✓ GTK3 found"
+    fi
+    
     # Offer to install missing dependencies
     if [[ ${#MISSING_DEPS[@]} -gt 0 ]]; then
         echo ""
@@ -231,6 +238,9 @@ if [[ "$(uname)" == "Linux" ]]; then
                         ;;
                     libopenal)
                         install_package "libopenal1" "openal-soft" "openal" "openal-soft"
+                        ;;
+                    libgtk3)
+                        install_package "libgtk-3-0" "gtk3" "gtk3" "gtk+3"
                         ;;
                 esac
             done
@@ -323,6 +333,9 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     
     echo ""
     echo "Published to: $SCRIPT_DIR/publish/$RID"
+    echo ""
+    echo "NOTE: GTK3 is required on Linux for the installation selector GUI."
+    echo "      Most desktop Linux distributions include GTK3 by default."
 fi
 
 echo ""
