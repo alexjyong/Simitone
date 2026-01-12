@@ -11,10 +11,12 @@ namespace IffExporter
     public class ChunkExporter
     {
         private readonly ExportOptions _options;
+        private readonly HashSet<object> _visitedObjects;
 
         public ChunkExporter(ExportOptions options)
         {
             _options = options;
+            _visitedObjects = new HashSet<object>();
         }
 
         /// <summary>
@@ -24,6 +26,9 @@ namespace IffExporter
         {
             var result = new Dictionary<string, object>();
             var type = chunk.GetType();
+            
+            // Clear visited objects for each new chunk
+            _visitedObjects.Clear();
 
             // Always include basic chunk info
             result["chunkId"] = chunk.ChunkID;
@@ -119,6 +124,13 @@ namespace IffExporter
             {
                 // Will be handled by binary handlers later
                 return null;
+            }
+
+            // Check for circular references (only for reference types we'll recurse into)
+            if (type.IsClass && !_visitedObjects.Add(value))
+            {
+                // Object already visited, return reference indicator to avoid infinite recursion
+                return $"<CircularReference:{type.Name}>";
             }
 
             // Handle arrays
