@@ -358,7 +358,7 @@ namespace Simitone.Windows
             }
             else
             {
-                MessageBox.Show(e.ExceptionObject.ToString(), "A fatal error occured! Screenshot this dialog and post it on Discord.");
+                MessageBox.Show(e.ExceptionObject.ToString(), "A fatal error occured! Screenshot this dialog and post it on the Github repo issue tracker!");
             }
         }
 
