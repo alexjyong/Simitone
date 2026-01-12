@@ -75,7 +75,14 @@ This includes:
 - `config.ini` - Game settings and installation path
 - `UserData/` - Your Simitone save files and families
 
-**Note:** Simitone uses separate save files from The Sims 1. Your original saves remain untouched.
+**Note:** Simitone uses separate save files from The Sims 1. On first launch, it automatically copies your existing TS1 saves to its own directory. This means:
+- You can continue playing with your existing neighborhoods, families, and houses
+- Changes in Simitone won't affect your original TS1 saves
+- Your original saves remain untouched and can still be used in non-Simitone Sims 1
+
+**The Sims 1 Save Locations (imported from):**
+- **Steam (Legacy Collection):** `%USERPROFILE%\Saved Games\Electronic Arts\The Sims 25\UserData`
+- **CD/DVD/GOG:** `[Installation Path]\UserData`
 
 ## Manual Path Configuration
 
@@ -107,46 +114,120 @@ TS1InstallationConfigured=true
 
 ## Quick Install Linux / macOS (Note at time of writing, macOS is currently untested. HELP WANTED!)
 
-Download **self-contained release** from [releases](https://github.com/alexjyong/Simitone/releases/latest/) for your operating system
+1. **Download** the [latest self-contained release](https://github.com/alexjyong/Simitone/releases/latest/) for your operating system
+2. **Extract** the archive to your preferred location
+3. **Run** `./Simitone`
 
-Extract it, and from within in the extracted directory in your terminal, run
+### First-Time Setup
 
+On first launch, Simitone will automatically scan for The Sims 1 installations (see Auto-detection section below for paths checked).
+
+**Installation Selector:**
+- If **one installation** is found → automatically configured
+- If **multiple installations** are found → shows a GUI selection dialog with details
+- If **no installations** are found → shows GUI prompt to browse and select manually
+
+**Alternatively, specify path directly:**
 ```bash
-./Simitone -path"/fully/qualified/path/to/The Sims/" #(note that there is no space between -path and the" and THIS IS INTENTIONAL)
+./Simitone -path"/fully/qualified/path/to/The Sims/" # (note: no space between -path and the quote - this is intentional)
 ```
 
-(After doing this once, this will update your config.ini file (See below for more information and location) with the path, and you won't need to run using the -path argument.
+After configuration, the path is saved to `config.ini` and you won't need to use `-path` again.
 
+## Manual Path Configuration (Linux/macOS)
+
+If you need to bypass auto-detection or reconfigure:
+
+**Command-line override:**
+```bash
+# Specify custom installation path (bypasses auto-detection)
+./Simitone -path"/your/custom/path/The Sims/"
+```
+
+**Portable installation:**
+Place The Sims files in `../The Sims/` relative to the Simitone executable (e.g., if Simitone is in `/home/user/Simitone/`, put The Sims in `/home/user/The Sims/`)
+
+**To reconfigure/change installation:**
+Edit `config.ini` in your user data directory (see below) and set:
+```ini
+TS1InstallationConfigured=false
+```
+Then restart Simitone to see the installation selector again.
+
+**Manual config.ini settings:**
+```ini
+TS1HybridPath=/your/path/to/The Sims/
+TS1IsSteamInstall=false
+TS1InstallationConfigured=true
+```
+
+### User Data Location
+
+Configuration and save files are stored in:
+- **Linux:** `~/.local/share/Simitone/` (or `~/Documents/Simitone/` if MyDocuments exists)
+- **macOS:** `~/Documents/Simitone/`
+
+This includes:
+- `config.ini` - Game settings and installation path
+- `UserData/` - Your Simitone save files and families
+
+**Note:** Simitone uses separate save files from The Sims 1. On first launch, it automatically copies your existing TS1 saves to its own directory. This means:
+- You can continue playing with your existing neighborhoods, families, and houses
+- Changes in Simitone won't affect your original TS1 saves
+- Your original saves remain untouched and can still be used in the plain installation for The Sims 1
+
+**The Sims 1 Save Locations (imported from):**
+- **Steam (via Proton):** Check `~/.steam/steam/steamapps/compatdata/[appid]/pfx/drive_c/users/steamuser/Saved Games/Electronic Arts/The Sims 25/UserData`
+- **Wine:** Typically in the Wine prefix under `drive_c/users/[username]/My Documents/`
+- **Native Windows files:** Check the Windows file structure if accessing via WSL
 
 ### The Sims 1 Installation
-Simitone reads The Sims 1 game files directly - However, the code has been tested with the Windows installaion. You can use:
-- A Windows installation via Wine/Proton
-- Steam Play/Proton: `~/.steam/steam/steamapps/common/The Sims/`
-- Wine prefix: `~/.wine/drive_c/Program Files/Maxis/The Sims/`
-- WSL (accessing Windows): `/mnt/c/Program Files (x86)/Maxis/The Sims/`
+Simitone reads The Sims 1 game files directly - However, the code has been tested with the Windows installation. You can use:
+- **Steam Play/Proton:** `~/.steam/steam/steamapps/common/The Sims/`
+- **Wine (default prefix):** `~/.wine/drive_c/Program Files/Maxis/The Sims/`
+- **Wine (x86 prefix):** `~/.wine/drive_c/Program Files (x86)/Maxis/The Sims/`
+- **WSL (accessing Windows):** `/mnt/c/Program Files (x86)/Maxis/The Sims/`
+- **Portable install:** Place in `../The Sims/` relative to Simitone executable
 
-### Specifying The Sims 1 Path
+### How Path Detection Works
 
-Simitone checks for The Sims 1 installation in this priority order:
+Simitone finds The Sims 1 installation in this priority order:
 
-1. **Command line argument** (highest priority):
+1. **Command line argument** (highest priority - optional):
    ```bash
    ./Simitone -path"/path/to/The Sims/"
    ```
+   Use this to override auto-detection or bypass the GUI selector.
 
-2. **config.ini setting** (persistent preference):
-   Edit `config.ini` in your user data directory (see locations above) and set:
+2. **config.ini setting** (saved from previous selection):
+   Located in your user data directory. Once you've selected an installation (via GUI or `-path`), this is saved automatically:
    ```ini
    TS1HybridPath=/fully/qualified/path/to/Sims1/installation
+   TS1InstallationConfigured=true
    ```
-   After setting this once, you can run Simitone without the `-path` argument.
 
-3. **Auto-detection** (fallback):
-   - Linux: Checks `~/.steam/steam/steamapps/common/The Sims/` and Wine paths
-   - Windows: Checks registry and Steam install locations
-   - macOS: Checks relative paths
+3. **Auto-detection with GUI selector** (first-time setup):
+   - **Linux:** Automatically scans these locations in order:
+     - Portable install (relative path `../The Sims/`)
+     - Steam Proton: `~/.steam/steam/steamapps/common/The Sims/`
+     - Wine (default prefix): `~/.wine/drive_c/Program Files/Maxis/The Sims/`
+     - Wine (x86 prefix): `~/.wine/drive_c/Program Files (x86)/Maxis/The Sims/`
+     - Fallback location: `game1/`
 
-**Note:** On first run, you'll need to use `-path` or let auto-detection find it. Once found, the path is saved to config.ini automatically.
+   - **macOS:** Automatically scans these locations in order:
+     - Portable install (relative path `../The Sims/`)
+     - Steam: `~/Library/Application Support/Steam/steamapps/common/The Sims/`
+     - Wine (default prefix): `~/.wine/drive_c/Program Files/Maxis/The Sims/`
+     - Wine (x86 prefix): `~/.wine/drive_c/Program Files (x86)/Maxis/The Sims/`
+     - Fallback location: `game1/`
+
+   - **Windows:** Automatically scans these locations in order:
+     - Portable install (relative path `../The Sims/`)
+     - Windows Registry (`HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims`)
+     - Steam installation (via Steam registry and libraryfolders.vdf)
+     - Default install: `C:\Program Files (x86)\Maxis\The Sims\`
+
+**Note:** On first run, auto-detection will find installations and show a GUI selector. The `-path` argument is optional and only needed to override auto-detection or for headless environments. Once configured, the path is saved to config.ini automatically.
 
 
 ### Optional Command-Line Arguments (for all platforms)
@@ -355,11 +436,6 @@ cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 
 publish/$os_platform/Simitone -path"/fully/qualified/path/to/The Sims/"
 ```
-
-
-**User data location:**
-- Linux: `~/.local/share/Simitone/` (or `~/Documents/Simitone/`)
-- macOS: `~/Documents/Simitone/`
 
 ## Troubleshooting
 
