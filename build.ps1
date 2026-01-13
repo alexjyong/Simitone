@@ -169,10 +169,11 @@ if ($Publish) {
     $hasVcTools = $false
     
     if (Test-Path $vsWhere) {
-        $vcToolsPath = & $vsWhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        # Use -all -products * to find Build Tools as well as full Visual Studio
+        $vcToolsPath = & $vsWhere -all -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null | Select-Object -First 1
         if ($vcToolsPath) {
             $hasVcTools = $true
-            Write-Host "  Found Visual Studio C++ tools" -ForegroundColor Green
+            Write-Host "  Found Visual Studio C++ tools at: $vcToolsPath" -ForegroundColor Green
         }
     }
     
