@@ -65,11 +65,35 @@ jobs:
     - name: Build Windows
       run: dotnet build Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
 
+    - name: Publish Windows (self-contained)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Windows/Simitone.Windows.csproj `
+          -c ${{ inputs.configuration || 'Release' }} `
+          -r win-x64 `
+          --self-contained true `
+          -o publish/win-x64 `
+          /p:TreatWarningsAsErrors=false `
+          /p:WarningsAsErrors=""
+
+    - name: Build Windows Launcher (Native AOT)
+      run: |
+        dotnet publish Client/Simitone/Simitone.Launcher/Simitone.Launcher.csproj `
+          -c ${{ inputs.configuration || 'Release' }} `
+          -r win-x64 `
+          -o publish/launcher-win
+
+    - name: Create Windows release structure
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Path "release/Simitone-Windows/lib" -Force
+        Copy-Item -Path "publish/launcher-win/Simitone.exe" -Destination "release/Simitone-Windows/Simitone.exe"
+        Copy-Item -Path "publish/win-x64/*" -Destination "release/Simitone-Windows/lib/" -Recurse
+
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4
       with:
         name: Simitone-Windows-${{ inputs.configuration || 'Release' }}
-        path: Client/Simitone/Simitone.Windows/bin/${{ inputs.configuration || 'Release' }}/net9.0-windows/
+        path: release/Simitone-Windows/
         if-no-files-found: error
 
   build-linux:
@@ -91,20 +115,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-2.0-0 libopenal1 libgtk-3-0 libgtk-3-dev libglib2.0-0 libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libatk1.0-0
+        sudo apt-get install -y libsdl2-2.0-0 libopenal1 libgtk-3-0 libgtk-3-dev libglib2.0-0 libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libatk1.0-0 imagemagick
 
     - name: Restore dependencies
       run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj
 
     - name: Build Linux
       run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
-
-    - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Simitone-Linux-x64-${{ inputs.configuration || 'Release' }}
-        path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
-        if-no-files-found: error
 
     - name: Publish Linux (self-contained)
       run: |
@@ -116,12 +133,27 @@ jobs:
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
 
+    - name: Build Linux Launcher (Native C)
+      run: |
+        mkdir -p publish/launcher-native
+        gcc -O2 -s Client/Simitone/Simitone.Launcher/launcher.c -o publish/launcher-native/Simitone
 
-    - name: Upload Self-Contained Linux artifacts
+    - name: Create Linux release structure
+      run: |
+        mkdir -p release/Simitone-Linux-x64/lib
+        cp publish/launcher-native/Simitone release/Simitone-Linux-x64/Simitone
+        chmod +x release/Simitone-Linux-x64/Simitone
+        cp -r publish/linux-x64/* release/Simitone-Linux-x64/lib/
+        cp Client/Simitone/Simitone.Launcher/simitone.desktop release/Simitone-Linux-x64/
+        chmod +x release/Simitone-Linux-x64/simitone.desktop
+        # Convert icon to PNG
+        convert Client/Simitone/Simitone.Windows/Icon.ico -resize 256x256 release/Simitone-Linux-x64/lib/Resources/icon.png || true
+
+    - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Simitone-SelfContained-Linux-x64-${{ inputs.configuration || 'Release' }}
-        path: publish/linux-x64/
+        name: Simitone-Linux-x64-${{ inputs.configuration || 'Release' }}
+        path: release/Simitone-Linux-x64/
         if-no-files-found: error
 
   build-macos:
@@ -150,13 +182,6 @@ jobs:
     - name: Build macOS
       run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} -r osx-x64 --no-restore /p:TreatWarningsAsErrors=false /p:WarningsAsErrors="" /p:NoWarn=NU1605
 
-    - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Simitone-macOS-x64-${{ inputs.configuration || 'Release' }}
-        path: Client/Simitone/Simitone.Desktop/bin/${{ inputs.configuration || 'Release' }}/net9.0/
-        if-no-files-found: error
-
     - name: Publish macOS Intel (self-contained)
       run: |
         dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
@@ -177,17 +202,41 @@ jobs:
           /p:TreatWarningsAsErrors=false \
           /p:WarningsAsErrors=""
 
-    - name: Upload Self-Contained macOS Intel artifacts
+    - name: Build macOS Launcher (Native C) for Intel
+      run: |
+        mkdir -p publish/launcher-native-x64
+        clang -O2 -target x86_64-apple-macos10.12 Client/Simitone/Simitone.Launcher/launcher.c -o publish/launcher-native-x64/Simitone
+
+    - name: Build macOS Launcher (Native C) for ARM
+      run: |
+        mkdir -p publish/launcher-native-arm64
+        clang -O2 -target arm64-apple-macos11 Client/Simitone/Simitone.Launcher/launcher.c -o publish/launcher-native-arm64/Simitone
+
+    - name: Create macOS Intel release structure
+      run: |
+        mkdir -p release/Simitone-macOS-x64/lib
+        cp publish/launcher-native-x64/Simitone release/Simitone-macOS-x64/Simitone
+        chmod +x release/Simitone-macOS-x64/Simitone
+        cp -r publish/osx-x64/* release/Simitone-macOS-x64/lib/
+
+    - name: Create macOS ARM release structure
+      run: |
+        mkdir -p release/Simitone-macOS-arm64/lib
+        cp publish/launcher-native-arm64/Simitone release/Simitone-macOS-arm64/Simitone
+        chmod +x release/Simitone-macOS-arm64/Simitone
+        cp -r publish/osx-arm64/* release/Simitone-macOS-arm64/lib/
+
+    - name: Upload macOS Intel artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Simitone-SelfContained-macOS-x64-${{ inputs.configuration || 'Release' }}
-        path: publish/osx-x64/
+        name: Simitone-macOS-x64-${{ inputs.configuration || 'Release' }}
+        path: release/Simitone-macOS-x64/
         if-no-files-found: error
 
-    - name: Upload Self-Contained macOS ARM artifacts
+    - name: Upload macOS ARM artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Simitone-SelfContained-macOS-arm64-${{ inputs.configuration || 'Release' }}
-        path: publish/osx-arm64/
+        name: Simitone-macOS-arm64-${{ inputs.configuration || 'Release' }}
+        path: release/Simitone-macOS-arm64/
         if-no-files-found: error
 

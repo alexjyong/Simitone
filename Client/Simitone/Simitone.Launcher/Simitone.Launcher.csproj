@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Simitone</AssemblyName>
+    
+    <!-- Native AOT for small, fast native executable -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    
+    <!-- Windows-specific: use Windows subsystem (no console), include icon -->
+    <ApplicationIcon Condition="$([MSBuild]::IsOSPlatform('Windows'))>..\Simitone.Windows\Icon.ico</ApplicationIcon>
+    
+    <!-- Trim unused code for smaller size -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>link</TrimMode>
+  </PropertyGroup>
+
+</Project>

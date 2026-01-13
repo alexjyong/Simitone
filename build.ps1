@@ -19,6 +19,9 @@ param(
     [switch]$SkipRestore,
     
     [Parameter(Mandatory=$false)]
+    [switch]$Publish,
+    
+    [Parameter(Mandatory=$false)]
     [switch]$Run
 )
 
@@ -155,10 +158,109 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# Publish mode: create user-friendly directory structure
+if ($Publish) {
+    Write-Host ""
+    Write-Host "=== Publishing Simitone ===" -ForegroundColor Cyan
+    
+    # Check for Native AOT prerequisites (Visual Studio C++ build tools)
+    Write-Host "Checking for Native AOT prerequisites..." -ForegroundColor Gray
+    $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $hasVcTools = $false
+    
+    if (Test-Path $vsWhere) {
+        $vcToolsPath = & $vsWhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        if ($vcToolsPath) {
+            $hasVcTools = $true
+            Write-Host "  Found Visual Studio C++ tools" -ForegroundColor Green
+        }
+    }
+    
+    if (-not $hasVcTools) {
+        Write-Host ""
+        Write-Host "ERROR: Native AOT requires Visual Studio C++ build tools." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Install with:" -ForegroundColor Yellow
+        Write-Host "  winget install Microsoft.VisualStudio.2022.BuildTools --override `"--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended`"" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Or install Visual Studio 2022 with the 'Desktop development with C++' workload." -ForegroundColor Yellow
+        exit 1
+    }
+    
+    $publishDir = "publish\win-x64"
+    $finalDir = "publish\Simitone-Windows"
+    
+    # Clean previous publish
+    if (Test-Path $finalDir) {
+        Remove-Item -Path $finalDir -Recurse -Force
+    }
+    
+    # Step 1: Publish the main application
+    Write-Host ""
+    Write-Host "Step 1: Publishing main application..." -ForegroundColor Gray
+    dotnet publish Client\Simitone\Simitone.Windows\Simitone.Windows.csproj `
+        -c $Configuration `
+        -r win-x64 `
+        --self-contained true `
+        -o $publishDir `
+        /p:TreatWarningsAsErrors=false `
+        /p:WarningsAsErrors=""
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: Failed to publish main application" -ForegroundColor Red
+        exit 1
+    }
+    
+    # Step 2: Build the launcher stub with Native AOT
+    Write-Host ""
+    Write-Host "Step 2: Building launcher stub (Native AOT)..." -ForegroundColor Gray
+    dotnet publish Client\Simitone\Simitone.Launcher\Simitone.Launcher.csproj `
+        -c $Configuration `
+        -r win-x64 `
+        -o "publish\launcher-win"
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: Failed to build launcher stub" -ForegroundColor Red
+        exit 1
+    }
+    
+    # Step 3: Create final directory structure
+    Write-Host ""
+    Write-Host "Step 3: Creating final directory structure..." -ForegroundColor Gray
+    
+    New-Item -ItemType Directory -Path $finalDir -Force | Out-Null
+    New-Item -ItemType Directory -Path "$finalDir\lib" -Force | Out-Null
+    
+    # Copy launcher to root
+    Copy-Item -Path "publish\launcher-win\Simitone.exe" -Destination "$finalDir\Simitone.exe"
+    
+    # Move all published files to lib/
+    Get-ChildItem -Path $publishDir | ForEach-Object {
+        Move-Item -Path $_.FullName -Destination "$finalDir\lib\" -Force
+    }
+    
+    # Clean up temporary directories
+    Remove-Item -Path $publishDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path "publish\launcher-win" -Recurse -Force -ErrorAction SilentlyContinue
+    
+    Write-Host ""
+    Write-Host "=== Publish Complete! ===" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Output directory: $((Resolve-Path $finalDir).Path)" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Directory structure:" -ForegroundColor Gray
+    Write-Host "  Simitone-Windows/" -ForegroundColor White
+    Write-Host "    Simitone.exe      <- Run this!" -ForegroundColor Green
+    Write-Host "    lib/              <- Game files (don't modify)" -ForegroundColor DarkGray
+    exit 0
+}
+
 Write-Host ""
 Write-Host "=== Build Complete! ===" -ForegroundColor Green
 $exePath = "Client\Simitone\Simitone.Windows\bin\$Configuration\net9.0-windows\Simitone.exe"
 Write-Host "Executable: $exePath" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "TIP: Use -Publish to create a distributable package with clean directory structure." -ForegroundColor Yellow
 
 if ($Run) {
     Write-Host ""

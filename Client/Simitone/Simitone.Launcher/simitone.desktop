@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Simitone
+Comment=The Sims 1 recreation using FreeSO engine
+Exec=./Simitone
+Icon=./lib/Resources/icon.png
+Terminal=false
+Categories=Game;Simulation;
+Keywords=sims;simulation;freeso;
+StartupNotify=true
