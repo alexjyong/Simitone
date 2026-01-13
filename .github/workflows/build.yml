@@ -65,16 +65,6 @@ jobs:
     - name: Build Windows
       run: dotnet build Client/Simitone/Simitone.Windows/Simitone.Windows.csproj -c ${{ inputs.configuration || 'Release' }} --no-restore
 
-    - name: Publish Windows (self-contained)
-      run: |
-        dotnet publish Client/Simitone/Simitone.Windows/Simitone.Windows.csproj `
-          -c ${{ inputs.configuration || 'Release' }} `
-          -r win-x64 `
-          --self-contained true `
-          -o publish/win-x64 `
-          /p:TreatWarningsAsErrors=false `
-          /p:WarningsAsErrors=""
-
     - name: Build Windows Launcher (Native AOT)
       run: |
         dotnet publish Client/Simitone/Simitone.Launcher/Simitone.Launcher.csproj `
@@ -85,9 +75,11 @@ jobs:
     - name: Create Windows release structure
       shell: pwsh
       run: |
+        $config = "${{ inputs.configuration || 'Release' }}"
+        $buildOutput = "Client/Simitone/Simitone.Windows/bin/$config/net9.0-windows"
         New-Item -ItemType Directory -Path "release/Simitone-Windows/lib" -Force
         Copy-Item -Path "publish/launcher-win/Simitone.exe" -Destination "release/Simitone-Windows/Simitone.exe"
-        Copy-Item -Path "publish/win-x64/*" -Destination "release/Simitone-Windows/lib/" -Recurse
+        Copy-Item -Path "$buildOutput/*" -Destination "release/Simitone-Windows/lib/" -Recurse
 
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4

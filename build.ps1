@@ -188,7 +188,7 @@ if ($Publish) {
         exit 1
     }
     
-    $publishDir = "publish\win-x64"
+    $buildOutput = "Client\Simitone\Simitone.Windows\bin\$Configuration\net9.0-windows"
     $finalDir = "publish\Simitone-Windows"
     
     # Clean previous publish
@@ -196,25 +196,9 @@ if ($Publish) {
         Remove-Item -Path $finalDir -Recurse -Force
     }
     
-    # Step 1: Publish the main application
+    # Step 1: Build the launcher stub with Native AOT
     Write-Host ""
-    Write-Host "Step 1: Publishing main application..." -ForegroundColor Gray
-    dotnet publish Client\Simitone\Simitone.Windows\Simitone.Windows.csproj `
-        -c $Configuration `
-        -r win-x64 `
-        --self-contained true `
-        -o $publishDir `
-        /p:TreatWarningsAsErrors=false `
-        /p:WarningsAsErrors=""
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Failed to publish main application" -ForegroundColor Red
-        exit 1
-    }
-    
-    # Step 2: Build the launcher stub with Native AOT
-    Write-Host ""
-    Write-Host "Step 2: Building launcher stub (Native AOT)..." -ForegroundColor Gray
+    Write-Host "Step 1: Building launcher stub (Native AOT)..." -ForegroundColor Gray
     dotnet publish Client\Simitone\Simitone.Launcher\Simitone.Launcher.csproj `
         -c $Configuration `
         -r win-x64 `
@@ -225,9 +209,9 @@ if ($Publish) {
         exit 1
     }
     
-    # Step 3: Create final directory structure
+    # Step 2: Create final directory structure using build output (not publish)
     Write-Host ""
-    Write-Host "Step 3: Creating final directory structure..." -ForegroundColor Gray
+    Write-Host "Step 2: Creating final directory structure..." -ForegroundColor Gray
     
     New-Item -ItemType Directory -Path $finalDir -Force | Out-Null
     New-Item -ItemType Directory -Path "$finalDir\lib" -Force | Out-Null
@@ -235,13 +219,11 @@ if ($Publish) {
     # Copy launcher to root
     Copy-Item -Path "publish\launcher-win\Simitone.exe" -Destination "$finalDir\Simitone.exe"
     
-    # Move all published files to lib/
-    Get-ChildItem -Path $publishDir | ForEach-Object {
-        Move-Item -Path $_.FullName -Destination "$finalDir\lib\" -Force
-    }
+    # Copy all build output files to lib/
+    Write-Host "  Copying build output to lib/..." -ForegroundColor Gray
+    Copy-Item -Path "$buildOutput\*" -Destination "$finalDir\lib\" -Recurse -Force
     
     # Clean up temporary directories
-    Remove-Item -Path $publishDir -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -Path "publish\launcher-win" -Recurse -Force -ErrorAction SilentlyContinue
     
     Write-Host ""
@@ -253,6 +235,9 @@ if ($Publish) {
     Write-Host "  Simitone-Windows/" -ForegroundColor White
     Write-Host "    Simitone.exe      <- Run this!" -ForegroundColor Green
     Write-Host "    lib/              <- Game files (don't modify)" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "NOTE: This package requires .NET 9.0 runtime to be installed on the target machine." -ForegroundColor Yellow
+    Write-Host "      Download from: https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Yellow
     exit 0
 }
 
