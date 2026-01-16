@@ -27,10 +27,13 @@ namespace Simitone.Windows.UI
 
         private void BuildContent()
         {
-            // Header label
+            var headerText = installations.Count > 0
+                ? "Multiple The Sims 1 installations were detected. Please select one:"
+                : "No installations found. Click Browse to locate your The Sims 1 folder:";
+            
             var headerLabel = new Label
             {
-                Text = "Multiple The Sims 1 installations were detected. Please select one:",
+                Text = headerText,
                 Font = SystemFonts.Bold()
             };
 
@@ -129,25 +132,35 @@ namespace Simitone.Windows.UI
 
         private void BrowseForInstallation()
         {
-            var dialog = new SelectFolderDialog
+            string? selectedPath = null;
+            
+            using (var dialog = new SelectFolderDialog())
             {
-                Title = "Select The Sims 1 Installation Folder"
-            };
-
-            if (dialog.ShowDialog(this) == DialogResult.Ok)
-            {
-                var selectedPath = dialog.Directory;
+                dialog.Title = "Select The Sims 1 Installation Folder";
                 
+                if (dialog.ShowDialog(this) == DialogResult.Ok)
+                {
+                    selectedPath = dialog.Directory;
+                }
+            }
+            
+            if (selectedPath != null)
+            {
                 // Validate it's a real TS1 installation
                 var behaviorPath = System.IO.Path.Combine(selectedPath, "GameData", "Behavior.iff");
                 if (System.IO.File.Exists(behaviorPath))
                 {
-                    Close(new InstallationSelectionResult
-                    {
-                        Path = selectedPath.Replace('\\', '/') + "/",
-                        IsSteam = false, // Manually selected, assume not Steam
-                        Source = "browse"
-                    });
+                    // Normalize the path
+                    var normalizedPath = selectedPath.Replace('\\', '/');
+                    if (!normalizedPath.EndsWith("/")) normalizedPath += "/";
+                    
+                    // Add to the list and select it
+                    var newInstall = new InstallationInfo("Custom Location", normalizedPath, GameLocator.TS1InstallationType.Portable);
+                    installations.Add(newInstall);
+                    
+                    // Refresh the grid and select the new item
+                    installationGrid.DataStore = installations;
+                    installationGrid.SelectedRow = installations.Count - 1;
                 }
                 else
                 {
