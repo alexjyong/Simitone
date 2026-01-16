@@ -147,7 +147,7 @@ namespace Simitone.Windows.UI
                     if (!normalizedPath.EndsWith("/")) normalizedPath += "/";
                     
                     // Add to the list and select it
-                    var newInstall = new InstallationInfo("Custom Location", normalizedPath, GameLocator.TS1InstallationType.Classic);
+                    var newInstall = new InstallationInfo("Custom Location", normalizedPath, GameLocator.TS1InstallationType.Portable);
                     installations.Add(newInstall);
                     
                     // Refresh the grid and select the new item
