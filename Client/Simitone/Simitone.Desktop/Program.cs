@@ -172,9 +172,15 @@ namespace Simitone.Windows
                         
                         try
                         {
+                            // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
+                            var savedDir = Directory.GetCurrentDirectory();
+                            
                             var app = new Application(Eto.Platform.Detect);
                             var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
                             var result = dialog.ShowModal();
+                            
+                            // Restore current directory after dialog closes
+                            Directory.SetCurrentDirectory(savedDir);
 
                             if (result != null)
                             {
@@ -231,9 +237,15 @@ namespace Simitone.Windows
                         
                         try
                         {
+                            // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
+                            var savedDir = Directory.GetCurrentDirectory();
+                            
                             var app = new Application(Eto.Platform.Detect);
                             var dialog = new InstallationSelectorDialog(installInfos);
                             var result = dialog.ShowModal();
+                            
+                            // Restore current directory after dialog closes
+                            Directory.SetCurrentDirectory(savedDir);
 
                             if (result != null)
                             {
