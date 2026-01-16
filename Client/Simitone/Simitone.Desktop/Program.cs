@@ -175,9 +175,12 @@ namespace Simitone.Windows
                             // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
                             var savedDir = Directory.GetCurrentDirectory();
                             
-                            var app = new Application(Eto.Platform.Detect);
-                            var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
-                            var result = dialog.ShowModal();
+                            InstallationSelectionResult? result = null;
+                            using (var app = new Application(Eto.Platform.Detect))
+                            using (var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>()))
+                            {
+                                result = dialog.ShowModal();
+                            }
                             
                             // Restore current directory after dialog closes
                             Directory.SetCurrentDirectory(savedDir);
@@ -240,9 +243,12 @@ namespace Simitone.Windows
                             // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
                             var savedDir = Directory.GetCurrentDirectory();
                             
-                            var app = new Application(Eto.Platform.Detect);
-                            var dialog = new InstallationSelectorDialog(installInfos);
-                            var result = dialog.ShowModal();
+                            InstallationSelectionResult? result = null;
+                            using (var app = new Application(Eto.Platform.Detect))
+                            using (var dialog = new InstallationSelectorDialog(installInfos))
+                            {
+                                result = dialog.ShowModal();
+                            }
                             
                             // Restore current directory after dialog closes
                             Directory.SetCurrentDirectory(savedDir);
