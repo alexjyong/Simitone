@@ -142,12 +142,17 @@ namespace Simitone.Windows.UI
                 var behaviorPath = System.IO.Path.Combine(selectedPath, "GameData", "Behavior.iff");
                 if (System.IO.File.Exists(behaviorPath))
                 {
-                    Close(new InstallationSelectionResult
-                    {
-                        Path = selectedPath.Replace('\\', '/') + "/",
-                        IsSteam = false, // Manually selected, assume not Steam
-                        Source = "browse"
-                    });
+                    // Normalize the path
+                    var normalizedPath = selectedPath.Replace('\\', '/');
+                    if (!normalizedPath.EndsWith("/")) normalizedPath += "/";
+                    
+                    // Add to the list and select it
+                    var newInstall = new InstallationInfo("Custom Location", normalizedPath, GameLocator.TS1InstallationType.Classic);
+                    installations.Add(newInstall);
+                    
+                    // Refresh the grid and select the new item
+                    installationGrid.DataStore = installations;
+                    installationGrid.SelectedRow = installations.Count - 1;
                 }
                 else
                 {
