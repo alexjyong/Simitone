@@ -172,9 +172,23 @@ namespace Simitone.Windows
                         
                         try
                         {
-                            var app = new Application(Eto.Platform.Detect);
-                            var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
-                            var result = dialog.ShowModal();
+                            // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
+                            var savedDir = Directory.GetCurrentDirectory();
+                            
+                            InstallationSelectionResult? result = null;
+                            using (var app = new Application(Eto.Platform.Detect))
+                            {
+                                using (var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>()))
+                                {
+                                    result = dialog.ShowModal();
+                                    dialog.Visible = false;
+                                }
+                                // Process pending events to ensure dialog is fully closed
+                                app.RunIteration();
+                            }
+                            
+                            // Restore current directory after dialog closes
+                            Directory.SetCurrentDirectory(savedDir);
 
                             if (result != null)
                             {
@@ -231,9 +245,23 @@ namespace Simitone.Windows
                         
                         try
                         {
-                            var app = new Application(Eto.Platform.Detect);
-                            var dialog = new InstallationSelectorDialog(installInfos);
-                            var result = dialog.ShowModal();
+                            // Save current directory - Eto.Forms file dialogs on Linux (GTK) can change the working directory
+                            var savedDir = Directory.GetCurrentDirectory();
+                            
+                            InstallationSelectionResult? result = null;
+                            using (var app = new Application(Eto.Platform.Detect))
+                            {
+                                using (var dialog = new InstallationSelectorDialog(installInfos))
+                                {
+                                    result = dialog.ShowModal();
+                                    dialog.Visible = false;
+                                }
+                                // Process pending events to ensure dialog is fully closed
+                                app.RunIteration();
+                            }
+                            
+                            // Restore current directory after dialog closes
+                            Directory.SetCurrentDirectory(savedDir);
 
                             if (result != null)
                             {
