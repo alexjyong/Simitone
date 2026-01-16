@@ -27,10 +27,13 @@ namespace Simitone.Windows.UI
 
         private void BuildContent()
         {
-            // Header label
+            var headerText = installations.Count > 0
+                ? "Multiple The Sims 1 installations were detected. Please select one:"
+                : "No installations found. Click Browse to locate your The Sims 1 folder:";
+            
             var headerLabel = new Label
             {
-                Text = "Multiple The Sims 1 installations were detected. Please select one:",
+                Text = headerText,
                 Font = SystemFonts.Bold()
             };
 
