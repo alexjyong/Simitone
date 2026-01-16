@@ -177,9 +177,14 @@ namespace Simitone.Windows
                             
                             InstallationSelectionResult? result = null;
                             using (var app = new Application(Eto.Platform.Detect))
-                            using (var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>()))
                             {
-                                result = dialog.ShowModal();
+                                using (var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>()))
+                                {
+                                    result = dialog.ShowModal();
+                                    dialog.Visible = false;
+                                }
+                                // Process pending events to ensure dialog is fully closed
+                                app.RunIteration();
                             }
                             
                             // Restore current directory after dialog closes
@@ -245,9 +250,14 @@ namespace Simitone.Windows
                             
                             InstallationSelectionResult? result = null;
                             using (var app = new Application(Eto.Platform.Detect))
-                            using (var dialog = new InstallationSelectorDialog(installInfos))
                             {
-                                result = dialog.ShowModal();
+                                using (var dialog = new InstallationSelectorDialog(installInfos))
+                                {
+                                    result = dialog.ShowModal();
+                                    dialog.Visible = false;
+                                }
+                                // Process pending events to ensure dialog is fully closed
+                                app.RunIteration();
                             }
                             
                             // Restore current directory after dialog closes

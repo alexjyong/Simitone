@@ -129,15 +129,20 @@ namespace Simitone.Windows.UI
 
         private void BrowseForInstallation()
         {
-            var dialog = new SelectFolderDialog
+            string? selectedPath = null;
+            
+            using (var dialog = new SelectFolderDialog())
             {
-                Title = "Select The Sims 1 Installation Folder"
-            };
-
-            if (dialog.ShowDialog(this) == DialogResult.Ok)
-            {
-                var selectedPath = dialog.Directory;
+                dialog.Title = "Select The Sims 1 Installation Folder";
                 
+                if (dialog.ShowDialog(this) == DialogResult.Ok)
+                {
+                    selectedPath = dialog.Directory;
+                }
+            }
+            
+            if (selectedPath != null)
+            {
                 // Validate it's a real TS1 installation
                 var behaviorPath = System.IO.Path.Combine(selectedPath, "GameData", "Behavior.iff");
                 if (System.IO.File.Exists(behaviorPath))
