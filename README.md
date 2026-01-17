@@ -3,7 +3,7 @@
 # Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
-[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.15-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.15-forked/Simitone-SelfContained-Linux-x64-Release.zip) 
+[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.16-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.16-forked/Simitone-Linux-x64-Release.zip) 
 
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
@@ -38,6 +38,13 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 1. **Download** the [latest release](https://github.com/alexjyong/Simitone/releases/latest/)
 2. **Extract** the ZIP to your preferred location
 3. **Run** `Simitone.exe`
+
+**Package Structure:**
+```
+Simitone-Windows/
+  Simitone.exe      <- Run this!
+  lib/              <- Game files (don't modify)
+```
 
 ### First-Time Setup
 
@@ -117,6 +124,14 @@ TS1InstallationConfigured=true
 1. **Download** the [latest self-contained release](https://github.com/alexjyong/Simitone/releases/latest/) for your operating system
 2. **Extract** the archive to your preferred location
 3. **Run** `./Simitone`
+
+**Package Structure:**
+```
+Simitone-Linux-x64/          (or Simitone-macOS-x64, Simitone-macOS-arm64)
+  Simitone              <- Run this!
+  simitone.desktop      <- Linux only: for desktop integration
+  lib/                  <- Game files (don't modify)
+```
 
 ### First-Time Setup
 
@@ -298,6 +313,7 @@ List of options you can use with the script
 .\build.ps1 -CleanAll                # Deep clean (includes FreeSO submodule and its submodules!)
 .\build.ps1 -Run                     # Build and run immediately
 .\build.ps1 -Clean -Run              # Clean, build, and run
+.\build.ps1 -Publish                 # Create distributable package with launcher
 
 # Advanced options
 .\build.ps1 -SkipSubmodules          # Skip submodule initialization
@@ -432,9 +448,9 @@ brew install sdl2                          # macOS
 cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 ./Simitone -path"/fully/qualified/path/to/The Sims/"
 
-#if you made a self-contained release, you can run it like so
-
-publish/$os_platform/Simitone -path"/fully/qualified/path/to/The Sims/"
+# If you made a self-contained release, run it like so:
+cd publish/Simitone-Linux-x64/   # or Simitone-macOS-x64, Simitone-macOS-arm64
+./Simitone -path"/fully/qualified/path/to/The Sims/"
 ```
 
 ## Troubleshooting
