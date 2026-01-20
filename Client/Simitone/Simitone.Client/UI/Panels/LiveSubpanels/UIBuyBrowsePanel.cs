@@ -329,6 +329,10 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         public bool HoldingEvents;
 
+        // Eyedropper tool support
+        public UICatButton EyedropperButton;
+        private bool EyedropperMode;
+
         public UIBuyBrowsePanel(TS1GameScreen screen, sbyte category, UICatalogMode mode) : base(screen) {
             CatContainer = new UITouchScroll(() => FilterCategory?.Count() ?? 0, CatalogElemProvider);
             CatContainer.ItemWidth = 90;
@@ -347,7 +351,70 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             screen.LotControl.ObjectHolder.OnPickup += ObjectHolder_OnPickup;
             screen.LotControl.ObjectHolder.OnPutDown += ObjectHolder_OnPutDown;
             screen.LotControl.ObjectHolder.OnDelete += ObjectHolder_OnDelete;
+            screen.LotControl.ObjectHolder.OnEyedropperPick += ObjectHolder_OnEyedropperPick;
             HoldingEvents = true;
+
+            // Create eyedropper button - TODO: Replace cat_eyedropper.png with a proper eyedropper icon
+            var ui = Content.Get().CustomUI;
+            EyedropperButton = new UICatButton(ui.Get("cat_eyedropper.png").Get(GameFacade.GraphicsDevice));
+            EyedropperButton.Y = 8;
+            EyedropperButton.X = 8; // Position at left side
+            EyedropperButton.OnButtonClick += ToggleEyedropper;
+            Add(EyedropperButton);
+        }
+
+        private void ToggleEyedropper(UIElement btn)
+        {
+            EyedropperMode = !EyedropperMode;
+            EyedropperButton.Selected = EyedropperMode;
+            Game.LotControl.ObjectHolder.EyedropperMode = EyedropperMode;
+        }
+
+        private void ObjectHolder_OnEyedropperPick(uint guid)
+        {
+            // Turn off eyedropper mode
+            EyedropperMode = false;
+            EyedropperButton.Selected = false;
+            Game.LotControl.ObjectHolder.EyedropperMode = false;
+
+            // Select the item in catalog
+            SelectItemByGUID(guid);
+        }
+
+        /// <summary>
+        /// Finds an item by GUID in the current catalog and selects it.
+        /// </summary>
+        public void SelectItemByGUID(uint guid)
+        {
+            if (FilterCategory == null) return;
+
+            // Find the item index in the current filtered category
+            int index = 0;
+            foreach (var item in FilterCategory)
+            {
+                if (item.Item.GUID == guid)
+                {
+                    // Found it - select it
+                    Selected(index);
+                    return;
+                }
+                index++;
+            }
+
+            // If not found in current category, search in FullCategory
+            index = 0;
+            foreach (var item in FullCategory)
+            {
+                if (item.Item.GUID == guid)
+                {
+                    // Found it - need to show all items first, then select
+                    FilterCategory = FullCategory;
+                    CatContainer.Reset();
+                    Selected(index);
+                    return;
+                }
+                index++;
+            }
         }
 
         private void ObjectHolder_OnDelete(UIObjectSelection holding, UpdateState state)
@@ -392,6 +459,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 Game.LotControl.ObjectHolder.OnPickup -= ObjectHolder_OnPickup;
                 Game.LotControl.ObjectHolder.OnPutDown -= ObjectHolder_OnPutDown;
                 Game.LotControl.ObjectHolder.OnDelete -= ObjectHolder_OnDelete;
+                Game.LotControl.ObjectHolder.OnEyedropperPick -= ObjectHolder_OnEyedropperPick;
+                Game.LotControl.ObjectHolder.EyedropperMode = false;
                 Game.LotControl.QueryPanel.Active = false;
                 Game.Frontend.MainPanel.SetSubpanelPickup(1f);
 

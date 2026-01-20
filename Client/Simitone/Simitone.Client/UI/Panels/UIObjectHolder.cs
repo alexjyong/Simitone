@@ -50,6 +50,11 @@ namespace Simitone.Client.UI.Panels
         public bool Roommate = true;
         public bool UseNet = false;
 
+        // Eyedropper tool support
+        public bool EyedropperMode;
+        public event EyedropperEventHandler OnEyedropperPick;
+        public delegate void EyedropperEventHandler(uint guid);
+
         public event HolderEventHandler OnPickup;
         public event HolderEventHandler OnDelete;
         public event HolderEventHandler OnPutDown;
@@ -412,7 +417,23 @@ namespace Simitone.Client.UI.Panels
             {
                 //not holding an object, but one can be selected
                 var newHover = World.GetObjectIDAtScreenPos(state.MouseState.X, state.MouseState.Y, GameFacade.GraphicsDevice);
-                if (MouseClicked && (newHover != 0) && (vm.GetObjectById(newHover) is VMGameObject))
+
+                // Eyedropper mode - pick object GUID instead of selecting to move
+                if (EyedropperMode && newHover != 0 && vm.GetObjectById(newHover) is VMGameObject)
+                {
+                    var obj = vm.GetObjectById(newHover);
+                    uint guid = obj.Object.OBJ.GUID;
+                    if (obj.MasterDefinition != null) guid = obj.MasterDefinition.GUID;
+
+                    var catalogItem = Content.Get().WorldCatalog.GetItemByGUID(guid);
+                    if (catalogItem != null)
+                    {
+                        OnEyedropperPick?.Invoke(guid);
+                        HITVM.Get().PlaySoundEvent(UISounds.ObjectPlace);
+                    }
+                    // Don't process normal click when in eyedropper mode
+                }
+                else if (MouseClicked && (newHover != 0) && (vm.GetObjectById(newHover) is VMGameObject))
                 {
                     var objGroup = vm.GetObjectById(newHover).MultitileGroup;
                     var objBasePos = objGroup.BaseObject.Position;
