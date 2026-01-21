@@ -91,42 +91,45 @@ namespace Simitone.Client.UI.Panels.Desktop
             FriendIcon = new UIImage(ui.Get("d_live_friend.png").Get(gd)) { Position = new Vector2(156, 186) };
             Add(FriendIcon);
 
-            // Eyedropper button - visible only in Buy/Build mode
+            // Eyedropper button - visible only in Buy mode (Build mode not yet supported)
             Add(EyedropperButton = new UIStencilButton(ui.Get("d_live_eyedropper.png").Get(gd))
             {
-                Position = new Vector2(196, 180),
+                Position = new Vector2(155, 164),
                 Shadow = true,
-                ShadowParam = sDir
+                ShadowParam = sDir,
+                Tooltip = "Eyedropper Tool"
             });
             EyedropperButton.OnButtonClick += ToggleEyedropper;
             EyedropperButton.Visible = false; // Hidden by default (LIVE mode)
 
-            Add(LiveButton = new UIButton(ui.Get("d_live_live.png").Get(gd)) { Position = new Vector2(15, 2) });
-            Add(BuyButton = new UIButton(ui.Get("d_live_buy.png").Get(gd)) { Position = new Vector2(107, 27) });
-            Add(BuildButton = new UIButton(ui.Get("d_live_build.png").Get(gd)) { Position = new Vector2(179, 80) });
-            Add(OptionsButton = new UIButton(ui.Get("d_live_opt.png").Get(gd)) { Position = new Vector2(242, 165) });
+            Add(LiveButton = new UIButton(ui.Get("d_live_live.png").Get(gd)) { Position = new Vector2(15, 2), Tooltip = "Live Mode" });
+            Add(BuyButton = new UIButton(ui.Get("d_live_buy.png").Get(gd)) { Position = new Vector2(107, 27), Tooltip = "Buy Mode" });
+            Add(BuildButton = new UIButton(ui.Get("d_live_build.png").Get(gd)) { Position = new Vector2(179, 80), Tooltip = "Build Mode" });
+            Add(OptionsButton = new UIButton(ui.Get("d_live_opt.png").Get(gd)) { Position = new Vector2(242, 165), Tooltip = "Options" });
 
-            Add(FloorUpButton = new UIStencilButton(ui.Get("d_live_floorup.png").Get(gd)) { Position = new Vector2(16, 150), Shadow = true, ShadowParam = sDir });
-            Add(FloorDownButton = new UIStencilButton(ui.Get("d_live_floordown.png").Get(gd)) { Position = new Vector2(16, 192), Shadow = true, ShadowParam = sDir });
+            Add(FloorUpButton = new UIStencilButton(ui.Get("d_live_floorup.png").Get(gd)) { Position = new Vector2(16, 150), Shadow = true, ShadowParam = sDir, Tooltip = "Floor Up" });
+            Add(FloorDownButton = new UIStencilButton(ui.Get("d_live_floordown.png").Get(gd)) { Position = new Vector2(16, 192), Shadow = true, ShadowParam = sDir, Tooltip = "Floor Down" });
 
-            Add(RoofButton = new UIStencilButton(ui.Get("d_live_w1.png").Get(gd)) { Position = new Vector2(15, 111), Shadow = true, ShadowParam = sDir });
-            Add(WallsUpButton = new UIStencilButton(ui.Get("d_live_w2.png").Get(gd)) { Position = new Vector2(50, 107), Shadow = true, ShadowParam = sDir });
-            Add(WallsCutButton = new UIStencilButton(ui.Get("d_live_w3.png").Get(gd)) { Position = new Vector2(86, 112), Shadow = true, ShadowParam = sDir });
-            Add(WallsDownButton = new UIStencilButton(ui.Get("d_live_w4.png").Get(gd)) { Position = new Vector2(117, 122), Shadow = true, ShadowParam = sDir });
+            Add(RoofButton = new UIStencilButton(ui.Get("d_live_w1.png").Get(gd)) { Position = new Vector2(15, 111), Shadow = true, ShadowParam = sDir, Tooltip = "Roof" });
+            Add(WallsUpButton = new UIStencilButton(ui.Get("d_live_w2.png").Get(gd)) { Position = new Vector2(50, 107), Shadow = true, ShadowParam = sDir, Tooltip = "Walls Up" });
+            Add(WallsCutButton = new UIStencilButton(ui.Get("d_live_w3.png").Get(gd)) { Position = new Vector2(86, 112), Shadow = true, ShadowParam = sDir, Tooltip = "Walls Cutaway" });
+            Add(WallsDownButton = new UIStencilButton(ui.Get("d_live_w4.png").Get(gd)) { Position = new Vector2(117, 122), Shadow = true, ShadowParam = sDir, Tooltip = "Walls Down" });
 
-            Add(ZoomInButton = new UIStencilButton(ui.Get("d_live_zoomp.png").Get(gd)) { Position = new Vector2(87, 154) });
-            Add(ZoomOutButton = new UIStencilButton(ui.Get("d_live_zoomm.png").Get(gd)) { Position = new Vector2(87, 196) });
-            Add(RotateCWButton = new UIStencilButton(ui.Get("d_live_rotcw.png").Get(gd)) { Position = new Vector2(62, 175) });
-            Add(RotateCCWButton = new UIStencilButton(ui.Get("d_live_rotccw.png").Get(gd)) { Position = new Vector2(114, 175) });
+            Add(ZoomInButton = new UIStencilButton(ui.Get("d_live_zoomp.png").Get(gd)) { Position = new Vector2(87, 154), Tooltip = "Zoom In" });
+            Add(ZoomOutButton = new UIStencilButton(ui.Get("d_live_zoomm.png").Get(gd)) { Position = new Vector2(87, 196), Tooltip = "Zoom Out" });
+            Add(RotateCWButton = new UIStencilButton(ui.Get("d_live_rotcw.png").Get(gd)) { Position = new Vector2(62, 175), Tooltip = "Rotate Clockwise" });
+            Add(RotateCCWButton = new UIStencilButton(ui.Get("d_live_rotccw.png").Get(gd)) { Position = new Vector2(114, 175), Tooltip = "Rotate Counter-Clockwise" });
 
             SpeedButtons = new UIButton[4];
+            var speedTooltips = new string[] { "Pause", "Normal Speed", "Fast", "Ultra Fast" };
             for (int i=0; i<4; i++)
             {
                 Add(SpeedButtons[i] = new UIStencilButton(ui.Get($"d_live_speed{i+1}.png").Get(gd))
                 {
                     Position = new Vector2(158 + 30 * i, 246),
                     Shadow = true,
-                    ShadowParam = sDir
+                    ShadowParam = sDir,
+                    Tooltip = speedTooltips[i]
                 });
                 var speed = i + 1;
                 SpeedButtons[i].OnButtonClick += (btn) =>

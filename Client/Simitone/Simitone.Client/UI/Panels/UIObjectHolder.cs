@@ -26,6 +26,7 @@ using FSO.Client.UI.Controls;
 using FSO.Common.Rendering.Framework;
 using FSO.Content;
 using FSO.Client;
+using Simitone.Client.Utils;
 
 namespace Simitone.Client.UI.Panels
 {
@@ -465,7 +466,14 @@ namespace Simitone.Client.UI.Panels
 
             if (ParentControl.MouseIsOn && !ParentControl.RMBScroll)
             {
-                GameFacade.Cursor.SetCursor(cur);
+                if (EyedropperMode && Holding == null)
+                {
+                    SimitoneCursors.SetEyedropperCursor();
+                }
+                else
+                {
+                    GameFacade.Cursor.SetCursor(cur);
+                }
             }
 
             MouseWasDown = MouseIsDown;
