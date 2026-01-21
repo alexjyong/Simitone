@@ -15,6 +15,7 @@ namespace Simitone.Client.Utils
     {
         private static MouseCursor EyedropperCursor;
         private static bool Initialized;
+        private static bool EyedropperActive;
 
         /// <summary>
         /// Initialize Simitone-specific cursors.
@@ -47,9 +48,14 @@ namespace Simitone.Client.Utils
 
         /// <summary>
         /// Sets the eyedropper cursor if available, otherwise uses a fallback.
+        /// Uses high priority to prevent CursorManager from overriding it.
         /// </summary>
         public static void SetEyedropperCursor()
         {
+            // Use high priority to prevent other cursor changes from overriding
+            CursorManager.INSTANCE?.SetCursorPriority(10);
+            EyedropperActive = true;
+
             if (EyedropperCursor != null)
             {
                 Mouse.SetCursor(EyedropperCursor);
@@ -58,6 +64,19 @@ namespace Simitone.Client.Utils
             {
                 // Fallback to LiveObjectAvail if custom cursor not available
                 CursorManager.INSTANCE?.SetCursor(CursorType.LiveObjectAvail);
+            }
+        }
+
+        /// <summary>
+        /// Clears the eyedropper cursor priority, allowing normal cursor handling.
+        /// Call this when eyedropper mode is disabled.
+        /// </summary>
+        public static void ClearEyedropperCursor()
+        {
+            if (EyedropperActive)
+            {
+                CursorManager.INSTANCE?.SetCursorPriority(0);
+                EyedropperActive = false;
             }
         }
 
