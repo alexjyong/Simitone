@@ -76,13 +76,8 @@ namespace Simitone.Client.Utils
             }
             else
             {
-                // Fallback - set directly via Mouse to bypass CursorManager state
-                var group = CursorManager.INSTANCE?.GetCurrentGroup();
-                if (CursorManager.INSTANCE != null)
-                {
-                    // Force set SimsRotate as fallback (visually distinct)
-                    Mouse.SetCursor(MouseCursor.Crosshair);
-                }
+                // Fallback to crosshair if custom cursor not available
+                Mouse.SetCursor(MouseCursor.Crosshair);
             }
         }
 
