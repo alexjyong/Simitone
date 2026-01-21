@@ -332,6 +332,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         // Eyedropper tool support
         public UICatButton EyedropperButton;
         private bool EyedropperMode;
+        private bool CheckedPendingEyedropper;
 
         public UIBuyBrowsePanel(TS1GameScreen screen, sbyte category, UICatalogMode mode) : base(screen) {
             CatContainer = new UITouchScroll(() => FilterCategory?.Count() ?? 0, CatalogElemProvider);
@@ -361,6 +362,25 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             EyedropperButton.X = 8; // Position at left side
             EyedropperButton.OnButtonClick += ToggleEyedropper;
             Add(EyedropperButton);
+
+        }
+
+        /// <summary>
+        /// Checks if there's a pending eyedropper GUID to select after a category switch.
+        /// Called from Update since Parent may not be set during constructor.
+        /// </summary>
+        private void CheckPendingEyedropperSelection()
+        {
+            if (CheckedPendingEyedropper) return;
+            CheckedPendingEyedropper = true;
+
+            var mainPanel = Parent as UIMainPanel;
+            if (mainPanel?.PendingEyedropperGUID != null)
+            {
+                var guid = mainPanel.PendingEyedropperGUID.Value;
+                mainPanel.PendingEyedropperGUID = null;
+                SelectItemInCurrentCategory(guid);
+            }
         }
 
         private void ToggleEyedropper(UIElement btn)
@@ -382,38 +402,89 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         }
 
         /// <summary>
-        /// Finds an item by GUID in the current catalog and selects it.
+        /// Finds an item by GUID in the catalog and selects it.
+        /// If the item is in a different category, switches to that category first.
         /// </summary>
         public void SelectItemByGUID(uint guid)
         {
-            if (FilterCategory == null) return;
+            // First, look up the item in the world catalog to find its category
+            var catalogItem = Content.Get().WorldCatalog.GetItemByGUID(guid);
+            if (catalogItem == null) return;
 
-            // Find the item index in the current filtered category
-            int index = 0;
-            foreach (var item in FilterCategory)
+            var targetCategory = catalogItem.Value.Category;
+
+            // Check if item is in a different category
+            if (targetCategory != Category)
             {
-                if (item.Item.GUID == guid)
+                // Store the GUID to select after category switch
+                var mainPanel = Parent as UIMainPanel;
+                if (mainPanel != null)
                 {
-                    // Found it - select it
-                    Selected(index);
-                    return;
+                    mainPanel.PendingEyedropperGUID = guid;
+                    // Switch to the target category - this will create a new panel
+                    mainPanel.Switcher.Select(targetCategory);
                 }
-                index++;
+                return;
             }
 
-            // If not found in current category, search in FullCategory
-            index = 0;
+            // Item is in this category - select it
+            SelectItemInCurrentCategory(guid);
+        }
+
+        /// <summary>
+        /// Selects an item by GUID within the current category.
+        /// </summary>
+        private void SelectItemInCurrentCategory(uint guid)
+        {
+            // If we're still choosing subcategory, skip to show all items
+            if (ChoosingSub)
+            {
+                ChoosingSub = false;
+                foreach (var btn in SelButtons)
+                {
+                    Remove(btn);
+                }
+                foreach (var label in SelLabels)
+                {
+                    Remove(label);
+                }
+                SelButtons.Clear();
+                SelLabels.Clear();
+
+                // Show all items in this category
+                FilterCategory = FullCategory.Where(x => GetSubsort(x.Item) > 0);
+                CatContainer.Opacity = 1f;
+                CatContainer.Reset();
+            }
+
+            // Search in FilterCategory first
+            if (FilterCategory != null)
+            {
+                int index = 0;
+                foreach (var item in FilterCategory)
+                {
+                    if (item.Item.GUID == guid)
+                    {
+                        Selected(index);
+                        return;
+                    }
+                    index++;
+                }
+            }
+
+            // If not found in filtered, search in FullCategory
+            int fullIndex = 0;
             foreach (var item in FullCategory)
             {
                 if (item.Item.GUID == guid)
                 {
-                    // Found it - need to show all items first, then select
+                    // Show all items and select
                     FilterCategory = FullCategory;
                     CatContainer.Reset();
-                    Selected(index);
+                    Selected(fullIndex);
                     return;
                 }
-                index++;
+                fullIndex++;
             }
         }
 
@@ -853,6 +924,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         public override void Update(UpdateState state)
         {
+            // Check for pending eyedropper selection (after category switch)
+            CheckPendingEyedropperSelection();
+
             Invalidate();
             var first = SelButtons.FirstOrDefault();
             if (first != null && first.Opacity == 0)

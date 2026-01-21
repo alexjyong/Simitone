@@ -57,6 +57,9 @@ namespace Simitone.Client.UI.Panels
         public event Action OnEndSelect;
         public event Action<UIMainPanelMode> ModeChanged;
 
+        // Eyedropper tool support - stores GUID to select after category switch
+        public uint? PendingEyedropperGUID;
+
         public string[] FloorNames = new string[]
         {
             "1st",
