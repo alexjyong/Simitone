@@ -15,7 +15,6 @@ namespace Simitone.Client.Utils
     {
         private static MouseCursor EyedropperCursor;
         private static bool Initialized;
-        private static bool EyedropperActive;
 
         /// <summary>
         /// Initialize Simitone-specific cursors.
@@ -48,35 +47,22 @@ namespace Simitone.Client.Utils
 
         /// <summary>
         /// Sets the eyedropper cursor if available, otherwise uses a fallback.
-        /// Uses high priority to prevent CursorManager from overriding it.
         /// </summary>
         public static void SetEyedropperCursor()
         {
-            // Use high priority to prevent other cursor changes from overriding
-            CursorManager.INSTANCE?.SetCursorPriority(10);
-            EyedropperActive = true;
-
             if (EyedropperCursor != null)
             {
                 Mouse.SetCursor(EyedropperCursor);
             }
             else
             {
-                // Fallback to LiveObjectAvail if custom cursor not available
-                CursorManager.INSTANCE?.SetCursor(CursorType.LiveObjectAvail);
-            }
-        }
-
-        /// <summary>
-        /// Clears the eyedropper cursor priority, allowing normal cursor handling.
-        /// Call this when eyedropper mode is disabled.
-        /// </summary>
-        public static void ClearEyedropperCursor()
-        {
-            if (EyedropperActive)
-            {
-                CursorManager.INSTANCE?.SetCursorPriority(0);
-                EyedropperActive = false;
+                // Fallback - set directly via Mouse to bypass CursorManager state
+                var group = CursorManager.INSTANCE?.GetCurrentGroup();
+                if (CursorManager.INSTANCE != null)
+                {
+                    // Force set SimsRotate as fallback (visually distinct)
+                    Mouse.SetCursor(MouseCursor.Crosshair);
+                }
             }
         }
 
@@ -84,5 +70,6 @@ namespace Simitone.Client.Utils
         /// Returns true if the eyedropper cursor was loaded successfully.
         /// </summary>
         public static bool HasEyedropperCursor => EyedropperCursor != null;
+    }
     }
 }

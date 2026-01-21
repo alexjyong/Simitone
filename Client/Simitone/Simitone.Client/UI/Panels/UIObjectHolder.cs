@@ -472,14 +472,8 @@ namespace Simitone.Client.UI.Panels
                 }
                 else
                 {
-                    SimitoneCursors.ClearEyedropperCursor();
                     GameFacade.Cursor.SetCursor(cur);
                 }
-            }
-            else
-            {
-                // Mouse left the area or scrolling - clear eyedropper cursor priority
-                SimitoneCursors.ClearEyedropperCursor();
             }
 
             MouseWasDown = MouseIsDown;
