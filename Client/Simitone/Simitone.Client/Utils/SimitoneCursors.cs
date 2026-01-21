@@ -26,14 +26,26 @@ namespace Simitone.Client.Utils
             // Load the eyedropper cursor from the Content folder
             var cursorPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.cur");
             
-            // Debug: write to log file
-            var logPath = Path.Combine(FSOEnvironment.ContentDir, "cursor_debug.log");
+            // Debug: write to log file in same folder as executable
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cursor_debug.log");
             try
             {
+                File.WriteAllText(logPath, $"ContentDir: {FSOEnvironment.ContentDir}\n");
                 File.AppendAllText(logPath, $"Looking for cursor at: {cursorPath}\n");
                 File.AppendAllText(logPath, $"File exists: {File.Exists(cursorPath)}\n");
             }
-            catch { }
+            catch (Exception logEx) 
+            { 
+                // Try desktop as fallback
+                try
+                {
+                    var desktopLog = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cursor_debug.log");
+                    File.WriteAllText(desktopLog, $"ContentDir: {FSOEnvironment.ContentDir}\n");
+                    File.AppendAllText(desktopLog, $"Looking for cursor at: {cursorPath}\n");
+                    File.AppendAllText(desktopLog, $"File exists: {File.Exists(cursorPath)}\n");
+                }
+                catch { }
+            }
             
             if (File.Exists(cursorPath))
             {
@@ -49,7 +61,7 @@ namespace Simitone.Client.Utils
                 catch (Exception ex)
                 {
                     // Cursor file is invalid - will use fallback
-                    try { File.AppendAllText(logPath, $"Failed to load cursor: {ex.Message}\n"); } catch { }
+                    try { File.AppendAllText(logPath, $"Failed to load cursor: {ex.Message}\n{ex.StackTrace}\n"); } catch { }
                     EyedropperCursor = null;
                 }
             }
