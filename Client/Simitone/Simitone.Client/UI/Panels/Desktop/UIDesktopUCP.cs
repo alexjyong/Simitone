@@ -25,6 +25,7 @@ namespace Simitone.Client.UI.Panels.Desktop
     {
         public UIImage Background;
         public UIImage FriendIcon;
+        public UIButton EyedropperButton;
 
         public UIButton LiveButton;
         public UIButton BuyButton;
@@ -89,6 +90,16 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             FriendIcon = new UIImage(ui.Get("d_live_friend.png").Get(gd)) { Position = new Vector2(156, 186) };
             Add(FriendIcon);
+
+            // Eyedropper button - visible only in Buy/Build mode
+            Add(EyedropperButton = new UIStencilButton(ui.Get("d_live_eyedropper.png").Get(gd))
+            {
+                Position = new Vector2(196, 186),
+                Shadow = true,
+                ShadowParam = sDir
+            });
+            EyedropperButton.OnButtonClick += ToggleEyedropper;
+            EyedropperButton.Visible = false; // Hidden by default (LIVE mode)
 
             Add(LiveButton = new UIButton(ui.Get("d_live_live.png").Get(gd)) { Position = new Vector2(15, 2) });
             Add(BuyButton = new UIButton(ui.Get("d_live_buy.png").Get(gd)) { Position = new Vector2(107, 27) });
@@ -322,6 +333,12 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             if (LastZoom != Game.ZoomLevel) UpdateZoomButton();
 
+            // Sync eyedropper button state with ObjectHolder (for when it's auto-disabled after pick)
+            if (EyedropperButton.Visible && Game.LotControl?.ObjectHolder != null)
+            {
+                EyedropperButton.Selected = Game.LotControl.ObjectHolder.EyedropperMode;
+            }
+
             base.Update(state);
 
             //KEY SHORTCUTS
@@ -390,12 +407,29 @@ namespace Simitone.Client.UI.Panels.Desktop
             LastZoom = Game.ZoomLevel;
         }
 
+        private void ToggleEyedropper(UIElement btn)
+        {
+            var holder = Game.LotControl.ObjectHolder;
+            holder.EyedropperMode = !holder.EyedropperMode;
+            EyedropperButton.Selected = holder.EyedropperMode;
+        }
+
         public void SetMode(UIMainPanelMode mode)
         {
             LiveButton.Selected = mode == UIMainPanelMode.LIVE;
             BuyButton.Selected = mode == UIMainPanelMode.BUY;
             BuildButton.Selected = mode == UIMainPanelMode.BUILD;
             OptionsButton.Selected = mode == UIMainPanelMode.OPTIONS;
+
+            // Show eyedropper only in BUY or BUILD mode
+            EyedropperButton.Visible = (mode == UIMainPanelMode.BUY || mode == UIMainPanelMode.BUILD);
+            // Reset selection when changing modes
+            if (!EyedropperButton.Visible)
+            {
+                EyedropperButton.Selected = false;
+                if (Game.LotControl?.ObjectHolder != null)
+                    Game.LotControl.ObjectHolder.EyedropperMode = false;
+            }
         }
 
         public void DisplayChange(int change)

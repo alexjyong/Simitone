@@ -197,6 +197,16 @@ namespace Simitone.Client.UI.Controls
             Scroll = value;
         }
 
+        public void ScrollToItem(int itemIndex)
+        {
+            // Center the item in the visible area
+            var targetScroll = itemIndex * ItemWidth - (GetPAxis(Size) / 2) + (ItemWidth / 2);
+            // Clamp to valid scroll range
+            var length = LengthProvider();
+            Scroll = Math.Max(-Margin, Math.Min(length * ItemWidth - GetPAxis(Size) + Margin, targetScroll));
+            ScrollVelocity = 0; // Stop any ongoing momentum
+        }
+
         public override void Draw(UISpriteBatch batch)
         {
             if (!Visible) return;

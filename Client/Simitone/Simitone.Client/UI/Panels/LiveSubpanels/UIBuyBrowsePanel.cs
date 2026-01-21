@@ -329,9 +329,6 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         public bool HoldingEvents;
 
-        // Eyedropper tool support
-        public UICatButton EyedropperButton;
-        private bool EyedropperMode;
         private bool CheckedPendingEyedropper;
 
         public UIBuyBrowsePanel(TS1GameScreen screen, sbyte category, UICatalogMode mode) : base(screen) {
@@ -354,15 +351,6 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             screen.LotControl.ObjectHolder.OnDelete += ObjectHolder_OnDelete;
             screen.LotControl.ObjectHolder.OnEyedropperPick += ObjectHolder_OnEyedropperPick;
             HoldingEvents = true;
-
-            // Create eyedropper button - TODO: Replace cat_eyedropper.png with a proper eyedropper icon
-            var ui = Content.Get().CustomUI;
-            EyedropperButton = new UICatButton(ui.Get("cat_eyedropper.png").Get(GameFacade.GraphicsDevice));
-            EyedropperButton.Y = 8;
-            EyedropperButton.X = 8; // Position at left side
-            EyedropperButton.OnButtonClick += ToggleEyedropper;
-            Add(EyedropperButton);
-
         }
 
         /// <summary>
@@ -383,18 +371,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             }
         }
 
-        private void ToggleEyedropper(UIElement btn)
-        {
-            EyedropperMode = !EyedropperMode;
-            EyedropperButton.Selected = EyedropperMode;
-            Game.LotControl.ObjectHolder.EyedropperMode = EyedropperMode;
-        }
-
         private void ObjectHolder_OnEyedropperPick(uint guid)
         {
-            // Turn off eyedropper mode
-            EyedropperMode = false;
-            EyedropperButton.Selected = false;
+            // Turn off eyedropper mode (button state is synced in UIDesktopUCP)
             Game.LotControl.ObjectHolder.EyedropperMode = false;
 
             // Select the item in catalog
@@ -466,6 +445,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                     if (item.Item.GUID == guid)
                     {
                         Selected(index);
+                        CatContainer.ScrollToItem(index);
                         return;
                     }
                     index++;
@@ -482,6 +462,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                     FilterCategory = FullCategory;
                     CatContainer.Reset();
                     Selected(fullIndex);
+                    CatContainer.ScrollToItem(fullIndex);
                     return;
                 }
                 fullIndex++;

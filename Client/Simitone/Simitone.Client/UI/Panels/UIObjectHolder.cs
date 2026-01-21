@@ -429,7 +429,6 @@ namespace Simitone.Client.UI.Panels
                     if (catalogItem != null)
                     {
                         OnEyedropperPick?.Invoke(guid);
-                        HITVM.Get().PlaySoundEvent(UISounds.ObjectPlace);
                     }
                     // Don't process normal click when in eyedropper mode
                 }
