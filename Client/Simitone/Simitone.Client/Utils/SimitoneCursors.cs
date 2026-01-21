@@ -3,6 +3,7 @@ using FSO.Common.Rendering.Framework;
 using FSO.Common.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.IO;
 
 namespace Simitone.Client.Utils
@@ -26,10 +27,18 @@ namespace Simitone.Client.Utils
             var cursorPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.cur");
             if (File.Exists(cursorPath))
             {
-                using (var stream = File.Open(cursorPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                try
                 {
-                    var cursorData = CurLoader.LoadMonoCursor(gd, stream);
-                    EyedropperCursor = cursorData.MouseCursor;
+                    using (var stream = File.Open(cursorPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        var cursorData = CurLoader.LoadMonoCursor(gd, stream);
+                        EyedropperCursor = cursorData.MouseCursor;
+                    }
+                }
+                catch (Exception)
+                {
+                    // Cursor file is invalid - will use fallback
+                    EyedropperCursor = null;
                 }
             }
 
