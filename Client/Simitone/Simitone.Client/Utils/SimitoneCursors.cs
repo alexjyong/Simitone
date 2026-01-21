@@ -71,5 +71,4 @@ namespace Simitone.Client.Utils
         /// </summary>
         public static bool HasEyedropperCursor => EyedropperCursor != null;
     }
-    }
 }
