@@ -25,6 +25,16 @@ namespace Simitone.Client.Utils
 
             // Load the eyedropper cursor from the Content folder
             var cursorPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.cur");
+            
+            // Debug: write to log file
+            var logPath = Path.Combine(FSOEnvironment.ContentDir, "cursor_debug.log");
+            try
+            {
+                File.AppendAllText(logPath, $"Looking for cursor at: {cursorPath}\n");
+                File.AppendAllText(logPath, $"File exists: {File.Exists(cursorPath)}\n");
+            }
+            catch { }
+            
             if (File.Exists(cursorPath))
             {
                 try
@@ -33,11 +43,13 @@ namespace Simitone.Client.Utils
                     {
                         var cursorData = CurLoader.LoadMonoCursor(gd, stream);
                         EyedropperCursor = cursorData.MouseCursor;
+                        try { File.AppendAllText(logPath, "Cursor loaded successfully!\n"); } catch { }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Cursor file is invalid - will use fallback
+                    try { File.AppendAllText(logPath, $"Failed to load cursor: {ex.Message}\n"); } catch { }
                     EyedropperCursor = null;
                 }
             }
