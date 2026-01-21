@@ -207,6 +207,21 @@ namespace Simitone.Client.UI.Controls
             ScrollVelocity = 0; // Stop any ongoing momentum
         }
 
+        /// <summary>
+        /// Selects an item by its index programmatically, triggering the visual highlight.
+        /// </summary>
+        public void SelectItem(int itemIndex)
+        {
+            if (itemIndex < 0 || itemIndex >= LengthProvider()) return;
+            var rItem = GetOrPrepare(itemIndex);
+            if (rItem != null)
+            {
+                LastSelected?.Deselected();
+                rItem.Selected();
+                LastSelected = rItem;
+            }
+        }
+
         public override void Draw(UISpriteBatch batch)
         {
             if (!Visible) return;

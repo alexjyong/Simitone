@@ -1,3 +1,4 @@
+using FSO.Common;
 using FSO.Common.Rendering.Framework;
 using FSO.Common.Utils;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,7 +23,7 @@ namespace Simitone.Client.Utils
             if (Initialized) return;
 
             // Load the eyedropper cursor from the Content folder
-            var cursorPath = Path.Combine("Content", "Cursors", "eyedropper.cur");
+            var cursorPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.cur");
             if (File.Exists(cursorPath))
             {
                 using (var stream = File.Open(cursorPath, FileMode.Open, FileAccess.Read, FileShare.Read))

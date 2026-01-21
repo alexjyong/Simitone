@@ -462,7 +462,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     if (item.Item.GUID == guid)
                     {
-                        Selected(index);
+                        CatContainer.SelectItem(index);
                         CatContainer.ScrollToItem(index);
                         return;
                     }
@@ -479,7 +479,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                     // Show all items and select
                     FilterCategory = FullCategory;
                     CatContainer.Reset();
-                    Selected(fullIndex);
+                    CatContainer.SelectItem(fullIndex);
                     CatContainer.ScrollToItem(fullIndex);
                     return;
                 }
