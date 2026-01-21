@@ -27,3 +27,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 Simitone -> Semitone -> musical term -> C# -> a note
 
 Further questions can be directed at my PR manager, uh, ... burglar cop.
+
+# Attributions
+
+Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>

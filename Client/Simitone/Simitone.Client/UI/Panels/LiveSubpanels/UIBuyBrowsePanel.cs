@@ -395,6 +395,24 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             // Check if item is in a different category
             if (targetCategory != Category)
             {
+                // Validate that the target category is valid for the current mode
+                // Buy mode uses categories 0-7, Build mode uses different categories
+                if (Mode == UICatalogMode.Build)
+                {
+                    // Build mode - can't switch to buy categories via eyedropper
+                    // Build categories are handled differently (13-18), so just return
+                    return;
+                }
+                else
+                {
+                    // Buy mode - only categories 0-7 are valid
+                    if (targetCategory < 0 || targetCategory > 7)
+                    {
+                        // This item is in a build category, can't select in buy mode
+                        return;
+                    }
+                }
+
                 // Store the GUID to select after category switch
                 var mainPanel = Parent as UIMainPanel;
                 if (mainPanel != null)
