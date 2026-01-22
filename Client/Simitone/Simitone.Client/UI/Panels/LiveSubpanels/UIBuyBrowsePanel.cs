@@ -350,6 +350,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             screen.LotControl.ObjectHolder.OnPutDown += ObjectHolder_OnPutDown;
             screen.LotControl.ObjectHolder.OnDelete += ObjectHolder_OnDelete;
             screen.LotControl.ObjectHolder.OnEyedropperPick += ObjectHolder_OnEyedropperPick;
+            screen.LotControl.ObjectHolder.OnEyedropperArchitecturePick += ObjectHolder_OnEyedropperArchitecturePick;
+            screen.LotControl.OnCustomControlReleased += LotControl_OnCustomControlReleased;
             HoldingEvents = true;
         }
 
@@ -384,7 +386,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         }
 
         /// <summary>
-        /// Checks if there's a pending eyedropper GUID to select after a category or mode switch.
+        /// Checks if there's a pending eyedropper GUID or architecture pattern to select after a category or mode switch.
         /// Called from Update since Parent may not be set during constructor.
         /// </summary>
         private void CheckPendingEyedropperSelection()
@@ -393,7 +395,22 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             CheckedPendingEyedropper = true;
 
             var mainPanel = Parent as UIMainPanel;
-            if (mainPanel?.PendingEyedropperGUID != null)
+            if (mainPanel == null) return;
+
+            // Check for pending architecture pick first
+            if (mainPanel.PendingEyedropperPatternID != null && mainPanel.PendingEyedropperArchType != null)
+            {
+                var patternID = mainPanel.PendingEyedropperPatternID.Value;
+                var archType = mainPanel.PendingEyedropperArchType.Value;
+                mainPanel.PendingEyedropperPatternID = null;
+                mainPanel.PendingEyedropperArchType = null;
+
+                SelectArchitectureByPatternID(patternID, archType);
+                return;
+            }
+
+            // Check for pending GUID pick
+            if (mainPanel.PendingEyedropperGUID != null)
             {
                 var guid = mainPanel.PendingEyedropperGUID.Value;
                 mainPanel.PendingEyedropperGUID = null;
@@ -411,6 +428,77 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             // Select the item in catalog
             SelectItemByGUID(guid);
+        }
+
+        private void ObjectHolder_OnEyedropperArchitecturePick(ushort patternID, ArchitectureType archType)
+        {
+            // Turn off eyedropper mode (button state is synced in UIDesktopUCP)
+            Game.LotControl.ObjectHolder.EyedropperMode = false;
+
+            // Architecture picks only work in Build mode
+            if (Mode != UICatalogMode.Build)
+            {
+                // Switch to Build mode first
+                var mainPanel = Parent as UIMainPanel;
+                if (mainPanel != null)
+                {
+                    mainPanel.PendingEyedropperPatternID = patternID;
+                    mainPanel.PendingEyedropperArchType = archType;
+                    var frontend = Game.Frontend as UISimitoneFrontend;
+                    frontend?.SwitchMode(UIMainPanelMode.BUILD);
+                }
+                return;
+            }
+
+            // Already in Build mode - select the architecture item
+            SelectArchitectureByPatternID(patternID, archType);
+        }
+
+        /// <summary>
+        /// Selects an architecture item (floor or wallpaper) by its pattern ID.
+        /// </summary>
+        private void SelectArchitectureByPatternID(ushort patternID, ArchitectureType archType)
+        {
+            // Architecture items are in UI Category 0 (Architecture)
+            // Floor = subcategory index 2, Wallpaper = subcategory index 1
+            int targetUICategory = 0;
+            int targetSubcatIndex = (archType == ArchitectureType.Floor) ? 2 : 1;
+
+            // Switch to Architecture category if needed
+            if (Category != targetUICategory)
+            {
+                var mainPanel = Parent as UIMainPanel;
+                if (mainPanel != null)
+                {
+                    mainPanel.PendingEyedropperPatternID = patternID;
+                    mainPanel.PendingEyedropperArchType = archType;
+                    mainPanel.Switcher.Select(targetUICategory);
+                }
+                return;
+            }
+
+            // Initialize the correct subcategory
+            var subcat = BuildCategories[targetUICategory][targetSubcatIndex];
+            if (ChoosingSub)
+            {
+                InitSubcategory(subcat);
+            }
+
+            // Find and select the item by pattern ID (matching Special.ResID)
+            if (FilterCategory != null)
+            {
+                int index = 0;
+                foreach (var elem in FilterCategory)
+                {
+                    if (elem.Special?.ResID == patternID)
+                    {
+                        Selected(index);
+                        CatContainer.ScrollToItem(index);
+                        return;
+                    }
+                    index++;
+                }
+            }
         }
 
         /// <summary>
@@ -571,6 +659,12 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             ItemID = -1;
         }
 
+        private void LotControl_OnCustomControlReleased()
+        {
+            Game.LotControl.QueryPanel.Active = false;
+            ItemID = -1;
+        }
+
         private void ObjectHolder_OnPutDown(UIObjectSelection holding, UpdateState state)
         {
             Game.LotControl.QueryPanel.Active = false;
@@ -607,6 +701,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 Game.LotControl.ObjectHolder.OnPutDown -= ObjectHolder_OnPutDown;
                 Game.LotControl.ObjectHolder.OnDelete -= ObjectHolder_OnDelete;
                 Game.LotControl.ObjectHolder.OnEyedropperPick -= ObjectHolder_OnEyedropperPick;
+                Game.LotControl.ObjectHolder.OnEyedropperArchitecturePick -= ObjectHolder_OnEyedropperArchitecturePick;
+                Game.LotControl.OnCustomControlReleased -= LotControl_OnCustomControlReleased;
                 Game.LotControl.ObjectHolder.EyedropperMode = false;
                 Game.LotControl.QueryPanel.Active = false;
                 Game.Frontend.MainPanel.SetSubpanelPickup(1f);

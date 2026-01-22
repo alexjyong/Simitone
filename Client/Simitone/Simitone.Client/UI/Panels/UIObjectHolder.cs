@@ -56,6 +56,10 @@ namespace Simitone.Client.UI.Panels
         public event EyedropperEventHandler OnEyedropperPick;
         public delegate void EyedropperEventHandler(uint guid);
 
+        // Architecture eyedropper (for floors/wallpaper which don't have GUIDs)
+        public event EyedropperArchitectureHandler OnEyedropperArchitecturePick;
+        public delegate void EyedropperArchitectureHandler(ushort patternID, ArchitectureType type);
+
         public event HolderEventHandler OnPickup;
         public event HolderEventHandler OnDelete;
         public event HolderEventHandler OnPutDown;
@@ -419,18 +423,46 @@ namespace Simitone.Client.UI.Panels
                 //not holding an object, but one can be selected
                 var newHover = World.GetObjectIDAtScreenPos(state.MouseState.X, state.MouseState.Y, GameFacade.GraphicsDevice);
 
-                // Eyedropper mode - pick object GUID instead of selecting to move
-                if (EyedropperMode && newHover != 0 && vm.GetObjectById(newHover) is VMGameObject)
+                // Eyedropper mode - pick object GUID or architecture pattern
+                // Priority: Objects (doors/windows in walls) → Walls → Floors
+                if (EyedropperMode)
                 {
-                    var obj = vm.GetObjectById(newHover);
-                    uint guid = obj.Object.OBJ.GUID;
-                    if (obj.MasterDefinition != null) guid = obj.MasterDefinition.GUID;
+                    bool handled = false;
 
-                    var catalogItem = Content.Get().WorldCatalog.GetItemByGUID(guid);
-                    if (catalogItem != null)
+                    // First, try to pick an object if one is directly under cursor
+                    // This ensures doors/windows in walls get picked instead of the wall
+                    if (newHover != 0 && vm.GetObjectById(newHover) is VMGameObject)
                     {
-                        OnEyedropperPick?.Invoke(guid);
+                        var obj = vm.GetObjectById(newHover);
+                        uint guid = obj.Object.OBJ.GUID;
+                        if (obj.MasterDefinition != null) guid = obj.MasterDefinition.GUID;
+
+                        var catalogItem = Content.Get().WorldCatalog.GetItemByGUID(guid);
+                        if (catalogItem != null)
+                        {
+                            OnEyedropperPick?.Invoke(guid);
+                            handled = true;
+                        }
                     }
+
+                    // If no object, check for walls (wallpaper)
+                    // Check for floor tiles (architecture without GUIDs)
+                    if (!handled)
+                    {
+                        var tilePos = World.EstTileAtPosWithScroll(
+                            new Vector2(state.MouseState.X, state.MouseState.Y) / FSOEnvironment.DPIScaleFactor);
+                        var tileX = (short)Math.Floor(tilePos.X);
+                        var tileY = (short)Math.Floor(tilePos.Y);
+                        var level = World.State.Level;
+
+                        var floor = vm.Context.Architecture.GetFloor(tileX, tileY, level);
+                        if (floor.Pattern > 0 && Content.Get().WorldFloors.Entries.ContainsKey(floor.Pattern))
+                        {
+                            OnEyedropperArchitecturePick?.Invoke(floor.Pattern, ArchitectureType.Floor);
+                            handled = true;
+                        }
+                    }
+
                     // Don't process normal click when in eyedropper mode
                 }
                 else if (MouseClicked && (newHover != 0) && (vm.GetObjectById(newHover) is VMGameObject))
@@ -572,5 +604,13 @@ namespace Simitone.Client.UI.Panels
                 return (MoveTarget != 0);
             }
         }
+    }
+
+    /// <summary>
+    /// Type of architecture element for eyedropper picks.
+    /// </summary>
+    public enum ArchitectureType
+    {
+        Floor
     }
 }

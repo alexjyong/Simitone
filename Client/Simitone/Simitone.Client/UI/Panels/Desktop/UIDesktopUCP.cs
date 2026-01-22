@@ -97,7 +97,7 @@ namespace Simitone.Client.UI.Panels.Desktop
                 Position = new Vector2(155, 164),
                 Shadow = true,
                 ShadowParam = sDir,
-                Tooltip = "Eyedropper Tool"
+                Tooltip = "Eyedropper Tool (E)"
             });
             EyedropperButton.OnButtonClick += ToggleEyedropper;
             EyedropperButton.Visible = false; // Hidden by default (LIVE mode)
@@ -121,7 +121,7 @@ namespace Simitone.Client.UI.Panels.Desktop
             Add(RotateCCWButton = new UIStencilButton(ui.Get("d_live_rotccw.png").Get(gd)) { Position = new Vector2(114, 175), Tooltip = "Rotate Counter-Clockwise" });
 
             SpeedButtons = new UIButton[4];
-            var speedTooltips = new string[] { "Pause", "Normal Speed", "Fast", "Ultra Fast" };
+            var speedTooltips = new string[] { "Normal Speed", "Fast", "Ultra Fast", "Pause" };
             for (int i=0; i<4; i++)
             {
                 Add(SpeedButtons[i] = new UIStencilButton(ui.Get($"d_live_speed{i+1}.png").Get(gd))
@@ -346,13 +346,19 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             //KEY SHORTCUTS
             var keys = state.NewKeys;
-            var nofocus = true;
+            var nofocus = state.InputManager.GetFocus() == null; // No text input has focus
             if (Game.InLot)
             {
                 if (keys.Contains(Keys.F1) && !LiveButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.LIVE);
                 if (keys.Contains(Keys.F2) && !BuyButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUY);
                 if (keys.Contains(Keys.F3) && !BuildButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUILD);
                 if (keys.Contains(Keys.F4)) OnModeClick?.Invoke(UIMainPanelMode.OPTIONS); // Options Panel
+
+                // E key for eyedropper (only in Buy/Build mode and when no text input is focused)
+                if (nofocus && keys.Contains(Keys.E) && EyedropperButton.Visible)
+                {
+                    ToggleEyedropper(EyedropperButton);
+                }
 
                 if (nofocus)
                 {
