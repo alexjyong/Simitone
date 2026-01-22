@@ -384,7 +384,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         }
 
         /// <summary>
-        /// Checks if there's a pending eyedropper GUID to select after a category switch.
+        /// Checks if there's a pending eyedropper GUID to select after a category or mode switch.
         /// Called from Update since Parent may not be set during constructor.
         /// </summary>
         private void CheckPendingEyedropperSelection()
@@ -398,27 +398,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 var guid = mainPanel.PendingEyedropperGUID.Value;
                 mainPanel.PendingEyedropperGUID = null;
 
-                if (Mode == UICatalogMode.Build)
-                {
-                    // In Build mode, we need to also switch to the correct subcategory
-                    var catalogItem = Content.Get().WorldCatalog.GetItemByGUID(guid);
-                    if (catalogItem != null)
-                    {
-                        var mapping = MapCatalogToBuildCategory(catalogItem.Value.Category);
-                        if (mapping != null)
-                        {
-                            var (_, targetSubcatIndex) = mapping.Value;
-                            var subcat = BuildCategories[Category][targetSubcatIndex];
-
-                            if (ChoosingSub)
-                            {
-                                InitSubcategory(subcat);
-                            }
-                        }
-                    }
-                }
-
-                SelectItemInCurrentCategory(guid);
+                // Use SelectItemByGUID to handle category switching if needed
+                // (e.g., after a mode switch, we may be in the wrong category)
+                SelectItemByGUID(guid);
             }
         }
 
@@ -434,6 +416,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         /// <summary>
         /// Finds an item by GUID in the catalog and selects it.
         /// If the item is in a different category, switches to that category first.
+        /// If the item is in a different mode (Buy vs Build), switches modes first.
         /// </summary>
         public void SelectItemByGUID(uint guid)
         {
@@ -442,7 +425,39 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             if (catalogItem == null) return;
 
             var targetCategory = catalogItem.Value.Category;
+            var mainPanel = Parent as UIMainPanel;
 
+            // Determine if this is a Buy item (0-7) or Build item (8+)
+            bool isBuyItem = targetCategory >= 0 && targetCategory <= 7;
+            bool isBuildItem = targetCategory >= 8;
+
+            // Check if we need to switch modes
+            if (Mode == UICatalogMode.Build && isBuyItem)
+            {
+                // In Build mode but clicked a Buy item → switch to Buy mode
+                if (mainPanel != null)
+                {
+                    mainPanel.PendingEyedropperGUID = guid;
+                    // Trigger mode switch to Buy
+                    var frontend = Game.Frontend as UISimitoneFrontend;
+                    frontend?.SwitchMode(UIMainPanelMode.BUY);
+                }
+                return;
+            }
+            else if (Mode != UICatalogMode.Build && isBuildItem)
+            {
+                // In Buy mode but clicked a Build item → switch to Build mode
+                if (mainPanel != null)
+                {
+                    mainPanel.PendingEyedropperGUID = guid;
+                    // Trigger mode switch to Build
+                    var frontend = Game.Frontend as UISimitoneFrontend;
+                    frontend?.SwitchMode(UIMainPanelMode.BUILD);
+                }
+                return;
+            }
+
+            // Same mode - handle normally
             if (Mode == UICatalogMode.Build)
             {
                 // Build mode - map catalog category to Build UI category
@@ -454,7 +469,6 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 // Check if we need to switch Build UI categories
                 if (targetUICategory != Category)
                 {
-                    var mainPanel = Parent as UIMainPanel;
                     if (mainPanel != null)
                     {
                         // Store for after category switch
@@ -477,15 +491,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             // Buy mode logic
             if (targetCategory != Category)
             {
-                // Buy mode - only categories 0-7 are valid
-                if (targetCategory < 0 || targetCategory > 7)
-                {
-                    // This item is in a build category, can't select in buy mode
-                    return;
-                }
-
                 // Store the GUID to select after category switch
-                var mainPanel = Parent as UIMainPanel;
                 if (mainPanel != null)
                 {
                     mainPanel.PendingEyedropperGUID = guid;
