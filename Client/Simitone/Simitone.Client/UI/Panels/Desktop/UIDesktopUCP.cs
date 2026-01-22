@@ -91,7 +91,7 @@ namespace Simitone.Client.UI.Panels.Desktop
             FriendIcon = new UIImage(ui.Get("d_live_friend.png").Get(gd)) { Position = new Vector2(156, 186) };
             Add(FriendIcon);
 
-            // Eyedropper button - visible only in Buy mode (Build mode not yet supported)
+            // Eyedropper button - visible in Buy and Build modes
             Add(EyedropperButton = new UIStencilButton(ui.Get("d_live_eyedropper.png").Get(gd))
             {
                 Position = new Vector2(155, 164),
@@ -424,8 +424,8 @@ namespace Simitone.Client.UI.Panels.Desktop
             BuildButton.Selected = mode == UIMainPanelMode.BUILD;
             OptionsButton.Selected = mode == UIMainPanelMode.OPTIONS;
 
-            // Show eyedropper only in BUY mode (Build mode not yet supported)
-            EyedropperButton.Visible = (mode == UIMainPanelMode.BUY);
+            // Show eyedropper in BUY and BUILD modes
+            EyedropperButton.Visible = (mode == UIMainPanelMode.BUY || mode == UIMainPanelMode.BUILD);
             // Reset selection when changing modes
             if (!EyedropperButton.Visible)
             {
