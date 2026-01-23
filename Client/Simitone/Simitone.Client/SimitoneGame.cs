@@ -24,6 +24,7 @@ using MSDFData;
 using FSO.LotView.Model;
 using Simitone.Client.UI.Panels;
 using System.IO;
+using Simitone.Client.Utils;
 
 namespace Simitone.Client
 {
@@ -161,6 +162,7 @@ namespace Simitone.Client
             {
                 CurLoader.BmpLoaderFunc = ImageLoader.BaseFunction;
                 GameFacade.Cursor.Init(GlobalSettings.Default.TS1HybridPath, true);
+                SimitoneCursors.Init(GraphicsDevice);
             }
 
             /** Init any computed values **/

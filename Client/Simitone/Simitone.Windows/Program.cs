@@ -125,13 +125,15 @@ namespace Simitone.Windows
                     // Check if installation has already been configured
                     if (!GlobalSettings.Default.TS1InstallationConfigured)
                     {
+                        // Create single Application instance for all dialogs in first-time setup
+                        var app = new Application(Eto.Platform.Detect);
+
                         // First time setup - show installation selector
                         var installations = windowsLocator.GetAllTheSims1Installations();
                         
                         if (installations.Count == 0)
                         {
                             // No installations found - show empty selector so user can browse
-                            var app = new Application(Eto.Platform.Detect);
                             var dialog = new InstallationSelectorDialog(new System.Collections.Generic.List<InstallationInfo>());
                             var result = dialog.ShowModal();
 
@@ -166,7 +168,6 @@ namespace Simitone.Windows
                         bool hasExistingSaves = Directory.Exists(Path.Combine(FSOEnvironment.UserDir, "UserData/"));
                         if (hasExistingSaves)
                         {
-                            var app = new Application(Eto.Platform.Detect);
                             var result = MessageBox.Show(
                                 "Existing Simitone save data was detected.\n\n" +
                                 "If you select a different installation type than before, your saves may not be compatible.\n\n" +
@@ -195,8 +196,7 @@ namespace Simitone.Windows
                                              "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
                                 : Path.Combine(path, "UserData");
                             string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
-                            
-                            var app = new Application(Eto.Platform.Detect);
+
                             var infoDialog = new InstallationInfoDialog(path, savesPath, simitoneSavesPath, isSteam);
                             infoDialog.ShowModal();
                         }
@@ -207,7 +207,6 @@ namespace Simitone.Windows
                                 .Select(i => new InstallationInfo(i.description, i.path, i.type))
                                 .ToList();
 
-                            var app = new Application(Eto.Platform.Detect);
                             var dialog = new InstallationSelectorDialog(installInfos);
                             var result = dialog.ShowModal();
 
