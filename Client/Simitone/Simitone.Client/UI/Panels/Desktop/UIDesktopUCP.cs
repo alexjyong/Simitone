@@ -346,7 +346,7 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             //KEY SHORTCUTS
             var keys = state.NewKeys;
-            var nofocus = state.InputManager.GetFocus() == null; // No text input has focus
+            var nofocus = state.InputManager.GetFocus() == null; // No text input (like the cheat menu!) has focus
             if (Game.InLot)
             {
                 if (keys.Contains(Keys.F1) && !LiveButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.LIVE);
