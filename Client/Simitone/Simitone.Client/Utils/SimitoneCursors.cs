@@ -8,26 +8,19 @@ using System.IO;
 
 namespace Simitone.Client.Utils
 {
-    /// <summary>
-    /// Manages Simitone-specific custom cursors that aren't part of FreeSO.
-    /// </summary>
+    // Manages Simitone-specific custom cursors that aren't part of FreeSO.
     public static class SimitoneCursors
     {
         private static MouseCursor EyedropperCursor;
         private static bool Initialized;
 
-        /// <summary>
-        /// Initialize Simitone-specific cursors.
-        /// </summary>
+        // Initialize Simitone-specific cursors.
         public static void Init(GraphicsDevice gd)
         {
             if (Initialized) return;
 
-            // Try loading from PNG first (more reliable), then fall back to .cur
             var pngPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.png");
-            var curPath = Path.Combine(FSOEnvironment.ContentDir, "Cursors", "eyedropper.cur");
-            
-            // Try PNG first
+
             if (File.Exists(pngPath))
             {
                 try
@@ -44,30 +37,11 @@ namespace Simitone.Client.Utils
                     EyedropperCursor = null;
                 }
             }
-            
-            // Fall back to .cur if PNG didn't work
-            if (EyedropperCursor == null && File.Exists(curPath))
-            {
-                try
-                {
-                    using (var stream = File.Open(curPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        var cursorData = CurLoader.LoadMonoCursor(gd, stream);
-                        EyedropperCursor = cursorData.MouseCursor;
-                    }
-                }
-                catch (Exception)
-                {
-                    EyedropperCursor = null;
-                }
-            }
 
             Initialized = true;
         }
 
-        /// <summary>
-        /// Sets the eyedropper cursor if available, otherwise uses a fallback.
-        /// </summary>
+        // Sets the eyedropper cursor if available, otherwise uses a fallback.
         public static void SetEyedropperCursor()
         {
             if (EyedropperCursor != null)
@@ -81,9 +55,7 @@ namespace Simitone.Client.Utils
             }
         }
 
-        /// <summary>
-        /// Returns true if the eyedropper cursor was loaded successfully.
-        /// </summary>
+        // Returns true if the eyedropper cursor was loaded successfully.
         public static bool HasEyedropperCursor => EyedropperCursor != null;
     }
 }
