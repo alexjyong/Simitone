@@ -30,6 +30,9 @@ echo "  Simitone Linux/macOS Build Script"
 echo "========================================"
 echo ""
 echo "Configuration: $CONFIG"
+if [[ "$PUBLISH" == "--publish" ]]; then
+    echo "Mode: Publish (self-contained with launcher)"
+fi
 echo ""
 
 # Detect package manager
@@ -302,7 +305,35 @@ dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c "$CONFI
 
 if [[ "$PUBLISH" == "--publish" ]]; then
     echo ""
-    echo "Step 3: Publishing self-contained build..."
+    echo "Step 3: Publishing self-contained build with launcher..."
+    
+    # Check for C compiler (required for native launcher)
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if ! command -v clang &> /dev/null; then
+            echo ""
+            echo "ERROR: clang not found. Required for building the native launcher."
+            echo ""
+            echo "Install Xcode Command Line Tools with:"
+            echo "  xcode-select --install"
+            echo ""
+            exit 1
+        fi
+        CC="clang"
+    else
+        if ! command -v gcc &> /dev/null; then
+            echo ""
+            echo "ERROR: gcc not found. Required for building the native launcher."
+            echo ""
+            echo "Install with:"
+            echo "  Ubuntu/Debian: sudo apt install build-essential"
+            echo "  Fedora:        sudo dnf install gcc"
+            echo "  Arch:          sudo pacman -S gcc"
+            echo ""
+            exit 1
+        fi
+        CC="gcc"
+    fi
+    echo "✓ C compiler found: $CC"
     
     # Detect architecture
     ARCH="$(uname -m)"
@@ -317,25 +348,108 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     # Detect OS
     if [[ "$(uname)" == "Darwin" ]]; then
         RID="osx-$RID_ARCH"
+        PLATFORM_NAME="macOS"
     else
         RID="linux-$RID_ARCH"
+        PLATFORM_NAME="Linux"
     fi
     
     echo "Runtime Identifier: $RID"
     
+    TEMP_PUBLISH_DIR="publish/$RID"
+    FINAL_DIR="publish/Simitone-$PLATFORM_NAME-$RID_ARCH"
+    
+    # Clean previous publish
+    rm -rf "$FINAL_DIR"
+    
+    # Step 3a: Publish the main application
+    echo ""
+    echo "Step 3a: Publishing main application..."
     dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
         -c "$CONFIG" \
         -r "$RID" \
         --self-contained true \
-        -o "publish/$RID" \
+        -o "$TEMP_PUBLISH_DIR" \
         /p:TreatWarningsAsErrors=false \
         /p:WarningsAsErrors=""
     
+    # Step 3b: Build the native C launcher
     echo ""
-    echo "Published to: $SCRIPT_DIR/publish/$RID"
+    echo "Step 3b: Building native launcher..."
+    LAUNCHER_SRC="Client/Simitone/Simitone.Launcher/launcher.c"
+    LAUNCHER_OUT="publish/launcher-native/Simitone"
+    mkdir -p "publish/launcher-native"
+    
+    $CC -O2 -s "$LAUNCHER_SRC" -o "$LAUNCHER_OUT" 2>/dev/null || \
+    $CC -O2 "$LAUNCHER_SRC" -o "$LAUNCHER_OUT"  # macOS doesn't support -s
+    
+    if [[ ! -f "$LAUNCHER_OUT" ]]; then
+        echo "ERROR: Failed to compile native launcher"
+        exit 1
+    fi
+    echo "✓ Native launcher built ($(du -h "$LAUNCHER_OUT" | cut -f1))"
+    
+    # Step 3c: Create final directory structure
     echo ""
+    echo "Step 3c: Creating final directory structure..."
+    
+    mkdir -p "$FINAL_DIR/lib"
+    
+    # Copy launcher to root
+    cp "$LAUNCHER_OUT" "$FINAL_DIR/Simitone"
+    chmod +x "$FINAL_DIR/Simitone"
+    
+    # Move all published files to lib/
+    mv "$TEMP_PUBLISH_DIR"/* "$FINAL_DIR/lib/"
+    
+    # Copy .desktop file for Linux
+    if [[ "$(uname)" != "Darwin" ]]; then
+        cp "Client/Simitone/Simitone.Launcher/simitone.desktop" "$FINAL_DIR/"
+        chmod +x "$FINAL_DIR/simitone.desktop"
+        
+        # Convert icon to PNG if imagemagick is available
+        if command -v convert &> /dev/null; then
+            echo "Converting icon to PNG..."
+            convert "Client/Simitone/Simitone.Windows/Icon.ico" -resize 256x256 "$FINAL_DIR/lib/Resources/icon.png" 2>/dev/null || true
+        elif [[ -f "Client/Simitone/Simitone.Shared/Resources/Icon.bmp" ]]; then
+            # Fallback: copy BMP if PNG conversion fails
+            cp "Client/Simitone/Simitone.Shared/Resources/Icon.bmp" "$FINAL_DIR/lib/Resources/icon.bmp" 2>/dev/null || true
+        fi
+    fi
+    
+    # Clean up temporary directories
+    rm -rf "$TEMP_PUBLISH_DIR"
+    rm -rf "publish/launcher-native"
+    
+    echo ""
+    echo "========================================"
+    echo "  Publish Complete!"
+    echo "========================================"
+    echo ""
+    echo "Output directory: $SCRIPT_DIR/$FINAL_DIR"
+    echo ""
+    echo "Directory structure:"
+    echo "  Simitone-$PLATFORM_NAME-$RID_ARCH/"
+    echo "    Simitone              <- Run this!"
+    if [[ "$(uname)" != "Darwin" ]]; then
+        echo "    simitone.desktop      <- For Linux desktop integration"
+    fi
+    echo "    lib/                  <- Game files (don't modify)"
+    echo ""
+    echo "To run:"
+    echo "  cd $FINAL_DIR"
+    echo "  ./Simitone"
+    echo ""
+    if [[ "$(uname)" != "Darwin" ]]; then
+        echo "For Linux desktop integration:"
+        echo "  1. Copy the folder to your desired location"
+        echo "  2. Edit simitone.desktop to set the correct paths"
+        echo "  3. Copy simitone.desktop to ~/.local/share/applications/"
+        echo ""
+    fi
     echo "NOTE: GTK3 is required on Linux for the installation selector GUI."
     echo "      Most desktop Linux distributions include GTK3 by default."
+    exit 0
 fi
 
 echo ""
@@ -349,6 +463,8 @@ echo ""
 echo "To run Simitone:"
 echo "  cd Client/Simitone/Simitone.Desktop/bin/$CONFIG/net9.0/"
 echo "  ./Simitone -path\"/path/to/The Sims/\""
+echo ""
+echo "TIP: Use --publish to create a distributable package with clean directory structure."
 echo ""
 echo "Example paths for The Sims 1 installation:"
 echo "  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/"

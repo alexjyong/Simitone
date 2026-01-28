@@ -57,4 +57,18 @@
     <Copy SourceFiles="@(MGDesktopGL)" DestinationFolder="$(OutputPath)Monogame\WindowsGL" SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- Exclude server executables and duplicate content from publish to avoid NETSDK1152 errors -->
+  <Target Name="RemoveConflictingPublishFiles" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <!-- Remove server executable outputs (watchdog, api.core) -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" 
+                             Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('FSO.Server.Updater')) or 
+                                        $([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('FSO.Server.Api.Core'))" />
+      <!-- Remove duplicate TEX_1.png from tso.content (keep the one from Simitone.Client) -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" 
+                             Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('tso.content')) and 
+                                        $([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('TEX_1.png'))" />
+    </ItemGroup>
+  </Target>
+
 </Project>
