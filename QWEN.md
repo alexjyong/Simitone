@@ -234,4 +234,4 @@ Historical object editing tools (for reference when understanding IFF structure)
 Modern tools:
 - **Volcanic** — FreeSO's comprehensive object editor/IDE (`FSO.IDE`)
 - **IffExporter** — Exports IFF to human-readable JSON (`Tools/IffExporter/`)
-- See `Tools/IffExporter/CLAUDE.md` for detailed IFF export information
+- See `Tools/IffExporter/QWEN.md` for detailed IFF export information
