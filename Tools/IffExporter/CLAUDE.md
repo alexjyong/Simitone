@@ -2,6 +2,59 @@
 
 This document provides comprehensive information about The Sims IFF (Interchange File Format) file structure, based on community documentation and object hacking guides. This information helps understand what the IffExporter is extracting and how to interpret the exported JSON.
 
+## Data Types & Encoding
+
+### Numeric Types
+
+The Sims uses standard binary numeric types with specific purposes:
+
+| Type | Size | Range | Usage |
+|------|------|-------|-------|
+| u8/byte | 1 byte | 0–255 | Flags, counts, small values |
+| u16/word | 2 bytes | 0–65,535 | Resource IDs, small integers |
+| u32/dword | 4 bytes | 0–4,294,967,295 | File offsets, GUIDs, large integers |
+| f32/float | 4 bytes | IEEE 754 | Coordinates, animation data |
+
+### ⚠️ CRITICAL: Byte Ordering
+
+The Sims uses **different byte orders** for different formats. This is a common source of parsing errors:
+
+**BIG-ENDIAN (Network Byte Order):**
+- IFF container headers
+- IFF resource headers
+
+**LITTLE-ENDIAN (Intel Byte Order):**
+- IFF resource contents (the actual data)
+- FAR archives (all parts)
+- CMX, BCF, SKN, BMF, BMP formats
+
+When implementing parsers, you **must** swap byte order when transitioning from IFF headers to IFF resource data. This applies to multi-byte values (u16, u32, f32).
+
+### String Encodings
+
+The Sims uses three string encoding methods:
+
+1. **Pascal Strings** — Length byte followed by characters
+   - First byte = string length (0-255)
+   - Maximum 255 characters
+   - No null terminator
+
+2. **C Strings** — Null-terminated character sequences
+   - Characters followed by `0x00` byte
+   - Variable length
+
+3. **Padded Strings** — String with alignment padding
+   - String data followed by `0xA3` padding bytes
+   - Padded to specific alignment boundaries (4-byte, 8-byte, etc.)
+
+### File Size Limits
+
+Binary format constraints impose practical limits:
+
+- **FAR archives:** 4 GB maximum (32-bit offset addressing)
+- **IFF files:** 4 GB maximum (32-bit size fields)
+- **Individual resources:** ~16 MB practical limit (engine constraints)
+
 ## What is an IFF File?
 
 IFF files are the primary data format used by The Sims 1 and The Sims Online to store game objects, character data, behaviors, graphics, sounds, and more. Think of an IFF as a structured database file containing everything needed to define an object in the game.
@@ -49,6 +102,129 @@ IFF File
 - The actual content (varies by block type)
 - Can be: bytecode, strings, image data, numeric values, structured records
 
+## Container Formats
+
+### FAR Archive Format
+
+FAR archives bundle multiple files into a single `.far` package for distribution and loading efficiency. The format uses a simple header-files-manifest layout with **little-endian** byte ordering throughout.
+
+**Format Characteristics:**
+- No compression (files stored as-is)
+- Little-endian byte order (all fields)
+- Up to 4 GB total size (32-bit offsets)
+- Random access via manifest lookup
+
+**FAR Header (16 bytes):**
+```
+Offset 0-7:   Signature "FAR!byAZ" (8 bytes, ASCII)
+Offset 8-11:  Version = 1 (u32, little-endian)
+Offset 12-15: Manifest offset (u32, little-endian, byte position of manifest)
+```
+
+**File Data Section:**
+After the header, file contents are stored back-to-back with no padding. File positions are determined by the manifest.
+
+**Manifest Section:**
+Located at the byte offset specified in the header. Contains one entry per file:
+
+**Manifest Entry Format:**
+```
+Bytes 0-3:   File size in bytes (u32, little-endian)
+Bytes 4-7:   File size duplicate (u32, little-endian) — always identical to bytes 0-3
+Bytes 8-11:  File data offset (u32, little-endian, byte position from start of FAR)
+Bytes 12-15: Filename length (u32, little-endian)
+Bytes 16+:   Filename (UTF-8, not null-terminated, length specified)
+```
+
+**Entry Size Calculation:**
+`entry_size = 16 + filename_length` bytes
+
+**Duplicate Size Field Note:**
+Both size fields (bytes 0-3 and 4-7) are always identical. They were likely reserved for future compressed/uncompressed size differentiation, but compression was never implemented.
+
+**FAR Archive Contents:**
+FAR archives can contain:
+- IFF files (`.iff`, `.flr`, `.wll`, `.spf`)
+- XA sound files (`.xa`)
+- BMP textures (`.bmp`)
+- BMF meshes (`.bmf`)
+- BCF animations (`.cmx.bcf`)
+- PALT palettes (`.pal`)
+
+**FAR Archives Cannot Contain** (will be ignored):
+- ASCII text files (`.cmx`, `.skn` text formats)
+- Other FAR archives (no nesting)
+
+**Resource Override Behavior:**
+Files in `Downloads/` FAR archives override files in `GameData/` FAR archives when they have matching filenames. This enables modding without replacing base game files.
+
+### IFF File Format
+
+**Binary Structure:**
+
+**IFF Header (64 bytes):**
+```
+Offset 0-59:  Signature string (60 bytes, null-padded ASCII):
+              "IFF FILE 2.5:TYPE FOLLOWED BY SIZE\0 JAMIE DOORNBOS & MAXIS 1"
+Offset 60-63: rsmp offset (u32, big-endian)
+              0 = no resource map present
+              Non-zero = byte offset to rsmp resource
+```
+
+**Resource Header (76 bytes, repeated for each resource):**
+```
+Offset 0-3:   Type code (4 bytes, ASCII, e.g., "BHAV", "OBJD", "STR#")
+Offset 4-7:   Total size (u32, big-endian) — includes this 76-byte header + data
+Offset 8-9:   Resource ID (u16, big-endian, 0-65535)
+Offset 10-11: Flags (u16, big-endian)
+              0x0000 = normal resource
+              0x0010 = alternative flag (rare, purpose unclear)
+Offset 12-75: Name (64 bytes, null-padded ASCII, optional human-readable label)
+Offset 76+:   Resource data (variable length, little-endian)
+```
+
+**Critical Note:** Resource headers use big-endian byte order, but the resource data immediately following uses little-endian. Parsers must swap byte order at the 76-byte boundary.
+
+### rsmp — Resource Map
+
+The **rsmp** resource provides an indexed lookup table for fast random access to resources within IFF files. It's an optional optimization; not all IFF files include rsmp.
+
+**rsmp Header (20 bytes):**
+```
+Offset 0-3:   Reserved (u32, big-endian, always 0)
+Offset 4-7:   Version (u32, big-endian)
+              0 = Sims 1 format
+              1 = TSO format (extended resource IDs)
+Offset 8-11:  Identifier "rsmp" (4 bytes, ASCII)
+Offset 12-15: Total size (u32, big-endian, header + all entries)
+Offset 16-19: Type count (u32, big-endian, number of resource types indexed)
+```
+
+**Version 0 (Sims 1) List Entry:**
+```
+Bytes 0-3:    File offset (u32, big-endian, byte position of resource)
+Bytes 4-5:    Resource ID (u16, big-endian)
+Bytes 6-7:    Flags (u16, big-endian)
+Bytes 8+:     Name (null-terminated string, variable length)
+```
+
+**Version 1 (TSO) List Entry:**
+```
+Bytes 0-3:    File offset (u32, big-endian)
+Bytes 4-7:    Resource ID (u32, big-endian) — extended to 32-bit for TSO
+Bytes 8-9:    Flags (u16, big-endian)
+Bytes 10:     String length (u8)
+Bytes 11+:    Name (Pascal string, length specified, not null-terminated)
+```
+
+**rsmp Exclusions:**
+The rsmp does not index:
+- Itself (the rsmp resource)
+- `XXXX` filler resources (dummy padding resources)
+
+**Usage:**
+Parsers can use rsmp for O(1) resource lookup by ID rather than scanning the entire file sequentially. This significantly improves loading performance for large IFF files with 100+ resources.
+
 ### Common Resource ID Ranges
 
 By convention (not enforced), resource IDs follow patterns:
@@ -71,8 +247,13 @@ By convention (not enforced), resource IDs follow patterns:
 
 The "birth certificate" of every object. Contains all metadata needed for the game to recognize and use the object.
 
+**Structure:**
+- **Size:** 216 bytes (version 138 format)
+- **Fields:** ~100 fields total
+- **Byte Order:** Little-endian (inside IFF resource data)
+
 **Critical Fields:**
-- **GUID** (Global Unique ID) — 32-bit hex identifier. Must be unique across all objects. Generated from creator's "magic cookie".
+- **GUID** (Global Unique ID) — 32-bit hex identifier. **Must be unique across all installed content.** Conflicts cause objects to disappear from catalog. Generated from creator's "magic cookie".
 - **Original GUID** — GUID of the object this was cloned from
 - **Prices** — Initial price, sale price, depreciation rates, minimum value
 - **Category Flags:**
@@ -87,6 +268,28 @@ The "birth certificate" of every object. Contains all metadata needed for the ga
   - Animation Table ID → Points to STR# animation resource
   - Catalog ID → Points to CTSS resource
   - Slots ID → Points to SLOT resource
+  - Initial stack size, graphic resource IDs, state counts
+
+**Multi-Tile Object Architecture:**
+
+Objects spanning multiple tiles (e.g., beds, counters, large tables) require special OBJD structure:
+
+- **Master OBJD** — `sub_index = 0xFFFF`
+  - Contains shared settings: pricing, catalog information, master GUID
+  - Controls the entire multi-tile object
+  - Placed on the "origin" tile
+
+- **Slave OBJDs** — Indexed by tile coordinates
+  - Contains tile-specific data: positioning, rotation, slave GUID
+  - Each slave has its own **unique GUID** (different from master)
+  - References the master OBJD
+  - Coordinates are relative to master tile
+
+**Example:** A 2x1 bed needs:
+1. Master OBJD at tile (0,0) with sub_index=0xFFFF and price=$3,000
+2. Slave OBJD at tile (1,0) with coordinate-based sub_index and price=$0
+
+All slaves must have unique GUIDs. If any slave GUID conflicts with other installed content, the entire multi-tile object fails to appear.
 
 **Byte Positions in OBJD (for hex editing):**
 - Byte 9: Build/Buy toggle (4=Buy, 8=Build)
@@ -106,6 +309,34 @@ The "birth certificate" of every object. Contains all metadata needed for the ga
 
 Contains executable behavior trees — the "programs" that make objects work. Each BHAV resource is one tree (subroutine).
 
+**Structure:**
+- **Header Size:** 12 bytes
+- **Instruction Size:** 12 bytes per instruction
+- **Max Instructions:** 1-253 per tree
+
+**BHAV Header (12 bytes):**
+```
+Bytes 0-1:   Signature (u16, little-endian)
+             0x8002 = standard format
+             0x8000-0x8003 = version variants
+Bytes 2-3:   Instruction count (u16, 1-253)
+Bytes 4-5:   Parameter count (u16, 0-4 parameters accepted by tree)
+Bytes 6-7:   Local variable count (u16, 0-12 local variables)
+Bytes 8-11:  Reserved/flags (4 bytes)
+```
+
+**Instruction Format (12 bytes per line):**
+```
+Bytes 0-1:   Opcode (u16, little-endian)
+             0x0000-0x003F = primitive opcodes
+             0x0100+ = subroutine calls
+Bytes 2-3:   Addresses (u16, little-endian)
+             High byte = True outcome (line or exit code)
+             Low byte = False outcome (line or exit code)
+Bytes 4-11:  Operands (8 bytes, instruction-specific data)
+             Interpreted as four u16 parameters or raw bytes
+```
+
 **Tree Structure:**
 ```
 BHAV #4096 "init"
@@ -113,6 +344,29 @@ BHAV #4096 "init"
   Line 0: [Function 2] Param1, Param2, Param3, Param4 → True:1, False:Error
   Line 1: [Function 36] ... → True:True, False:Error
 ```
+
+**SimAntics Virtual Machine Architecture:**
+
+The SimAntics VM executes BHAV subroutines through a multi-threaded, cooperative scheduler:
+- **Execution Model:** Multi-threaded, cooperative (non-preemptive)
+- **Time Scale:** 15 ticks per simulated minute
+- **Flow Control:** Two-address system (True/False paths enable non-sequential execution)
+
+**Subroutine Address Space:**
+```
+0x0000–0x003F:  64 primitive opcodes (built-in operations)
+0x0100–0x0FFF:  Global subroutines (Global.iff, shared across all objects)
+0x1000–0x1FFF:  Local subroutines (object's own BHAV trees)
+0x2000+:        Semi-global subroutines (referenced via GLOB)
+```
+
+**Instruction Statistics (from analysis of all base game objects):**
+- **Expression (opcode 2):** 57% of all instructions (55,088 of 95,487 total) — overwhelmingly dominant
+- **Animation (opcode 44):** 5% of instructions
+- **Sound (opcode 45):** 4% of instructions
+- Other opcodes: 34% combined
+
+The Expression instruction is the workhorse of SimAntics, handling all arithmetic, comparisons, assignments, and variable manipulation.
 
 **Each line contains:**
 - **Function number** (0-255) — Operation type:
@@ -174,6 +428,23 @@ Prefix menu strings with "Category/" to create submenus:
 - "Opening hours/Evening"
 - "Opening hours/Closed"
 → Creates "Opening hours" submenu with 3 options
+
+**⚠️ Advertisement vs Actual Behavior:**
+
+Important: **Objects often claim motive benefits they don't actually deliver.** The advertised motive deltas in TTAB (which influence autonomous behavior) may not match the actual motive changes implemented in BHAV code.
+
+**Why This Happens:**
+- Advertisements are design estimates made early in development
+- Actual BHAV behavior may be tuned differently during testing
+- Developers sometimes boost advertisements to make objects more appealing to autonomous Sims
+- Balance changes affect BHAV code but TTAB ads may not be updated
+
+**Impact:**
+- Sims may autonomously choose objects based on inflated promises
+- Actual satisfaction may be lower than advertised
+- This is intentional game design, not a bug
+
+**Example:** A chair may advertise +50 Comfort but actually provide +30 Comfort when used. Sims will still choose it autonomously based on the +50 advertisement.
 
 ### TTAs — Pie Menu Strings
 
@@ -266,7 +537,36 @@ Defines where Sims can stand relative to the object to interact with it. Determi
 - Routing paths
 - Object boundaries
 
-Complex objects (like tables) have elaborate SLOT definitions. Simple objects (statues) have minimal slots.
+**Position Granularity:**
+- **1/16-tile precision** — Slots positioned in 16ths of a tile
+- Allows fine-grained positioning for tight spaces
+
+**Slot Types (Statistical Distribution):**
+
+Based on analysis of all base game objects:
+
+- **Type 0 (Support Slots)** — 24.7% of all slots
+  - Non-routing slots
+  - Used for object placement, containment
+  - Example: Surface of table, inside refrigerator
+
+- **Type 1 (Specialized)** — 1.6% of all slots (rare)
+  - Elevated positions
+  - Special-purpose slots
+  - Example: Top of stairs, elevated platforms
+
+- **Type 3 (Routing)** — 73.5% of all slots (most common)
+  - Character navigation and standing positions
+  - Where Sims walk to and stand
+  - Example: Front of stove, side of bed
+
+**Slot Properties:**
+- Position (X, Y, Z coordinates in 1/16-tile units)
+- Preference weights: standing, sitting, lying
+- Routing flags: facing direction, coordinate system behavior
+- Height offset for elevated interactions
+
+Complex objects (like tables) have elaborate SLOT definitions with 8+ slots. Simple objects (statues) have minimal slots (1-2).
 
 ### FWAV — Audio Event References
 
@@ -292,18 +592,62 @@ Resource is typically `#128`. Just contains the filename string (e.g., "ArtGloba
 
 ### OBJf — Object Function Table
 
-Modern alternative to the old OBJD function table. Maps standard actions to BHAV trees:
+Modern alternative to the old OBJD function table. Introduced in later expansions as a cleaner vtable-style entry point system.
 
-- **init** — Initialization (run once on placement)
-- **main** — Main loop (runs continuously)
-- **cleanup** — Clean up before deletion
-- **placement** — Called when user places object
-- **user_pickup** — Called when user moves object
-- **load** — Called when lot loads
-- **room_changed** — Called when room score changes
-- Many more...
+**Structure:**
+- **31-entry vtable** mapping standard functions to BHAV trees
+- **Guard/Action pairs** for interaction validation
 
-Set to specific BHAV tree numbers (e.g., init → 4097, main → 4096).
+**Entry Format — Guard/Action Pairs:**
+
+Each function type has two components:
+
+1. **Guard Function** — Validates if interaction is available
+   - Returns: True (available) or False (not available)
+   - Example: "Can sit?" checks if chair is unoccupied
+
+2. **Action Function** — Executes the interaction
+   - Runs only if guard returned True
+   - Example: "Sit" plays sitting animation and updates state
+
+**Function Types (Entry Indices):**
+
+**Lifecycle Events:**
+- `init` — Initialization (run once on placement)
+- `main` — Main loop (runs continuously while object exists)
+- `cleanup` — Cleanup before deletion
+- `load` — Called when lot loads from save
+- `reset` — Reset object to default state
+
+**Placement Events:**
+- `placement` — Called when user places object from catalog
+- `user_pickup` — Called when user moves object
+- `room_changed` — Called when room boundaries change
+
+**Interaction Events:**
+- `sit` — Sit on object
+- `cook` — Cook food
+- `eat` — Eat food
+- `prepare_food` — Food preparation
+- Many more (31 total function slots)
+
+**Environmental Events:**
+- `wall_adjacency_changed` — Object touches/untouches wall
+- `room_score_changed` — Room quality changes
+- `on_portal` — Object placed on door/portal
+
+**Example Mapping:**
+```
+OBJf Resource #256:
+  init_guard → BHAV #4097 (always returns True)
+  init_action → BHAV #4098 (setup code)
+  main_guard → BHAV #4099 (always returns True)
+  main_action → BHAV #4096 (main loop)
+  sit_guard → BHAV #4150 (check if unoccupied)
+  sit_action → BHAV #4151 (sitting interaction)
+```
+
+Set to specific BHAV tree numbers or 0 (unused slot).
 
 ### PALT — Color Palette
 
@@ -314,6 +658,92 @@ Set to specific BHAV tree numbers (e.g., init → 4097, main → 4096).
 Numeric constant values that BHAV code can reference. Allows centralized "tuning" values.
 
 Example: Balloon lifespan, attraction radius, need change rates.
+
+### CARR — Career System
+
+CARR resources define career tracks with 10 levels per track. Found in career-specific IFF files, CARR blocks contain all information about job progression.
+
+**Structure:**
+- **10 levels per track** (Level 1 = entry, Level 10 = top position)
+- **Variable-width bit-level compression** for data storage
+
+**Each Career Level Specifies:**
+
+**Skill Requirements:**
+- Cooking (0-10)
+- Mechanical (0-10)
+- Charisma (0-10)
+- Body (0-10)
+- Logic (0-10)
+- Creativity (0-10)
+- Friendship points required
+
+**Work Properties:**
+- Daily salary ($)
+- Work schedule (start time, end time, days per week)
+- Vehicle type (carpool, taxi, limo, helicopter, etc.)
+- Uniform specification with substitution codes:
+  - `$g` — Gender (male/female)
+  - `$b` — Body type (fat/fit/skinny)
+  - `$c` — Skin color (lgt/med/drk)
+
+**Motive Decay Rates:**
+Specifies how quickly motives decay during work hours (different from normal decay):
+- Energy decay rate (working is tiring)
+- Social decay rate (varies by career)
+- Fun decay rate (boring jobs decay faster)
+- Etc.
+
+**Career Tracks (Base Game):**
+1. Business
+2. Entertainment
+3. Law Enforcement
+4. Life of Crime
+5. Medicine
+6. Military
+7. Politics
+8. Pro Athlete
+9. Science
+10. Xtreme (X-treme)
+
+Expansion packs add additional career tracks (e.g., Slacker, Paranormal, Journalism).
+
+**Example:** Medicine Level 10 (Medical Researcher) requires:
+- Body: 7
+- Logic: 9
+- Charisma: 4
+- 8 friends
+- Salary: $850/day
+- Hours: 9:00 AM - 4:00 PM
+- Vehicle: Helicopter
+- Uniform: Lab coat variants
+
+### FCNS — Function Constants
+
+FCNS resources in `Global.iff` contain global tuning parameters that affect core game systems. These are distinct from per-object BCON values.
+
+**Structure:**
+- 16-byte header
+- Variable number of entries
+- Each entry contains:
+  - Short description string
+  - Floating-point value (f32)
+  - Long description string
+
+**Tuning Parameters Include:**
+- Household starting funds ($20,000 default)
+- Motive decay relationships (how motives affect each other)
+- Skill gain rates (study efficiency)
+- Advertisement volume settings (autonomous behavior sensitivity)
+- Social interaction multipliers
+- Need satisfaction curves
+
+**Example FCNS Entries:**
+- "StartingMoney" = 20000.0 — Initial household funds
+- "SkillGainRate" = 1.0 — Multiplier for skill point accumulation
+- "MotiveDecayRate" = 1.0 — Global motive decay speed
+
+These values can be modified to create custom gameplay balance (e.g., harder mode with less starting money or faster motive decay).
 
 ### TPRP, TRCN — Tree Parameters/Constants
 
@@ -431,8 +861,41 @@ Common checks:
 
 The Sims supports 20+ installation languages. All displayed text must have translations.
 
-**Language IDs (in order):**
-1. US English
+### String Encoding Formats
+
+The Sims uses **five distinct string encoding formats** for multi-language text storage. Format detection uses the first two bytes:
+
+**Format Detection (first two bytes determine format):**
+
+1. **Simple Counted Format** (`≥ 0x0000`) — Basic format
+   - Used when first two bytes form a valid count
+   - Language strings stored sequentially
+
+2. **Null-Terminated Format** (`0xFFFF`) — Legacy format
+   - First two bytes = `0xFFFF`
+   - Strings separated by null terminators
+
+3. **Paired Strings Format** (`0xFEFF`) — Dual-language
+   - First two bytes = `0xFEFF`
+   - String pairs (e.g., name + description)
+
+4. **Language-Coded Format** (`0xFDFF`) — Explicit language IDs
+   - First two bytes = `0xFDFF`
+   - Each string prefixed with language ID byte
+
+5. **Dynamic Length Format** (`0xFCFF`) — TSO+ extended
+   - First two bytes = `0xFCFF`
+   - Variable-length encoding for large string sets
+   - Used in TSO for expanded content
+
+**Language Indexing:**
+- Languages indexed 1-20 (not 0-19)
+- Language 1 = US English (fallback language)
+- If translation missing, game shows US English string or "*" error marker
+
+### Language IDs (in order)
+
+1. US English (fallback)
 2. UK English
 3. French
 4. German
@@ -476,6 +939,140 @@ To understand what IffExporter extracts, here's how objects are typically create
 10. **Test in game** → Iterate until working
 
 IffExporter helps with steps 2-9 by showing the structure in readable JSON.
+
+## IFFSnooper Workflows
+
+**IFFSnooper** is a community-developed IFF editing tool. Understanding its capabilities helps when working with IFF files:
+
+### Editing Capabilities by Resource Type
+
+**Full Editing Support:**
+- OBJD (Object Definition) — All fields editable
+- CTSS (Catalog Strings) — Multi-language name/description
+- STR# (String Tables) — All string tables
+- TTAs (Pie Menu Strings) — Menu text
+- CARR (Career System) — Career level data
+
+**Partial Editing Support:**
+- TTAB (Tree Table / Pie Menu) — Flags and motive advertisements only
+  - Cannot edit BHAV tree references (view-only)
+  - Can edit: autonomy flags, attenuation, motive deltas
+
+**Read-Only (View Only):**
+- BHAV (Behavior) — View bytecode but cannot edit
+- SLOT (Slot Definition) — View positions but cannot edit
+- TREE — View tree structure
+- OBJf (Object Functions) — View function table
+
+**Import/Export Support:**
+- Sprites (SPR2, SPR#) — Export to BMP, import from BMP
+- Resources — Export individual resources, import replacements
+- Full disassembly — Export entire IFF structure to folder
+
+### Sprite System Architecture
+
+IFFSnooper works with a three-channel sprite system:
+
+**1. P-Sprite (RGB Color Channel)**
+- Visible pixel colors
+- Standard RGB bitmap
+- File naming: `{object}_large_ne_p.bmp`
+
+**2. Z-Buffer (Depth Channel)**
+- Depth mapping for layering
+- Dark values (0-50) = closer to camera = drawn in front
+- Bright values (200-255) = farther from camera = drawn behind
+- File naming: `{object}_large_ne_z.bmp`
+
+**3. Alpha Channel (Transparency)**
+- Controls pixel opacity
+- 0 = fully transparent (invisible)
+- 255 = fully opaque (solid)
+- Partial transparency: 1-254 (used for glass, shadows, smoke)
+- File naming: `{object}_large_ne_a.bmp`
+
+**Sprite Naming Convention:**
+`{object}_{size}_{direction}_{channel}.bmp`
+- Size: `small`, `medium`, `large` (zoom levels)
+- Direction: `ne`, `nw`, `se`, `sw` (rotations)
+- Channel: `p` (color), `z` (depth), `a` (alpha)
+
+Example: `chair_large_ne_p.bmp` = chair, largest zoom, northeast view, color channel
+
+### Object Creation Workflow (Disassemble → Modify → Reassemble)
+
+IFFSnooper's primary workflow for creating custom objects:
+
+**Step 1: Find Similar Object**
+Locate an existing IFF file that's similar to what you want to create (use as template).
+
+**Step 2: Disassemble**
+- File → Export → Disassemble
+- Exports entire IFF structure to a folder
+- Creates separate files for each resource type
+- Sprites exported as BMP images (P/Z/Alpha channels)
+
+**Step 3: Modify Resources**
+Edit the disassembled files:
+- OBJD: Change prices, categories, GUID
+- Sprites: Edit P/Z/Alpha BMP files in image editor (Photoshop, GIMP)
+- CTSS: Update name and description
+- TTAs: Change menu text
+- BHAV: View-only, cannot edit directly
+
+**Step 4: Reassemble**
+- File → Import → Assemble or Import → Resources
+- Reconstructs IFF from modified files
+- Sprite encoding: Automatically generates SPR2 + PALT from P/Z/Alpha BMPs
+
+**Step 5: Test In-Game**
+- Place modified IFF in `Downloads/`
+- Load game and verify object appears correctly
+
+### GUID Management
+
+**Automatic GUID Handling (IFFSnooper 1.1.3+):**
+- Clone operation automatically generates new GUIDs
+- Updates BHAV references to match new GUIDs
+- Updates multi-tile slave GUIDs
+
+**Manual GUID Editing:**
+For older versions or manual control:
+- Edit OBJD GUID field directly
+- For multi-tile objects: Edit master + all slave GUIDs
+- GUID format: 32-bit hex (e.g., `0x12345678`)
+- Middle 2 bytes = "magic cookie" (creator identifier)
+
+**Critical Rule:** Every object and every slave tile must have a unique GUID across all installed content. Conflicts cause objects to vanish from catalog.
+
+### Minimum Required Resources
+
+Different object types require different minimum resource sets:
+
+**Basic Decorative Object:**
+- OBJD (object definition)
+- DGRP (draw group)
+- SPR2 (sprites)
+- PALT (palette)
+- CTSS (catalog strings)
+
+**Interactive Object:**
+- All basic resources, plus:
+- TTAB (pie menu interactions)
+- TTAs (menu text)
+- BHAV trees (behavior code)
+- SLOT (standing positions)
+
+**Multi-Tile Object:**
+- All interactive resources, plus:
+- Multiple OBJDs (master + slaves with unique GUIDs)
+
+**Character (Sim):**
+- OBJD (type=2, person)
+- STR# #200 (body strings)
+- CTSS (name and bio)
+- BMP_ (portraits #2002-2007)
+- BHAV #4096+ (behavior)
 
 ## Character Data Structure (Sims)
 

@@ -92,6 +92,23 @@ Simitone
 - **PIFF:** Patch IFF format for applying modifications to IFF files without replacing them.
 - **Volcanic:** FreeSO's object editor/IDE for inspecting and editing game objects (`FSO.IDE`).
 
+## Resource Loading & File Organization
+
+The Sims loads resources from multiple directories with a specific priority order. When multiple files define the same resource, the highest-priority location wins:
+
+**Resource Loading Priority (highest to lowest):**
+1. **`Downloads/`** — User custom content (highest priority, overrides everything)
+2. **`ExpansionPack*/`** — Expansion-specific assets (e.g., `ExpansionPack1/`, `ExpansionPack2/`)
+3. **`GameData/`** — Core game resources (lowest priority, base game content)
+
+**File Locations:**
+- **`GameData/`** — Core game resources (⚠️ backup before modifying)
+- **`Downloads/`** — User custom content (safe to modify for mods)
+- **`UserData/`** — Saves, neighborhoods, and user preferences
+- **`ExpansionPack*/`** — Expansion-specific assets
+
+This loading system enables modding: files placed in `Downloads/` can override base game objects without modifying original game files. For example, a custom chair in `Downloads/custom_chair.iff` will override the original chair in `GameData/Objects.far` if they share the same GUID.
+
 ## Understanding IFF Files
 
 ### IFF Structure
@@ -100,6 +117,18 @@ IFF files are container files organized into **blocks** (also called "chunks"). 
 - **Blocks** are drawers (identified by 4-character type codes like `BHAV`, `OBJD`)
 - **Resources** are folders inside drawers (identified by numeric IDs, usually starting at specific ranges)
 - Each resource contains the actual data (code, strings, images, etc.)
+
+#### ⚠️ CRITICAL: Byte Ordering
+
+The Sims uses **different byte orders** for different parts of IFF files. This is a common source of parsing errors:
+
+- **IFF container headers** — BIG-ENDIAN (network byte order)
+- **IFF resource headers** — BIG-ENDIAN (network byte order)
+- **IFF resource contents** — LITTLE-ENDIAN
+- **FAR archives** — LITTLE-ENDIAN
+- **All other formats** (CMX, BCF, SKN, BMF, BMP) — LITTLE-ENDIAN
+
+When implementing IFF parsers, you **must** swap byte order when reading headers versus reading the actual resource data.
 
 ### Critical IFF Block Types
 
@@ -213,6 +242,67 @@ Objects appear in catalogs based on flags in the OBJD block:
 **Downtown/Vacation/Studio/Magic Town Sorts:**
 - Use additive binary values: 1, 2, 4, 8, 128
 - Objects can appear in multiple categories (e.g., 143 = all categories)
+
+## Character Animation System
+
+The Sims uses a skeletal animation system for character rendering, separate from the sprite-based object rendering. This system uses external file formats (not IFF) for 3D character meshes and animations.
+
+### CMX/BCF — Skeleton & Animation Definition
+
+**CMX** files are text-based, **BCF** files are their binary equivalents. Both contain three data sections:
+
+1. **Skeletons** — Bone hierarchy defining the armature structure
+2. **Suits** — Bone-to-mesh bindings that link skeleton bones to mesh vertices
+3. **Skills** — Animation sequences (keyframe data)
+
+**Standard Skeletons:**
+- **Adult** — 29 bones
+- **Child** — 29 bones
+- **Dog** — 37 bones
+- **Cat** — 40 bones
+
+### SKN/BMF — 3D Meshes
+
+**SKN** files are text-based, **BMF** files are their binary equivalents. Both define deformable 3D geometry with seven sections:
+
+1. **Filenames** — References to textures and related files
+2. **Bones** — Bone names matching skeleton structure
+3. **Faces** — Triangle definitions (vertex indices)
+4. **Bone Bindings** — Which bones influence which vertices
+5. **UV Texture Coordinates** — Texture mapping data
+6. **Blend Data** — Vertex weights for smooth deformation
+7. **Vertex Positions with Normals** — 3D coordinates and surface normals
+
+Meshes use naming conventions indicating body type (fat/fit/skinny), gender (m/f), and skin tone (drk/lgt/med).
+
+### CFP — Compressed Animation Data
+
+**CFP (Compressed Floating Point)** files store animation keyframe data using three encoding strategies:
+
+1. **Uncompressed** — `0xFF` marker followed by IEEE 754 float (4 bytes)
+2. **Repeat Previous** — `0xFE` marker + repeat count (re-use last value N times)
+3. **Delta Encoding** — Codes 0-119 and 133-252 reference a symmetrical delta table
+
+**Compression Performance:**
+- Ratio: ~7:1 compression
+- Precision: 3+ significant digits maintained
+
+### Character Rendering Pipeline
+
+The complete workflow for rendering animated Sims:
+
+1. **Load skeleton hierarchy** from CMX/BCF (bone structure and parent-child relationships)
+2. **Bind mesh vertices to bones** using SKN/BMF bone bindings and weights
+3. **For each animation frame:**
+   - Read bone position and rotation data from CFP
+   - Apply transformations to bone matrices
+   - Deform mesh vertices using weighted bone influences
+4. **Apply texture mapping** using UV coordinates
+5. **Render triangles** with normal-based shading
+
+**Character vs Object Rendering:**
+- **Objects** — Use DGRP → SPR2 → PALT pipeline (2D sprite composition)
+- **Characters** — Use CMX/BCF → SKN/BMF → CFP pipeline (3D skeletal animation)
 
 ### FAR Files
 
