@@ -3,16 +3,20 @@
 # Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
-[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.17-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.17-forked/Simitone-Linux-x64-Release.zip) 
+[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.18-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.18-forked/Simitone-Linux-x64-Release.zip) 
 
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
 
-**Supported Platforms:** Windows, Linux. MacOS needs testing!
+**Supported Platforms:** Windows, Linux. MacOS builds but DOES NOT WORK. PRs are welcome!
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
-NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. While all objects run, many of them have bugs that can make certain lot types unplayable. For current development progress, see [this issue.](https://github.com/riperiperi/Simitone/issues/8)
+NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work. While all objects run, many of them have bugs that can make certain lot types unplayable. 
+
+For current development progress on the original Simitone, see [this issue on the original repo.](https://github.com/riperiperi/Simitone/issues/8)
+
+For requests on this repo, fill one out [here](https://github.com/alexjyong/Simitone/issues).
 
 # Purpose
 
