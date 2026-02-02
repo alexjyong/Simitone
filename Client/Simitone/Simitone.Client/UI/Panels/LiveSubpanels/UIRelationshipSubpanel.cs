@@ -91,7 +91,18 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             var n = neighbourhood.GetNeighborByID(neighbour);
             var rel = n.Relationships;
 
-            var rItems = rel.Select(x => new Tuple<int,int>(neighbour, x.Key)).ToList();
+            // Filter relationships based on RelSort category
+            IEnumerable<KeyValuePair<int, List<short>>> filtered = rel;
+            if (RelSort == 2) // Fame filter - show only celebrities (those with fame > 1)
+            {
+                filtered = rel.Where(x => {
+                    var otherNeigh = neighbourhood.GetNeighborByID((short)x.Key);
+                    return otherNeigh?.PersonData != null &&
+                           otherNeigh.PersonData[(int)VMPersonDataVariable.TS1FameScore] > 1;
+                });
+            }
+
+            var rItems = filtered.Select(x => new Tuple<int,int>(neighbour, x.Key)).ToList();
 
             bool difference = false;
             if (rItems.Count == Items.Count)
