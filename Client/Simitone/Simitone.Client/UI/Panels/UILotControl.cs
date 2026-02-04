@@ -920,7 +920,7 @@ namespace Simitone.Client.UI.Panels
                         {
                             // It was a click - rotate camera 90 degrees clockwise
                             World.State.Rotation = (WorldRotation)(((int)World.State.Rotation + 1) % 4);
-                            HITVM.Get().PlaySoundEvent(UISounds.ObjectRotate);
+                            HITVM.Get().PlaySoundEvent(UISounds.Click);
                         }
                     }
                     MMBScroll = false;
