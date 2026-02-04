@@ -438,16 +438,16 @@ namespace Simitone.Client.UI.Panels
 
         private void AddFreeWillToggle(UISubpanel parent)
         {
-            var container = new UIContainer();
-            container.Position = new Vector2(350, 16);
-            parent.Add(container);
+            // Index 3 (4th button) to match spacing of existing buttons
+            // Existing buttons use: 50 + i * 120f for button X, 50 + i * 120f - 27 for label X
+            int index = 3;
+            float buttonX = 50 + index * 120f;
+            float labelX = buttonX - 27;
 
-            var toggleButton = new UICatButton(Content.Get().CustomUI.Get("opt_save.png").Get(GameFacade.GraphicsDevice));
-            
             var label = new UILabel();
             label.Alignment = TextAlignment.Middle | TextAlignment.Center;
             label.Wrapped = true;
-            label.Position = new Vector2(-27, 90);
+            label.Position = new Vector2(labelX - 77, 106);
             label.Size = new Vector2(120, 1);
             label.CaptionStyle = label.CaptionStyle.Clone();
             label.CaptionStyle.Size = 12;
@@ -459,6 +459,8 @@ namespace Simitone.Client.UI.Panels
                 label.CaptionStyle.Color = enabled ? UIStyle.Current.Text : UIStyle.Current.NegMoney;
             };
             
+            var toggleButton = new UICatButton(Content.Get().CustomUI.Get("opt_save.png").Get(GameFacade.GraphicsDevice));
+            toggleButton.Position = new Vector2(buttonX - 50, 16);
             toggleButton.OnButtonClick += (btn) => {
                 VM.FreeWillEnabled = !VM.FreeWillEnabled;
                 GlobalSettings.Default.TS1FreeWill = VM.FreeWillEnabled;
@@ -466,8 +468,12 @@ namespace Simitone.Client.UI.Panels
                 updateLabel();
             };
             
-            container.Add(toggleButton);
-            container.Add(label);
+            // Animate in like other buttons
+            GameFacade.Screens.Tween.To(label, 0.5f, new Dictionary<string, float>() { { "X", labelX } }, TweenQuad.EaseOut);
+            GameFacade.Screens.Tween.To(toggleButton, 0.5f, new Dictionary<string, float>() { { "X", buttonX } }, TweenQuad.EaseOut);
+            
+            parent.Add(label);
+            parent.Add(toggleButton);
             updateLabel();
         }
 
