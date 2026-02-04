@@ -2,6 +2,7 @@
 using FSO.Client.UI.Framework;
 using FSO.Common.Utils;
 using FSO.Content;
+using FSO.SimAntics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Simitone.Client.UI.Controls;
@@ -242,6 +243,7 @@ namespace Simitone.Client.UI.Panels
                         new UICatFunc(GameFacade.Strings.GetString("145", "1"), "opt_neigh.png", () => { Game.ReturnToNeighbourhood(); }),
                         new UICatFunc(GameFacade.Strings.GetString("145", "5"), "opt_quit.png", () => { Game.CloseAttempt(); }),
                     });
+                    AddFreeWillToggle(panel);
                     break;
             }
             SetSubpanel(panel);
@@ -432,6 +434,41 @@ namespace Simitone.Client.UI.Panels
                 ShowingSelect = false;
                 OnEndSelect?.Invoke();
             };
+        }
+
+        private void AddFreeWillToggle(UISubpanel parent)
+        {
+            var container = new UIContainer();
+            container.Position = new Vector2(350, 16);
+            parent.Add(container);
+
+            var toggleButton = new UICatButton(Content.Get().CustomUI.Get("opt_save.png").Get(GameFacade.GraphicsDevice));
+            
+            var label = new UILabel();
+            label.Alignment = TextAlignment.Middle | TextAlignment.Center;
+            label.Wrapped = true;
+            label.Position = new Vector2(-27, 90);
+            label.Size = new Vector2(120, 1);
+            label.CaptionStyle = label.CaptionStyle.Clone();
+            label.CaptionStyle.Size = 12;
+            label.CaptionStyle.Color = UIStyle.Current.Text;
+            
+            Action updateLabel = () => {
+                bool enabled = VM.FreeWillEnabled;
+                label.Caption = "Free Will:\n" + (enabled ? "ON" : "OFF");
+                label.CaptionStyle.Color = enabled ? UIStyle.Current.Text : UIStyle.Current.NegMoney;
+            };
+            
+            toggleButton.OnButtonClick += (btn) => {
+                VM.FreeWillEnabled = !VM.FreeWillEnabled;
+                GlobalSettings.Default.TS1FreeWill = VM.FreeWillEnabled;
+                GlobalSettings.Default.Save();
+                updateLabel();
+            };
+            
+            container.Add(toggleButton);
+            container.Add(label);
+            updateLabel();
         }
 
         public override void GameResized()
