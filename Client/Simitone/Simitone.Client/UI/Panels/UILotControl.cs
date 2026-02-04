@@ -886,7 +886,7 @@ namespace Simitone.Client.UI.Panels
                                 {
                                     // Switch to this family member
                                     vm.SendCommand(new VMNetChangeControlCmd() { TargetID = clickedObj.ObjectID });
-                                    HITVM.Get().PlaySoundEvent(UISounds.QueueAdd);
+                                    HITVM.Get().PlaySoundEvent(UISounds.Click);
                                 }
                             }
                         }
