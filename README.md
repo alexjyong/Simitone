@@ -3,7 +3,7 @@
 # Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
-[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.19-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.19-forked/Simitone-Linux-x64-Release.zip) 
+[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Linux-x64-Release.zip) 
 
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
@@ -27,14 +27,14 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper)
+- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper), rotating camera by clicking mouse wheel
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 
 # How to Install
 
 ## Prerequisites
 - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
-- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS _might_ work but is currently untested!)
+- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS is currently not functional! PRs welcome!)
 - For Windows [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
 ## Quick Install Windows
