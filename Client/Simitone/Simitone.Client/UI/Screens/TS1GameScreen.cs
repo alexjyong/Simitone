@@ -30,6 +30,7 @@ using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Panels;
 using Simitone.Client.UI.Panels.WorldUI;
 using Simitone.Client.Utils;
+using Simitone.Client.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -195,6 +196,9 @@ namespace Simitone.Client.UI.Screens
             if (Content.Get().TS1)
             {
                 NeighSelection(mode);
+
+                // Check for updates from GitHub releases
+                UpdateChecker.CheckForUpdatesAsync();
             }
         }
         public int? MoveInFamily;
