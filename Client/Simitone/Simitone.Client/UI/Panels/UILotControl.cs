@@ -891,7 +891,10 @@ namespace Simitone.Client.UI.Panels
                                 {
                                     // Switch to this family member
                                     vm.SendCommand(new VMNetChangeControlCmd() { TargetID = clickedObj.ObjectID });
-                                    HITVM.Get().PlaySoundEvent(UISounds.QueueAdd);
+                                    // Update local state immediately so interactions work right away
+                                    ActiveEntity = clickedObj;
+                                    Queue.QueueOwner = ActiveEntity;
+                                    HITVM.Get().PlaySoundEvent(UISounds.Click);
                                 }
                             }
                         }
