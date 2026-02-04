@@ -15,7 +15,7 @@ namespace Simitone.Client
         /// <summary>
         /// The current version of Simitone. Update this for each release.
         /// </summary>
-        public const string Current = "0.8.19-forked";
+        public const string Current = "0.8.20-forked";
 
         /// <summary>
         /// GitHub API endpoint for fetching the latest release.
