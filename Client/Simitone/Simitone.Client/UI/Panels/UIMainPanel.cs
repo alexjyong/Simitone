@@ -459,7 +459,7 @@ namespace Simitone.Client.UI.Panels
                 label.CaptionStyle.Color = enabled ? UIStyle.Current.Text : UIStyle.Current.NegMoney;
             };
             
-            var toggleButton = new UICatButton(Content.Get().CustomUI.Get("opt_save.png").Get(GameFacade.GraphicsDevice));
+            var toggleButton = new UICatButton(Content.Get().CustomUI.Get("opt_freewill.png").Get(GameFacade.GraphicsDevice));
             toggleButton.Position = new Vector2(buttonX - 50, 16);
             toggleButton.OnButtonClick += (btn) => {
                 VM.FreeWillEnabled = !VM.FreeWillEnabled;
