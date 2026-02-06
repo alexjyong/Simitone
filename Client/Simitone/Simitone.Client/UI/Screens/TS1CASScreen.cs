@@ -449,6 +449,7 @@ namespace Simitone.Client.UI.Screens
 
             FamiliesPanel = new UIFamiliesCASPanel();
             FamiliesPanel.OnNewFamily += () => { SetMode(UICASMode.FamilyEdit); };
+            FamiliesPanel.OnDeleteFamily += DeleteFamily;
             Add(FamiliesPanel);
 
             BackButton = new UITwoStateButton(ui.Get("btn_back.png").Get(gd));
@@ -761,6 +762,46 @@ namespace Simitone.Client.UI.Screens
                 var q = new List<FSO.SimAntics.Engine.VMQueuedAction>(fam.Thread.Queue);
                 foreach (var action in q)
                     fam.Thread.CancelAction(action.UID);
+            }
+        }
+
+        public void DeleteFamily()
+        {
+            if (FamiliesPanel.Selection == -1) return;
+            
+            var selectedFamily = FamiliesPanel.Families[FamiliesPanel.Selection];
+            var familyName = Content.Get().Neighborhood.MainResource.Get<FAMs>(selectedFamily.ChunkID)?.GetString(0) ?? "this family";
+            
+            if (ConfirmDialog == null)
+            {
+                ConfirmDialog = new UIMobileAlert(new UIAlertOptions()
+                {
+                    Title = "Delete Family",
+                    Message = $"Are you sure you want to delete the {familyName} family? This cannot be undone.",
+                    Buttons = UIAlertButton.YesNo(
+                        (ybtn) => { 
+                            ConfirmDialog.Close(); 
+                            ConfirmDialog = null;
+                            // Actually delete the family
+                            var neigh = Content.Get().Neighborhood;
+                            var fami = selectedFamily;
+                            var fams = neigh.MainResource.Get<FAMs>(fami.ChunkID);
+                            
+                            // Remove both FAMI and FAMs chunks
+                            fami.ChunkParent.FullRemoveChunk(fami);
+                            if (fams != null) fams.ChunkParent.FullRemoveChunk(fams);
+                            
+                            // Save the neighborhood
+                            neigh.SaveNeighbourhood(true);
+                            
+                            // Refresh the list and clear selection
+                            FamiliesPanel.SetSelection(-1);
+                            SetFamilies();
+                        },
+                        (nbtn) => { ConfirmDialog.Close(); ConfirmDialog = null; }
+                    )
+                });
+                UIScreen.GlobalShowDialog(ConfirmDialog, true);
             }
         }
 
