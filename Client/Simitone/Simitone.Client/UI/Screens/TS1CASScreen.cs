@@ -782,19 +782,15 @@ namespace Simitone.Client.UI.Screens
                         (ybtn) => { 
                             ConfirmDialog.Close(); 
                             ConfirmDialog = null;
-                            // Actually delete the family
                             var neigh = Content.Get().Neighborhood;
                             var fami = selectedFamily;
                             var fams = neigh.MainResource.Get<FAMs>(fami.ChunkID);
                             
-                            // Remove both FAMI and FAMs chunks
                             fami.ChunkParent.FullRemoveChunk(fami);
                             if (fams != null) fams.ChunkParent.FullRemoveChunk(fams);
                             
-                            // Save the neighborhood
                             neigh.SaveNeighbourhood(true);
                             
-                            // Refresh the list and clear selection
                             FamiliesPanel.SetSelection(-1);
                             SetFamilies();
                         },
