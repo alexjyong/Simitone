@@ -538,4 +538,6 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 
 # Attributions
 
-Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+* Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+
+* Icon for Free Will option: <a target="_blank" href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness">Creativity And Resourcefulness</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
