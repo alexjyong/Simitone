@@ -49,10 +49,11 @@ namespace Simitone.Client
             FSOEnvironment.TexCompress = false;
             UILotControl.ShowSimanticsExceptions = !FSOEnvironment.Args.Contains("nosimantics-exc");
 
+            FSOEnvironment.DPIScaleFactor = GlobalSettings.Default.DPIScaleFactor;
+
             if (!FSOEnvironment.SoftwareKeyboard)
             {
                 Graphics.SynchronizeWithVerticalRetrace = true;
-                // Apply DPI scaling to buffer size (matches TSOGame pattern)
                 Graphics.PreferredBackBufferWidth = (int)(GlobalSettings.Default.GraphicsWidth * FSOEnvironment.DPIScaleFactor);
                 Graphics.PreferredBackBufferHeight = (int)(GlobalSettings.Default.GraphicsHeight * FSOEnvironment.DPIScaleFactor);
                 Graphics.HardwareModeSwitch = false;
@@ -91,11 +92,8 @@ namespace Simitone.Client
             if (uiLayer?.CurrentUIScreen == null) return;
 
             uiLayer.SpriteBatch.ResizeBuffer(GlobalSettings.Default.GraphicsWidth, GlobalSettings.Default.GraphicsHeight);
-
-            // Store logical dimensions for UI (matches TSOGame.cs pattern)
             GlobalSettings.Default.GraphicsWidth = (int)(width / FSOEnvironment.DPIScaleFactor);
             GlobalSettings.Default.GraphicsHeight = (int)(height / FSOEnvironment.DPIScaleFactor);
-
             uiLayer.CurrentUIScreen.GameResized();
         }
 
