@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/6294155/29047328-2bb60b54-7bc3-11e7-8d88-cee5309495ed.png)
 
-# Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
+# Note: This is a forked version of Simitone with some updates that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
 [Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Linux-x64-Release.zip) 
@@ -12,7 +12,7 @@ Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
-NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work. While all objects run, many of them have bugs that can make certain lot types unplayable. 
+NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work. Custom objects with custom animations may not work properly. While all stock objects run, many of them have bugs that can make certain lot types unplayable. 
 
 For current development progress on the original Simitone, see [this issue on the original repo.](https://github.com/riperiperi/Simitone/issues/8)
 
@@ -27,7 +27,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper), rotating camera by clicking mouse wheel
+- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper) and rotating camera by clicking mouse wheel.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 
 # How to Install
