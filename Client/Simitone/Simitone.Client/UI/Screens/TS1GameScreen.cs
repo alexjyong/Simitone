@@ -282,8 +282,10 @@ namespace Simitone.Client.UI.Screens
                 // Build set of kept entity ObjectIDs (build-mode objects only, no avatars)
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
-                foreach (var entity in marshal.Entities)
+                var keptThreads = new List<VMThreadMarshal>();
+                for (int i = 0; i < marshal.Entities.Length; i++)
                 {
+                    var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
 
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
@@ -291,11 +293,20 @@ namespace Simitone.Client.UI.Screens
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
+                        // Create a minimal empty thread (objects re-init on load)
+                        keptThreads.Add(new VMThreadMarshal
+                        {
+                            Stack = new VMStackFrameMarshal[0],
+                            Queue = new VMQueuedActionMarshal[0],
+                            ActiveQueueBlock = -1,
+                            TempRegisters = new short[20],
+                            TempXL = new int[2],
+                        });
                     }
                 }
 
                 marshal.Entities = keptEntities.ToArray();
-                marshal.Threads = new VMThreadMarshal[0]; // Objects re-init on load
+                marshal.Threads = keptThreads.ToArray();
 
                 // Filter multitile groups: keep only groups where ALL objects are in the kept set
                 var keptGroups = new List<VMMultitileGroupMarshal>();
