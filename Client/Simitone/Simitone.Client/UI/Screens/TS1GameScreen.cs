@@ -17,7 +17,9 @@ using FSO.LotView.Model;
 using FSO.SimAntics;
 using FSO.SimAntics.Engine.TSOTransaction;
 using FSO.SimAntics.Marshals;
+using FSO.SimAntics.Marshals.Threads;
 using FSO.SimAntics.Model;
+using FSO.SimAntics.Model.TS1Platform;
 using FSO.SimAntics.NetPlay;
 using FSO.SimAntics.NetPlay.Drivers;
 using FSO.SimAntics.NetPlay.Model;
@@ -251,7 +253,130 @@ namespace Simitone.Client.UI.Screens
             family.Budget += family.ValueInArch;
             family.ValueInArch = 0;
             Content.Get().Neighborhood.MoveOut(houseID);
+            ResetHouse(houseID);
+            Content.Get().Neighborhood.SaveNeighbourhood(false);
             TS1NeighPanel.SelectHouse(houseID);
+        }
+
+        /// <summary>
+        /// Resets a house by removing buy-mode objects and avatars while keeping
+        /// architecture (walls, floors) and build-mode objects (doors, windows, stairs, etc.).
+        /// </summary>
+        private void ResetHouse(int houseID)
+        {
+            var neigh = Content.Get().Neighborhood;
+            var houseIff = neigh.GetHouse(houseID);
+            var fsov = houseIff.Get<FSOV>(1);
+
+            VMMarshal marshal;
+
+            if (fsov != null)
+            {
+                // Case A: House has FSOV (played in Simitone) - deserialize and filter
+                marshal = new VMMarshal();
+                using (var reader = new BinaryReader(new MemoryStream(fsov.Data)))
+                {
+                    marshal.Deserialize(reader);
+                }
+
+                // Build set of kept entity ObjectIDs (build-mode objects only, no avatars)
+                var keptIds = new HashSet<short>();
+                var keptEntities = new List<VMEntityMarshal>();
+                foreach (var entity in marshal.Entities)
+                {
+                    if (entity is VMAvatarMarshal) continue; // Remove avatars
+
+                    var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
+                    if (objd != null && objd.BuildModeType > 0)
+                    {
+                        keptIds.Add(entity.ObjectID);
+                        keptEntities.Add(entity);
+                    }
+                }
+
+                marshal.Entities = keptEntities.ToArray();
+                marshal.Threads = new VMThreadMarshal[0]; // Objects re-init on load
+
+                // Filter multitile groups: keep only groups where ALL objects are in the kept set
+                var keptGroups = new List<VMMultitileGroupMarshal>();
+                foreach (var group in marshal.MultitileGroups)
+                {
+                    bool allKept = true;
+                    foreach (var objId in group.Objects)
+                    {
+                        if (!keptIds.Contains(objId))
+                        {
+                            allKept = false;
+                            break;
+                        }
+                    }
+                    if (allKept) keptGroups.Add(group);
+                }
+                marshal.MultitileGroups = keptGroups.ToArray();
+
+                // Update ObjectId counter
+                short maxId = 0;
+                foreach (var id in keptIds)
+                {
+                    if (id > maxId) maxId = id;
+                }
+                marshal.ObjectId = (short)(maxId + 1);
+                if (marshal.ObjectId < 1) marshal.ObjectId = 1;
+
+                // Keep walls/floors intact (architecture stays)
+                // Clear platform state
+                var ts1State = (VMTS1LotState)marshal.PlatformState;
+                if (ts1State.SimulationInfo != null)
+                {
+                    ts1State.SimulationInfo.ObjectsValue = 0; // Furniture removed
+                    // Keep ArchitectureValue (architecture remains)
+                    for (int i = 0; i < ts1State.SimulationInfo.BudgetDays.Length; i++)
+                    {
+                        ts1State.SimulationInfo.BudgetDays[i].Valid = 0;
+                    }
+                }
+                ts1State.CurrentFamily = null;
+            }
+            else
+            {
+                // Case B: No FSOV (lot never played in Simitone) - convert IFF with filtering
+                marshal = VMTS1ActivatorNew.ConvertToFilteredMarshal(
+                    houseIff,
+                    (short)houseID,
+                    (guid) =>
+                    {
+                        var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
+                        return objd != null && objd.BuildModeType > 0;
+                    });
+            }
+
+            // Serialize filtered marshal into new FSOV chunk
+            var newFsov = new FSOV();
+            newFsov.ChunkLabel = "Simitone Lot Data";
+            newFsov.ChunkID = 1;
+            newFsov.ChunkProcessed = true;
+            newFsov.ChunkType = "FSOV";
+            newFsov.AddedByPatch = true;
+
+            using (var stream = new MemoryStream())
+            {
+                marshal.SerializeInto(new BinaryWriter(stream));
+                newFsov.Data = stream.ToArray();
+            }
+
+            // Build new IFF with filtered FSOV + SIMI
+            var newIff = new IffFile();
+            newIff.AddChunk(newFsov);
+
+            var platState = (VMTS1LotState)marshal.PlatformState;
+            if (platState.SimulationInfo != null)
+            {
+                platState.SimulationInfo.ChunkProcessed = true;
+                platState.SimulationInfo.AddedByPatch = true;
+                newIff.AddChunk(platState.SimulationInfo);
+            }
+
+            neigh.ResetHouse(houseID, newIff);
         }
 
         public override void GameResized()
