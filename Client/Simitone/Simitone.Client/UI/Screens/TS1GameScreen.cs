@@ -387,7 +387,29 @@ namespace Simitone.Client.UI.Screens
                 newIff.AddChunk(platState.SimulationInfo);
             }
 
+            // Copy thumbnail chunks from the original house IFF.
+            // Chunks are lazily loaded (ChunkData has raw bytes but OriginalData is null),
+            // so we must set OriginalData for WriteChunk to use as fallback.
+            CopyChunksRaw<BMP>(houseIff, newIff);
+            CopyChunksRaw<PNG>(houseIff, newIff);
+
             neigh.ResetHouse(houseID, newIff);
+        }
+
+        /// <summary>
+        /// Copies chunks from one IFF to another, preserving raw byte data
+        /// so that lazily-loaded chunks can be written without processing.
+        /// </summary>
+        private static void CopyChunksRaw<T>(IffFile source, IffFile dest) where T : IffChunk
+        {
+            var chunks = source.List<T>();
+            if (chunks == null) return;
+            foreach (var chunk in chunks)
+            {
+                if (chunk.OriginalData == null && chunk.ChunkData != null)
+                    chunk.OriginalData = chunk.ChunkData;
+                dest.AddChunk(chunk);
+            }
         }
 
         public override void GameResized()
