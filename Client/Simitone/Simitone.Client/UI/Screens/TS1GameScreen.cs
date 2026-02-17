@@ -387,14 +387,6 @@ namespace Simitone.Client.UI.Screens
                 newIff.AddChunk(platState.SimulationInfo);
             }
 
-            // Copy thumbnail chunks from the original house IFF so the neighborhood screen can display them
-            foreach (var bmp in houseIff.List<BMP>() ?? new List<BMP>())
-                newIff.AddChunk(bmp);
-            foreach (var png in houseIff.List<PNG>() ?? new List<PNG>())
-                newIff.AddChunk(png);
-            foreach (var thmb in houseIff.List<THMB>() ?? new List<THMB>())
-                newIff.AddChunk(thmb);
-
             neigh.ResetHouse(houseID, newIff);
         }
 
