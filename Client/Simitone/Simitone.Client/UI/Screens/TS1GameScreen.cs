@@ -392,6 +392,7 @@ namespace Simitone.Client.UI.Screens
             // so we must set OriginalData for WriteChunk to use as fallback.
             CopyChunksRaw<BMP>(houseIff, newIff);
             CopyChunksRaw<PNG>(houseIff, newIff);
+            CopyChunksRaw<THMB>(houseIff, newIff);
 
             neigh.ResetHouse(houseID, newIff);
         }
