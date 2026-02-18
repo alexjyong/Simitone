@@ -265,7 +265,10 @@ namespace Simitone.Client.UI.Screens
         private void ResetHouse(int houseID)
         {
             var neigh = Content.Get().Neighborhood;
-            var houseIff = neigh.GetHouse(houseID);
+            // Load with retainData:true so OriginalData is set on all chunks upfront.
+            // Without this, List<T>() triggers lazy processing which nulls ChunkData before
+            // we can copy it, causing WriteChunk to crash with a null data array.
+            var houseIff = new IffFile(neigh.GetHousePath(houseID), true);
             var fsov = houseIff.Get<FSOV>(1);
 
             VMMarshal marshal;
@@ -406,11 +409,7 @@ namespace Simitone.Client.UI.Screens
             var chunks = source.List<T>();
             if (chunks == null) return;
             foreach (var chunk in chunks)
-            {
-                if (chunk.OriginalData == null && chunk.ChunkData != null)
-                    chunk.OriginalData = chunk.ChunkData;
                 dest.AddChunk(chunk);
-            }
         }
 
         public override void GameResized()
