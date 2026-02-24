@@ -265,10 +265,7 @@ namespace Simitone.Client.UI.Screens
         private void ResetHouse(int houseID)
         {
             var neigh = Content.Get().Neighborhood;
-            // Load with retainData:true so OriginalData is set on all chunks upfront.
-            // Without this, List<T>() triggers lazy processing which nulls ChunkData before
-            // we can copy it, causing WriteChunk to crash with a null data array.
-            var houseIff = new IffFile(neigh.GetHousePath(houseID), true);
+            var houseIff = neigh.GetHouse(houseID);
             var fsov = houseIff.Get<FSOV>(1);
 
             VMMarshal marshal;
