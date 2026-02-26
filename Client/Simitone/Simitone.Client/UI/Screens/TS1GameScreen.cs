@@ -340,7 +340,10 @@ namespace Simitone.Client.UI.Screens
                 if (ts1State.SimulationInfo != null)
                 {
                     ts1State.SimulationInfo.ObjectsValue = 0; // Furniture removed
-                    // Keep ArchitectureValue (architecture remains)
+                    // If ArchitectureValue is 0 (e.g. TS1 stored everything in ObjectsValue),
+                    // set it to the total price of kept build-mode objects so the lot has a non-zero price.
+                    if (ts1State.SimulationInfo.ArchitectureValue == 0)
+                        ts1State.SimulationInfo.ArchitectureValue = keptGroups.Sum(g => g.Price);
                     for (int i = 0; i < ts1State.SimulationInfo.BudgetDays.Length; i++)
                     {
                         ts1State.SimulationInfo.BudgetDays[i].Valid = 0;
