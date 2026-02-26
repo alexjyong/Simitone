@@ -59,6 +59,23 @@ namespace Simitone.Client.UI.Screens
         public UINeighborhoodSelectionPanel TS1NeighPanel;
         public FAMI ActiveFamily;
 
+        /// <summary>
+        /// Essential lot infrastructure objects that must be kept on eviction.
+        /// VerifyFamily searches for the mailbox by GUID to place newly-spawned sims;
+        /// if absent, sims spawn at OUT_OF_WORLD and become invisible/unselectable.
+        /// </summary>
+        private static readonly HashSet<uint> EssentialLotObjects = new HashSet<uint>
+        {
+            0xEF121974u, // Mailbox (primary - used by VerifyFamily)
+            0x1D95C9B0u, // Mailbox (alternate)
+            0x39CCF441u, // Mailbox (2-tile)
+            0xA4258067u, // Trash bin
+            0x313D2F9Au, // Phone
+            0x303CD603u, // Phone (community lots)
+            0x865A6812u, // Car portal entrance
+            0xD564C66Bu, // Car portal exit
+        };
+
         public bool InLot
         {
             get
@@ -289,7 +306,7 @@ namespace Simitone.Client.UI.Screens
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
 
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
-                    if (objd != null && objd.BuildModeType > 0)
+                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID)))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
@@ -359,6 +376,7 @@ namespace Simitone.Client.UI.Screens
                     (short)houseID,
                     (guid) =>
                     {
+                        if (EssentialLotObjects.Contains(guid)) return true;
                         var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
                         return objd != null && objd.BuildModeType > 0;
                     });
