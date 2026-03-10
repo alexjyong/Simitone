@@ -287,6 +287,10 @@ namespace Simitone.Client.UI.Screens
 
             VMMarshal marshal;
 
+            // Build set of controller object GUIDs (GlobalSimObjects) - invisible lot managers that must be preserved.
+            var controllerGuids = new HashSet<uint>(
+                Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
+
             if (fsov != null)
             {
                 // Case A: House has FSOV (played in Simitone) - deserialize and filter
@@ -296,7 +300,7 @@ namespace Simitone.Client.UI.Screens
                     marshal.Deserialize(reader);
                 }
 
-                // Build set of kept entity ObjectIDs (build-mode objects only, no avatars)
+                // Build set of kept entity ObjectIDs (build-mode + controller + essential objects, no avatars/buy-mode furniture)
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
@@ -306,7 +310,7 @@ namespace Simitone.Client.UI.Screens
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
 
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
-                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID)))
+                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID) || controllerGuids.Contains(entity.GUID)))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
@@ -377,6 +381,7 @@ namespace Simitone.Client.UI.Screens
                     (guid) =>
                     {
                         if (EssentialLotObjects.Contains(guid)) return true;
+                        if (controllerGuids.Contains(guid)) return true;
                         var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
                         return objd != null && objd.BuildModeType > 0;
                     });
