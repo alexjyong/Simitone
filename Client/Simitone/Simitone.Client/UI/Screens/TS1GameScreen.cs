@@ -287,10 +287,6 @@ namespace Simitone.Client.UI.Screens
 
             VMMarshal marshal;
 
-            // Build set of controller object GUIDs (GlobalSimObjects) - invisible lot managers that must be preserved.
-            var controllerGuids = new HashSet<uint>(
-                Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
-
             if (fsov != null)
             {
                 // Case A: House has FSOV (played in Simitone) - deserialize and filter
@@ -300,7 +296,8 @@ namespace Simitone.Client.UI.Screens
                     marshal.Deserialize(reader);
                 }
 
-                // Build set of kept entity ObjectIDs (build-mode + controller + essential objects, no avatars/buy-mode furniture)
+                // Build set of kept entity ObjectIDs (build-mode + essential objects only, no avatars/buy-mode furniture).
+                // Controllers are intentionally excluded so LoadFromFsov re-spawns them fresh for the new family.
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
@@ -310,7 +307,7 @@ namespace Simitone.Client.UI.Screens
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
 
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
-                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID) || controllerGuids.Contains(entity.GUID)))
+                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID)))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
@@ -361,10 +358,10 @@ namespace Simitone.Client.UI.Screens
                 if (ts1State.SimulationInfo != null)
                 {
                     ts1State.SimulationInfo.ObjectsValue = 0; // Furniture removed
-                    // If ArchitectureValue is 0 (e.g. TS1 stored everything in ObjectsValue),
-                    // set it to the total price of kept build-mode objects so the lot has a non-zero price.
-                    if (ts1State.SimulationInfo.ArchitectureValue == 0)
-                        ts1State.SimulationInfo.ArchitectureValue = keptGroups.Sum(g => g.Price);
+                    // Recompute ArchitectureValue from actual walls/floors + kept build-mode objects,
+                    // matching the same formula VMTS1LotState.UpdatePersistState uses on a live VM.
+                    ts1State.SimulationInfo.ArchitectureValue =
+                        VMArchitectureStats.GetArchValue(marshal.Context.Architecture) + keptGroups.Sum(g => g.Price);
                     for (int i = 0; i < ts1State.SimulationInfo.BudgetDays.Length; i++)
                     {
                         ts1State.SimulationInfo.BudgetDays[i].Valid = 0;
@@ -381,7 +378,6 @@ namespace Simitone.Client.UI.Screens
                     (guid) =>
                     {
                         if (EssentialLotObjects.Contains(guid)) return true;
-                        if (controllerGuids.Contains(guid)) return true;
                         var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
                         return objd != null && objd.BuildModeType > 0;
                     });
