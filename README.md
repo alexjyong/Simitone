@@ -12,7 +12,7 @@ Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
-NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work. Custom objects with custom animations may not work properly. While all stock objects run, many of them have bugs that can make certain lot types unplayable. 
+NOTE! Currently does not support the entire Fame career track, saving on vacation, evicting familes from lots, and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work.  Custom objects with custom animations may not work properly. While all stock objects run, many of them have bugs that can make certain lot types unplayable. 
 
 For current development progress on the original Simitone, see [this issue on the original repo.](https://github.com/riperiperi/Simitone/issues/8)
 
