@@ -306,8 +306,11 @@ namespace Simitone.Client.UI.Screens
                     var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
 
+                    // Keep all OUT_OF_WORLD objects (invisible system/controller objects).
+                    // Buy-mode furniture always has a placed position; controllers sit out-of-world.
+                    var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
-                    if (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID)))
+                    if (isOutOfWorld || (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID))))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
@@ -358,6 +361,7 @@ namespace Simitone.Client.UI.Screens
                 if (ts1State.SimulationInfo != null)
                 {
                     ts1State.SimulationInfo.ObjectsValue = 0; // Furniture removed
+                    ts1State.SimulationInfo.Version = 0x3E; // Normalize: SIMI.Write hardcodes 0x3E but uses instance Version for item count; mismatch corrupts the layout for TS1 originals
                     // Recompute ArchitectureValue from actual walls/floors + kept build-mode objects,
                     // matching the same formula VMTS1LotState.UpdatePersistState uses on a live VM.
                     ts1State.SimulationInfo.ArchitectureValue =
