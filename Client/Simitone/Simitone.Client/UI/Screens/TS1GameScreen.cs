@@ -297,7 +297,8 @@ namespace Simitone.Client.UI.Screens
                 }
 
                 // Build set of kept entity ObjectIDs (build-mode + essential objects only, no avatars/buy-mode furniture).
-                // Controllers are intentionally excluded so LoadFromFsov re-spawns them fresh for the new family.
+                // Controllers are intentionally excluded so VMBlueprintRestoreCmd re-spawns them fresh for the new family.
+                var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
@@ -305,9 +306,10 @@ namespace Simitone.Client.UI.Screens
                 {
                     var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
+                    if (controllerGuids.Contains(entity.GUID)) continue; // Remove controllers (re-spawned fresh on load)
 
-                    // Keep all OUT_OF_WORLD objects (invisible system/controller objects).
-                    // Buy-mode furniture always has a placed position; controllers sit out-of-world.
+                    // Keep OUT_OF_WORLD non-controller objects (e.g. system objects that aren't global controllers).
+                    // Buy-mode furniture always has a placed position.
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
                     if (isOutOfWorld || (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID))))
