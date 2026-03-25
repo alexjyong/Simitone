@@ -296,9 +296,11 @@ namespace Simitone.Client.UI.Screens
                     marshal.Deserialize(reader);
                 }
 
-                // Build set of kept entity ObjectIDs (build-mode + essential objects only, no avatars/buy-mode furniture).
-                // Controllers are intentionally excluded so VMBlueprintRestoreCmd re-spawns them fresh for the new family.
-                var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
+                // Keep build-mode objects, essential objects, and all OUT_OF_WORLD objects
+                // (controllers + system objects). Controllers keep their ObjectData so EP2
+                // can re-initialise them correctly (fresh-spawning via CreateObjectInstance
+                // runs EP0 which behaves differently from the vanilla OBJM-load path).
+                // Their threads are reset to blank. Avatars and placed buy-mode furniture removed.
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
@@ -306,9 +308,8 @@ namespace Simitone.Client.UI.Screens
                 {
                     var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
-                    if (controllerGuids.Contains(entity.GUID)) continue; // Remove controllers (re-spawned fresh on load)
 
-                    // Keep OUT_OF_WORLD non-controller objects (e.g. system objects that aren't global controllers).
+                    // Keep all OUT_OF_WORLD objects (controllers + invisible system objects).
                     // Buy-mode furniture always has a placed position.
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
