@@ -275,26 +275,48 @@ namespace Simitone.Client.UI.Screens
             TS1NeighPanel.SelectHouse(houseID);
         }
 
+        private static readonly string DebugLogPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "simitone_evict_debug.txt");
+
+        private static void DbgLog(string msg)
+        {
+            try { System.IO.File.AppendAllText(DebugLogPath, "[" + DateTime.Now.ToString("HH:mm:ss.fff") + "] " + msg + "\n"); }
+            catch { }
+        }
+
         /// <summary>
         /// Resets a house by removing buy-mode objects and avatars while keeping
         /// architecture (walls, floors) and build-mode objects (doors, windows, stairs, etc.).
         /// </summary>
         private void ResetHouse(int houseID)
         {
+            System.IO.File.WriteAllText(DebugLogPath, ""); // clear log each eviction
+            DbgLog("=== ResetHouse houseID=" + houseID + " ===");
             var neigh = Content.Get().Neighborhood;
             var houseIff = neigh.GetHouse(houseID);
             var fsov = houseIff.Get<FSOV>(1);
+            DbgLog("FSOV in IFF: " + (fsov != null ? "YES (" + fsov.Data.Length + " bytes)" : "NO -> Case B"));
 
             VMMarshal marshal;
 
             if (fsov != null)
             {
                 // Case A: House has FSOV (played in Simitone) - deserialize and filter
+                DbgLog("--- Case A ---");
                 marshal = new VMMarshal();
                 using (var reader = new BinaryReader(new MemoryStream(fsov.Data)))
                 {
                     marshal.Deserialize(reader);
                 }
+                DbgLog("Entities in FSOV: " + marshal.Entities.Length);
+                DbgLog("GlobalState BEFORE reset: [3]=" + marshal.GlobalState[3] +
+                    " [9]=" + marshal.GlobalState[9] +
+                    " [10]=" + marshal.GlobalState[10] +
+                    " [17]=" + marshal.GlobalState[17] +
+                    " [20]=" + marshal.GlobalState[20] +
+                    " [25]=" + marshal.GlobalState[25] +
+                    " [32]=" + marshal.GlobalState[32] +
+                    " GS_length=" + marshal.GlobalState.Length);
 
                 // Reset critical GlobalState values that LoadFromIff always sets.
                 // Without these the game behaves as if no expansion packs are installed,
@@ -303,6 +325,11 @@ namespace Simitone.Client.UI.Screens
                 marshal.GlobalState[25] = 4;   // Needed for idle interactions (from EA-Land Edith)
                 marshal.GlobalState[17] = 4;   // Runtime Code Version (checked by controller trees)
                 if (marshal.GlobalState.Length > 3) marshal.GlobalState[3] = 0; // Clear selected person
+                DbgLog("GlobalState AFTER reset:  [3]=" + marshal.GlobalState[3] +
+                    " [9]=" + marshal.GlobalState[9] +
+                    " [17]=" + marshal.GlobalState[17] +
+                    " [20]=" + marshal.GlobalState[20] +
+                    " [25]=" + marshal.GlobalState[25]);
 
                 // Controllers are kept with their original thread state. A blank thread
                 // means no active loop, so the magic-man / new-neighbors scripts never run.
@@ -310,27 +337,45 @@ namespace Simitone.Client.UI.Screens
                 // are based on neighbour data (who has visited, who got the gift), not on
                 // lot-level flags.
                 var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
+                DbgLog("ControllerGuids count: " + controllerGuids.Count + " -> " +
+                    string.Join(", ", controllerGuids.Select(g => "0x" + g.ToString("X8"))));
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
                 for (int i = 0; i < marshal.Entities.Length; i++)
                 {
                     var entity = marshal.Entities[i];
-                    if (entity is VMAvatarMarshal) continue; // Remove avatars
+                    if (entity is VMAvatarMarshal)
+                    {
+                        DbgLog("  REMOVE avatar GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID);
+                        continue;
+                    }
 
-                    // Keep controllers with their full thread state (active game logic loop).
-                    // Keep build-mode/essential/OUT_OF_WORLD non-avatar objects.
-                    // Buy-mode furniture always has a placed position and is excluded.
+                    // Always exclude controllers: VMBlueprintRestoreCmd's spawn loop
+                    // re-creates them fresh (clean ObjectData + EP1 on thread), exactly
+                    // matching the LoadFromIff path for vanilla lots.  Keeping a stale
+                    // controller from the evicted session risks its ObjectData containing
+                    // "already visited" state that prevents magic-man / new-neighbor visits.
                     var isController = controllerGuids.Contains(entity.GUID);
+                    if (isController)
+                    {
+                        DbgLog("  REMOVE controller GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
+                            " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
+                        continue;
+                    }
+
+                    // Keep build-mode, essential, and OUT_OF_WORLD non-avatar/non-controller objects.
+                    // Buy-mode furniture at real lot positions is excluded.
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
-                    if (isOutOfWorld || (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID))))
+                    var buildMode = objd?.BuildModeType ?? -1;
+                    var isEssential = EssentialLotObjects.Contains(entity.GUID);
+
+                    if (isOutOfWorld || (objd != null && (buildMode > 0 || isEssential)))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
-                        // Controllers: keep original thread (the running game-logic loop).
-                        // Other objects: blank thread so EP2 re-initialises them cleanly.
-                        keptThreads.Add(isController ? marshal.Threads[i] : new VMThreadMarshal
+                        keptThreads.Add(new VMThreadMarshal
                         {
                             Stack = new VMStackFrameMarshal[0],
                             Queue = new VMQueuedActionMarshal[0],
@@ -338,9 +383,19 @@ namespace Simitone.Client.UI.Screens
                             TempRegisters = new short[20],
                             TempXL = new int[2],
                         });
+                        DbgLog("  KEEP GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
+                            " oow=" + isOutOfWorld + " bmt=" + buildMode + " ess=" + isEssential +
+                            " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
+                    }
+                    else
+                    {
+                        DbgLog("  REMOVE GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
+                            " oow=" + isOutOfWorld + " bmt=" + buildMode +
+                            " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
                     }
                 }
 
+                DbgLog("Kept " + keptEntities.Count + " non-controller entities (controllers stripped for fresh spawn)");
                 marshal.Entities = keptEntities.ToArray();
                 marshal.Threads = keptThreads.ToArray();
 
@@ -390,6 +445,7 @@ namespace Simitone.Client.UI.Screens
             }
             else
             {
+                DbgLog("--- Case B (ConvertToFilteredMarshal) ---");
                 // Case B: No FSOV (lot never played in Simitone) - convert IFF with filtering
                 marshal = VMTS1ActivatorNew.ConvertToFilteredMarshal(
                     houseIff,
@@ -400,8 +456,12 @@ namespace Simitone.Client.UI.Screens
                         var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
                         return objd != null && objd.BuildModeType > 0;
                     });
+                DbgLog("Case B result: " + marshal.Entities.Length + " entities, GS[17]=" +
+                    marshal.GlobalState[17] + " GS[20]=" + marshal.GlobalState[20] + " GS[25]=" + marshal.GlobalState[25]);
             }
 
+            DbgLog("Saving FSOV to IFF, entities=" + marshal.Entities.Length +
+                " threads=" + marshal.Threads.Length + " groups=" + marshal.MultitileGroups.Length);
             // Serialize filtered marshal into new FSOV chunk
             var newFsov = new FSOV();
             newFsov.ChunkLabel = "Simitone Lot Data";
@@ -866,9 +926,12 @@ namespace Simitone.Client.UI.Screens
                 isSurrounding = false;
                 vm = this.vm;
             }
+            DbgLog("=== BlueprintReset path=" + path + " isSurrounding=" + isSurrounding + " ===");
             try
             {
-                using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/") + filename.Substring(0, filename.Length - 4) + ".fsov")))
+                var cacheFile = Path.Combine(FSOEnvironment.UserDir, "LocalHouse/") + filename.Substring(0, filename.Length - 4) + ".fsov";
+                DbgLog("Trying LocalHouse cache: " + cacheFile + " exists=" + File.Exists(cacheFile));
+                using (var file = new BinaryReader(File.OpenRead(cacheFile)))
                 {
                     var marshal = new FSO.SimAntics.Marshals.VMMarshal();
                     marshal.Deserialize(file);
@@ -877,12 +940,15 @@ namespace Simitone.Client.UI.Screens
                     //    State = marshal
                     //});
 
+                    DbgLog("LocalHouse cache loaded: " + marshal.Entities.Length + " entities, GS[17]=" + (marshal.GlobalState?.Length > 17 ? marshal.GlobalState[17].ToString() : "?") + " GS[20]=" + (marshal.GlobalState?.Length > 20 ? marshal.GlobalState[20].ToString() : "?") + " GS[25]=" + (marshal.GlobalState?.Length > 25 ? marshal.GlobalState[25].ToString() : "?"));
                     vm.Load(marshal);
+                    DbgLog("vm.Load done (LocalHouse path)");
                     vm.Reset();
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                DbgLog("LocalHouse cache failed (" + ex.GetType().Name + ": " + ex.Message + "), falling back to VMBlueprintRestoreCmd");
                 var floorClip = Rectangle.Empty;
                 var offset = new Point();
                 var targetSize = 0;
@@ -890,6 +956,7 @@ namespace Simitone.Client.UI.Screens
                 var isIff = path.EndsWith(".iff");
                 short jobLevel = -1;
                 if (isIff) jobLevel = short.Parse(path.Substring(path.Length - 6, 2));
+                DbgLog("Sending VMBlueprintRestoreCmd: isIff=" + isIff + " jobLevel=" + jobLevel + " dataLen=" + (File.Exists(path) ? new FileInfo(path).Length.ToString() : "FILE_MISSING"));
                 vm.SendCommand(new VMBlueprintRestoreCmd
                 {
                     JobLevel = jobLevel,
