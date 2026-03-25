@@ -296,10 +296,19 @@ namespace Simitone.Client.UI.Screens
                     marshal.Deserialize(reader);
                 }
 
-                // Controllers are excluded: VMBlueprintRestoreCmd's spawn loop will
-                // re-spawn them fresh (EP0 + EP2), which is the same path as brand-new
-                // vanilla lots and is known to work. Keeping controllers with blank threads
-                // gives them EP2-only, which is insufficient.
+                // Reset critical GlobalState values that LoadFromIff always sets.
+                // Without these the game behaves as if no expansion packs are installed,
+                // which breaks controller behaviour (magic man, new neighbors, etc.).
+                marshal.GlobalState[20] = 255; // Game Edition: all expansion packs enabled
+                marshal.GlobalState[25] = 4;   // Needed for idle interactions (from EA-Land Edith)
+                marshal.GlobalState[17] = 4;   // Runtime Code Version (checked by controller trees)
+                if (marshal.GlobalState.Length > 3) marshal.GlobalState[3] = 0; // Clear selected person
+
+                // Controllers are kept with their original thread state. A blank thread
+                // means no active loop, so the magic-man / new-neighbors scripts never run.
+                // The original running thread is safe across families because the checks
+                // are based on neighbour data (who has visited, who got the gift), not on
+                // lot-level flags.
                 var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
@@ -308,19 +317,20 @@ namespace Simitone.Client.UI.Screens
                 {
                     var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
-                    if (controllerGuids.Contains(entity.GUID)) continue; // Remove controllers (re-spawned fresh on load)
 
-                    // Keep build-mode objects, essential objects, and any non-controller
-                    // OUT_OF_WORLD objects (invisible system objects that aren't global controllers).
-                    // Buy-mode furniture always has a placed position.
+                    // Keep controllers with their full thread state (active game logic loop).
+                    // Keep build-mode/essential/OUT_OF_WORLD non-avatar objects.
+                    // Buy-mode furniture always has a placed position and is excluded.
+                    var isController = controllerGuids.Contains(entity.GUID);
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
                     if (isOutOfWorld || (objd != null && (objd.BuildModeType > 0 || EssentialLotObjects.Contains(entity.GUID))))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
-                        // Create a minimal empty thread (objects re-init on load)
-                        keptThreads.Add(new VMThreadMarshal
+                        // Controllers: keep original thread (the running game-logic loop).
+                        // Other objects: blank thread so EP2 re-initialises them cleanly.
+                        keptThreads.Add(isController ? marshal.Threads[i] : new VMThreadMarshal
                         {
                             Stack = new VMStackFrameMarshal[0],
                             Queue = new VMQueuedActionMarshal[0],
