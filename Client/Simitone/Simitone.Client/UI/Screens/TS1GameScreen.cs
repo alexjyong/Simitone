@@ -296,11 +296,11 @@ namespace Simitone.Client.UI.Screens
                     marshal.Deserialize(reader);
                 }
 
-                // Keep build-mode objects, essential objects, and all OUT_OF_WORLD objects
-                // (controllers + system objects). Controllers keep their ObjectData so EP2
-                // can re-initialise them correctly (fresh-spawning via CreateObjectInstance
-                // runs EP0 which behaves differently from the vanilla OBJM-load path).
-                // Their threads are reset to blank. Avatars and placed buy-mode furniture removed.
+                // Controllers are excluded: VMBlueprintRestoreCmd's spawn loop will
+                // re-spawn them fresh (EP0 + EP2), which is the same path as brand-new
+                // vanilla lots and is known to work. Keeping controllers with blank threads
+                // gives them EP2-only, which is insufficient.
+                var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
                 var keptIds = new HashSet<short>();
                 var keptEntities = new List<VMEntityMarshal>();
                 var keptThreads = new List<VMThreadMarshal>();
@@ -308,8 +308,10 @@ namespace Simitone.Client.UI.Screens
                 {
                     var entity = marshal.Entities[i];
                     if (entity is VMAvatarMarshal) continue; // Remove avatars
+                    if (controllerGuids.Contains(entity.GUID)) continue; // Remove controllers (re-spawned fresh on load)
 
-                    // Keep all OUT_OF_WORLD objects (controllers + invisible system objects).
+                    // Keep build-mode objects, essential objects, and any non-controller
+                    // OUT_OF_WORLD objects (invisible system objects that aren't global controllers).
                     // Buy-mode furniture always has a placed position.
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
