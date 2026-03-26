@@ -64,6 +64,9 @@ namespace Simitone.Client.UI.Screens
         /// VerifyFamily searches for the mailbox by GUID to place newly-spawned sims;
         /// if absent, sims spawn at OUT_OF_WORLD and become invisible/unselectable.
         /// </summary>
+        // Objects that have FunctionFlags > 0 (buy-catalog items) but must survive eviction.
+        // All other non-buy-catalog objects (FunctionFlags == 0: portals, stairs, doors, etc.)
+        // are kept automatically by the filter without being listed here.
         private static readonly HashSet<uint> EssentialLotObjects = new HashSet<uint>
         {
             0xEF121974u, // Mailbox (primary - used by VerifyFamily)
@@ -72,8 +75,6 @@ namespace Simitone.Client.UI.Screens
             0xA4258067u, // Trash bin
             0x313D2F9Au, // Phone
             0x303CD603u, // Phone (community lots)
-            0x865A6812u, // Car portal entrance
-            0xD564C66Bu, // Car portal exit
         };
 
         public bool InLot
@@ -331,11 +332,10 @@ namespace Simitone.Client.UI.Screens
                     " [20]=" + marshal.GlobalState[20] +
                     " [25]=" + marshal.GlobalState[25]);
 
-                // Controllers are kept with their original thread state. A blank thread
-                // means no active loop, so the magic-man / new-neighbors scripts never run.
-                // The original running thread is safe across families because the checks
-                // are based on neighbour data (who has visited, who got the gift), not on
-                // lot-level flags.
+                // Controllers are kept but their ObjectData is zeroed and threads blanked,
+                // matching the vanilla OBJM load path (no EP0 called).  This clears any
+                // "already visited" state from the evicted family without stripping the
+                // objects entirely (which would force EP0 via CreateObjectInstance).
                 var controllerGuids = new HashSet<uint>(Content.Get().WorldObjects.ControllerObjects.Select(c => (uint)c.ID));
                 DbgLog("ControllerGuids count: " + controllerGuids.Count + " -> " +
                     string.Join(", ", controllerGuids.Select(g => "0x" + g.ToString("X8"))));
@@ -351,27 +351,44 @@ namespace Simitone.Client.UI.Screens
                         continue;
                     }
 
-                    // Always exclude controllers: VMBlueprintRestoreCmd's spawn loop
-                    // re-creates them fresh (clean ObjectData + EP1 on thread), exactly
-                    // matching the LoadFromIff path for vanilla lots.  Keeping a stale
-                    // controller from the evicted session risks its ObjectData containing
-                    // "already visited" state that prevents magic-man / new-neighbor visits.
+                    // Controllers are kept but their ObjectData is zeroed to match vanilla
+                    // OBJM load behavior (no EP0 called).  This avoids "already visited"
+                    // state from the evicted family bleeding into the new family's session,
+                    // while still letting controllers load with blank threads exactly as they
+                    // would from a freshly-loaded vanilla IFF.
                     var isController = controllerGuids.Contains(entity.GUID);
                     if (isController)
                     {
-                        DbgLog("  REMOVE controller GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
+                        if (entity.ObjectData != null)
+                            Array.Clear(entity.ObjectData, 0, entity.ObjectData.Length);
+                        keptIds.Add(entity.ObjectID);
+                        keptEntities.Add(entity);
+                        keptThreads.Add(new VMThreadMarshal
+                        {
+                            Stack = new VMStackFrameMarshal[0],
+                            Queue = new VMQueuedActionMarshal[0],
+                            ActiveQueueBlock = -1,
+                            TempRegisters = new short[20],
+                            TempXL = new int[2],
+                        });
+                        DbgLog("  KEEP controller (reset) GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
                             " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
                         continue;
                     }
 
-                    // Keep build-mode, essential, and OUT_OF_WORLD non-avatar/non-controller objects.
-                    // Buy-mode furniture at real lot positions is excluded.
+                    // Keep anything that is NOT buy-catalog furniture (old family's purchased items).
+                    // FunctionFlags > 0 means the object appears in the buy catalog.
+                    // FunctionFlags == 0 covers build-mode objects (doors, stairs), system objects
+                    // (portals, spawn points), and anything else the player didn't buy — all of
+                    // which must survive eviction.  Essential objects (mailbox, trash, phone) are
+                    // buy-catalog items we keep explicitly.
                     var isOutOfWorld = entity.Position.x == short.MinValue;
                     var objd = Content.Get().WorldObjects.Get(entity.GUID)?.OBJ;
                     var buildMode = objd?.BuildModeType ?? -1;
                     var isEssential = EssentialLotObjects.Contains(entity.GUID);
+                    var isNonCatalog = objd != null && objd.FunctionFlags == 0;
 
-                    if (isOutOfWorld || (objd != null && (buildMode > 0 || isEssential)))
+                    if (isOutOfWorld || isEssential || (objd != null && (buildMode > 0 || isNonCatalog)))
                     {
                         keptIds.Add(entity.ObjectID);
                         keptEntities.Add(entity);
@@ -384,18 +401,18 @@ namespace Simitone.Client.UI.Screens
                             TempXL = new int[2],
                         });
                         DbgLog("  KEEP GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
-                            " oow=" + isOutOfWorld + " bmt=" + buildMode + " ess=" + isEssential +
+                            " oow=" + isOutOfWorld + " bmt=" + buildMode + " ess=" + isEssential + " fnf=" + (objd?.FunctionFlags ?? 0) +
                             " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
                     }
                     else
                     {
                         DbgLog("  REMOVE GUID=0x" + entity.GUID.ToString("X8") + " ID=" + entity.ObjectID +
-                            " oow=" + isOutOfWorld + " bmt=" + buildMode +
+                            " oow=" + isOutOfWorld + " bmt=" + buildMode + " fnf=" + (objd?.FunctionFlags ?? 0) +
                             " pos=(" + entity.Position.x + "," + entity.Position.y + ")");
                     }
                 }
 
-                DbgLog("Kept " + keptEntities.Count + " non-controller entities (controllers stripped for fresh spawn)");
+                DbgLog("Kept " + keptEntities.Count + " entities (controllers reset, not stripped)");
                 marshal.Entities = keptEntities.ToArray();
                 marshal.Threads = keptThreads.ToArray();
 
@@ -454,7 +471,9 @@ namespace Simitone.Client.UI.Screens
                     {
                         if (EssentialLotObjects.Contains(guid)) return true;
                         var objd = Content.Get().WorldObjects.Get(guid)?.OBJ;
-                        return objd != null && objd.BuildModeType > 0;
+                        // Keep build-mode objects AND any non-catalog object (FunctionFlags == 0).
+                        // FunctionFlags > 0 means it's a buy-catalog item — those are removed.
+                        return objd != null && (objd.BuildModeType > 0 || objd.FunctionFlags == 0);
                     });
                 DbgLog("Case B result: " + marshal.Entities.Length + " entities, GS[17]=" +
                     marshal.GlobalState[17] + " GS[20]=" + marshal.GlobalState[20] + " GS[25]=" + marshal.GlobalState[25]);
