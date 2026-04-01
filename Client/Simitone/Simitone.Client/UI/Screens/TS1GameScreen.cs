@@ -353,11 +353,12 @@ namespace Simitone.Client.UI.Screens
             Visible = World?.Visible != false && World?.State.Cameras.HideUI != true;
             GameFacade.Game.IsMouseVisible = Visible;
 
-            if (state.NewKeys.Contains(Keys.D1)) ChangeSpeedTo(1);
-            if (state.NewKeys.Contains(Keys.D2)) ChangeSpeedTo(2);
-            if (state.NewKeys.Contains(Keys.D3)) ChangeSpeedTo(3);
-            if (state.NewKeys.Contains(Keys.P)) ChangeSpeedTo(0);
-            if (state.NewKeys.Contains(Keys.D0))
+            var nofocus = state.InputManager.GetFocus() == null;
+            if (nofocus && state.NewKeys.Contains(Keys.D1)) ChangeSpeedTo(1);
+            if (nofocus && state.NewKeys.Contains(Keys.D2)) ChangeSpeedTo(2);
+            if (nofocus && state.NewKeys.Contains(Keys.D3)) ChangeSpeedTo(3);
+            if (nofocus && state.NewKeys.Contains(Keys.P)) ChangeSpeedTo(0);
+            if (nofocus && state.NewKeys.Contains(Keys.D0))
             {
                 //frame advance
                 ChangeSpeedTo(1);
@@ -547,6 +548,14 @@ namespace Simitone.Client.UI.Screens
             vm = new VM(new VMContext(World), Driver, new UIHeadlineRendererProvider());
             vm.ListenBHAVChanges();
             vm.Init();
+
+            // Default to manual-clear weather (no auto-weather in TS1)
+            vm.Context.Blueprint.Weather?.SetWeather((short)(1 << 8));
+            LastSoundIntensity = -1;
+            LastWeatherType = WeatherType.Rain;
+            LastThunder = false;
+            TerrainSnowApplied = false;
+            ThunderTimer = 0f;
 
             LotControl = new UILotControl(vm, World);
             this.AddAt(0, LotControl);
