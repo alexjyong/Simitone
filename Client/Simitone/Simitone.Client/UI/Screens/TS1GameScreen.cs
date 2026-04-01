@@ -549,8 +549,6 @@ namespace Simitone.Client.UI.Screens
             vm.ListenBHAVChanges();
             vm.Init();
 
-            // Default to manual-clear weather (no auto-weather in TS1)
-            vm.Context.Blueprint.Weather?.SetWeather((short)(1 << 8));
             LastSoundIntensity = -1;
             LastWeatherType = WeatherType.Rain;
             LastThunder = false;
@@ -665,7 +663,9 @@ namespace Simitone.Client.UI.Screens
                     vm.TS1State.ActivateFamily(vm, ActiveFamily);
                 }
                 BlueprintReset(lotName, null);
-                
+                // Default to manual-clear weather after blueprint is loaded (no auto-weather in TS1)
+                vm.Context.Blueprint?.Weather?.SetWeather((short)(1 << 8));
+
                 if (vm.LoadErrors.Count > 0) GameThread.NextUpdate((state) => ShowLoadErrors(vm.LoadErrors, true));
 
                 vm.MyUID = 65537;
