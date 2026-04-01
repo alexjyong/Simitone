@@ -344,8 +344,6 @@ namespace Simitone.Client.UI.Screens
                 case 3: vm.SpeedMultiplier = 10; break;
             }
             vm.ResetTickAlign();
-            if (speed == 0) WeatherSounds.PauseRain();
-            else WeatherSounds.ResumeRain();
         }
 
         public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
@@ -443,6 +441,12 @@ namespace Simitone.Client.UI.Screens
                     ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
                 }
             }
+
+            // Pause/resume rain sound to match game speed
+            if (vm.SpeedMultiplier == 0)
+                WeatherSounds.PauseRain();
+            else
+                WeatherSounds.ResumeRain();
 
             bool stateChanged = currentType != LastWeatherType ||
                               currentThunder != LastThunder ||
@@ -666,8 +670,7 @@ namespace Simitone.Client.UI.Screens
                 // Default to manual-clear weather after blueprint is loaded (no auto-weather in TS1)
                 // Restore saved weather state, or default to manual-clear
                 short weatherData = (short)(1 << 8);
-                var weatherPath = Path.Combine(FSOEnvironment.UserDir, "LocalHouse/",
-                    Path.GetFileNameWithoutExtension(lotName) + ".weather");
+                var weatherPath = Path.Combine(FSOEnvironment.UserDir, "LocalHouse/cas.weather");
                 if (File.Exists(weatherPath))
                 {
                     var bytes = File.ReadAllBytes(weatherPath);
