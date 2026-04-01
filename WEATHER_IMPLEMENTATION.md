@@ -30,6 +30,7 @@ For now, this is just to get it available for others to play with and use for st
 
 
 ## Sound Assets
-- **Content/Sounds/rain_loop.ogg** - Heavy rain loop by Rubaoliva (CC0)
-- **Content/Sounds/thunder.ogg** - Thunder by Raclure (CC0)
-- **Content/Sounds/README.md** - Attribution information
+Uses The Sims 1's built-in ambience system (XA loop files and FSC scripts from the game's sounddata):
+- Rain: `sounddata/ambience/loops/rain_lp.xa`
+- Storm: `sounddata/ambience/loops/storm_lp.xa`
+- Thunder: `sounddata/ambience/thunder/thunder.fsc`

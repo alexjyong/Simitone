@@ -75,6 +75,7 @@ namespace Simitone.Client.UI.Panels
                 && state.NewKeys.Contains(Keys.C)) //prevent change over multiple frames
             {
                 Visible = !Visible;
+                if (!Visible) state.InputManager.SetFocus(null);
             }
             baseTextbox.Visible = Visible;
             if (Visible)
