@@ -344,6 +344,8 @@ namespace Simitone.Client.UI.Screens
                 case 3: vm.SpeedMultiplier = 10; break;
             }
             vm.ResetTickAlign();
+            if (speed == 0) WeatherSounds.PauseRain();
+            else WeatherSounds.ResumeRain();
         }
 
         public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
@@ -432,7 +434,7 @@ namespace Simitone.Client.UI.Screens
             var currentIntensity = weather.WeatherIntensity;
 
             // Thunder timer runs every frame regardless of state changes
-            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f)
+            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f && vm?.SpeedMultiplier != 0)
             {
                 ThunderTimer -= 1f / 60f;
                 if (ThunderTimer <= 0)
@@ -503,6 +505,10 @@ namespace Simitone.Client.UI.Screens
             TimedReferenceController.Clear();
 
             if (ZoomLevel < 4) ZoomLevel = 5;
+            WeatherSounds.StopRain();
+            LastSoundIntensity = -1;
+            LastWeatherType = WeatherType.Rain;
+            LastThunder = false;
             vm.Context.Ambience.Kill();
             foreach (var ent in vm.Entities)
             { //stop object sounds
@@ -658,7 +664,16 @@ namespace Simitone.Client.UI.Screens
                 }
                 BlueprintReset(lotName, null);
                 // Default to manual-clear weather after blueprint is loaded (no auto-weather in TS1)
-                vm.Context.Blueprint?.Weather?.SetWeather((short)(1 << 8));
+                // Restore saved weather state, or default to manual-clear
+                short weatherData = (short)(1 << 8);
+                var weatherPath = Path.Combine(FSOEnvironment.UserDir, "LocalHouse/",
+                    Path.GetFileNameWithoutExtension(lotName) + ".weather");
+                if (File.Exists(weatherPath))
+                {
+                    var bytes = File.ReadAllBytes(weatherPath);
+                    if (bytes.Length >= 2) weatherData = BitConverter.ToInt16(bytes, 0);
+                }
+                vm.Context.Blueprint?.Weather?.SetWeather(weatherData);
 
                 if (vm.LoadErrors.Count > 0) GameThread.NextUpdate((state) => ShowLoadErrors(vm.LoadErrors, true));
 
@@ -850,6 +865,8 @@ namespace Simitone.Client.UI.Screens
             {
                 marshal.SerializeInto(new BinaryWriter(output));
             }
+            var weatherData = vm.Context.Blueprint?.Weather?.WeatherData ?? (short)(1 << 8);
+            File.WriteAllBytes(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/cas.weather"), BitConverter.GetBytes(weatherData));
         }
 
         private UIMobileAlert CloseAlert;

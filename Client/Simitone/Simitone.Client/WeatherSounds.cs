@@ -66,6 +66,18 @@ namespace Simitone.Client
             }
         }
 
+        public static void PauseRain()
+        {
+            if (RainLoopInstance != null && IsRainPlaying)
+                RainLoopInstance.Pause();
+        }
+
+        public static void ResumeRain()
+        {
+            if (RainLoopInstance != null && IsRainPlaying)
+                RainLoopInstance.Resume();
+        }
+
         public static void StopRain()
         {
             if (RainLoopInstance != null && IsRainPlaying)

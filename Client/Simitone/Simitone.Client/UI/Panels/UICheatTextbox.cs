@@ -76,6 +76,7 @@ namespace Simitone.Client.UI.Panels
             {
                 Visible = !Visible;
                 if (!Visible) state.InputManager.SetFocus(null);
+                else state.InputManager.SetFocus(baseTextbox);
             }
             baseTextbox.Visible = Visible;
             if (Visible)
