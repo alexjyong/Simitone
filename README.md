@@ -27,3 +27,9 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 Simitone -> Semitone -> musical term -> C# -> a note
 
 Further questions can be directed at my PR manager, uh, ... burglar cop.
+
+
+# Attributions
+
+- **Rain Sound**: Rubaoliva - https://freesound.org/s/624645/ (CC0)
+- **Thunder Sound**: Raclure - https://freesound.org/s/458870/ (CC0)
