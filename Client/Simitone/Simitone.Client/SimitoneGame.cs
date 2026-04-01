@@ -260,7 +260,7 @@ namespace Simitone.Client
 
             FSO.Vitaboy.Avatar.setVitaboyEffect(vitaboyEffect);
 
-            WeatherSounds.Load(System.IO.Path.GetDirectoryName(Content.RootDirectory) ?? "Content");
+            WeatherSounds.Load("Content");
         }
 
         /// <summary>
