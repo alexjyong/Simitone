@@ -21,6 +21,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO)
+- **Cosmetic weather system** - Rain, snow, hail, and storms, toggled via the cheat console (Ctrl+Shift+C). See [WEATHER_IMPLEMENTATION.md](WEATHER_IMPLEMENTATION.md) for details.
 
 # Why is it called Simitone?
 

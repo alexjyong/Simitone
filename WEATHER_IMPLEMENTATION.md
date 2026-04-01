@@ -1,12 +1,12 @@
 # Weather System Implementation
 
 ## Overview
-Simitone now includes a basic, cosmestic only weather system.
+Simitone now includes a basic, cosmetic-only weather system.
 Available weather is rain, snow, and hail.
-It can only be enabled via console commands. Hopefully future updates will have a more natural system. 
+It can only be enabled via console commands. Hopefully future updates will have a more natural system.
 For now, this is just to get it available for others to play with and use for storyboarding, atmospheric effects, etc.
 
-## How to Use:
+## How to Use
 ### Commands (via Ctrl+Shift+C)
 
 - `weather rain [0-100]` - Enable rain (optional intensity, default 50)
@@ -28,6 +28,7 @@ For now, this is just to get it available for others to play with and use for st
 
 - `weather auto` - Automatic time-based weather
 
-
 ## Sound Assets
-Currently no sound. The TSO ambience XA files (rain_lp.xa, storm_lp.xa, thunder.fsc) are not part of The Sims 1 game data.
+
+- **Rain loop** - Rubaoliva (CC0) - https://freesound.org/s/624645/
+- **Thunder** - Raclure (CC0) - https://freesound.org/s/458870/
