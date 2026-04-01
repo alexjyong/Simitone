@@ -975,6 +975,11 @@ namespace Simitone.Client.UI.Screens
 
             Content.Get().Neighborhood.SaveHouse(vm.GetGlobalValue(10), iff);
             Content.Get().Neighborhood.SaveNeighbourhood(true);
+
+            // Write weather sidecar alongside the save
+            var weatherData = vm.Context.Blueprint?.Weather?.WeatherData ?? (short)(1 << 8);
+            Directory.CreateDirectory(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/"));
+            File.WriteAllBytes(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/cas.weather"), BitConverter.GetBytes(weatherData));
         }
 
         public PNG GeneratePNG(Texture2D data)
