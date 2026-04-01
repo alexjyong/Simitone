@@ -54,6 +54,9 @@ namespace Simitone.Client.UI.Panels
         public bool PanelActive;
         public UIMainPanelMode Mode;
 
+        private UITextBox CatalogSearchField;
+        private UILabel SearchPlaceholder;
+
         public event Action OnEndSelect;
         public event Action<UIMainPanelMode> ModeChanged;
 
@@ -156,7 +159,27 @@ namespace Simitone.Client.UI.Panels
             Switcher.OnCategorySelect += Switcher_OnCategorySelect;
             Switcher.OnOpen += Switcher_OnOpen;
             Add(Switcher);
-            
+
+            CatalogSearchField = new UITextBox();
+            CatalogSearchField.SetSize(200, 28);
+            CatalogSearchField.Position = new Vector2(263, -35);
+            CatalogSearchField.Visible = false;
+            CatalogSearchField.OnChange += (elem) =>
+            {
+                (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter(CatalogSearchField.CurrentText);
+            };
+            Add(CatalogSearchField);
+
+            SearchPlaceholder = new UILabel();
+            SearchPlaceholder.Caption = "Search\u2026";
+            SearchPlaceholder.Position = new Vector2(271, -29);
+            SearchPlaceholder.Size = new Vector2(184, 20);
+            SearchPlaceholder.CaptionStyle = SearchPlaceholder.CaptionStyle.Clone();
+            SearchPlaceholder.CaptionStyle.Size = 12;
+            SearchPlaceholder.CaptionStyle.Color = UIStyle.Current.Text * 0.4f;
+            SearchPlaceholder.Visible = false;
+            Add(SearchPlaceholder);
+
             foreach (var fade in GetFadeables())
             {
                 fade.Opacity = 0;
@@ -270,9 +293,18 @@ namespace Simitone.Client.UI.Panels
         {
             if (SubPanel != null)
             {
+                // Clear any active search before replacing the panel
+                (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter("");
                 SubPanel.Kill();
             }
             SubPanel = sub;
+            var isBrowsePanel = sub is UIBuyBrowsePanel;
+            if (CatalogSearchField != null)
+            {
+                CatalogSearchField.CurrentText = "";
+                CatalogSearchField.Visible = isBrowsePanel;
+                SearchPlaceholder.Visible = isBrowsePanel;
+            }
             if (sub != null)
             {
                 SubPanel.Position = new Vector2(263, 0);
@@ -381,6 +413,24 @@ namespace Simitone.Client.UI.Panels
             } else if (Game.vm.SpeedMultiplier == -1)
             {
                 Game.vm.SpeedMultiplier = 0;
+            }
+
+            // Update search placeholder visibility
+            if (CatalogSearchField != null && CatalogSearchField.Visible)
+            {
+                var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
+                SearchPlaceholder.Visible = !CatalogSearchField.HasText && !searchFocused;
+
+                // Two-stage Escape: clear text first; close panel only when field is already empty
+                if (searchFocused && state.NewKeys.Contains(Microsoft.Xna.Framework.Input.Keys.Escape))
+                {
+                    if (CatalogSearchField.HasText)
+                    {
+                        CatalogSearchField.CurrentText = "";
+                        (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter("");
+                    }
+                    // When field is empty, Escape falls through to normal panel behaviour (none currently)
+                }
             }
         }
 

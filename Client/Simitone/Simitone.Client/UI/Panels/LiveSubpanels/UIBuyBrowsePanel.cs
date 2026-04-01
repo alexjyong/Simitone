@@ -32,6 +32,10 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         public bool ChoosingSub;
         public int ItemID = -1;
 
+        private string ActiveSearchTerm;
+        private IEnumerable<UICatalogElement> PreSearchFilterCategory;
+        public UILabel NoResultsLabel;
+
         public static int[] RemapString = new int[]
         {
             0, //seat
@@ -341,6 +345,17 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             Add(CatContainer);
             Mode = mode;
             GameResized();
+
+            NoResultsLabel = new UILabel();
+            NoResultsLabel.Caption = "No items found";
+            NoResultsLabel.Alignment = TextAlignment.Middle | TextAlignment.Center;
+            NoResultsLabel.Position = new Vector2(0, 50);
+            NoResultsLabel.Size = new Vector2(Size.X, 25);
+            NoResultsLabel.CaptionStyle = NoResultsLabel.CaptionStyle.Clone();
+            NoResultsLabel.CaptionStyle.Size = 14;
+            NoResultsLabel.CaptionStyle.Color = UIStyle.Current.Text;
+            NoResultsLabel.Visible = false;
+            Add(NoResultsLabel);
 
             InitCategory(category, false);
 
@@ -779,6 +794,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         {
             base.GameResized();
             CatContainer.Size = new Vector2(Size.X, 128);
+            if (NoResultsLabel != null)
+                NoResultsLabel.Size = new Vector2(Size.X, 25);
             if (ChoosingSub) Reset();
         }
 
@@ -838,6 +855,52 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 var mask = 1 << index;
                 return !FullCategory.Any(x => (GetSubsort(x.Item) & mask) > 0);
             }
+        }
+
+        public void ApplyNameFilter(string term)
+        {
+            if (string.IsNullOrEmpty(term))
+            {
+                ActiveSearchTerm = null;
+                if (PreSearchFilterCategory != null)
+                {
+                    FilterCategory = PreSearchFilterCategory;
+                    PreSearchFilterCategory = null;
+                }
+                NoResultsLabel.Visible = false;
+                CatContainer.Reset();
+                return;
+            }
+
+            // Save the pre-search FilterCategory the first time we enter search mode
+            if (ActiveSearchTerm == null)
+                PreSearchFilterCategory = FilterCategory;
+
+            ActiveSearchTerm = term;
+
+            if (Mode == UICatalogMode.Build)
+            {
+                // Build-mode items (floors, walls, roofs, etc.) are not in WorldObjectCatalog,
+                // so search within the already-loaded FullCategory for the current build subcategory.
+                FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
+                    .Where(elem => elem.Item.GUID != uint.MaxValue &&
+                                   (elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                    elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
+                    .ToList();
+            }
+            else
+            {
+                // For Buy mode, search across all catalog categories.
+                FilterCategory = Content.Get().WorldCatalog.All()
+                    .Where(item => item.GUID != uint.MaxValue &&
+                                   (item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                    item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
+                    .Select(item => new UICatalogElement { Item = item, CalcPrice = (int)item.Price })
+                    .ToList();
+            }
+
+            NoResultsLabel.Visible = !FilterCategory.Any();
+            CatContainer.Reset();
         }
 
         public void InitSubcategory(UICatalogSubcat cat)
