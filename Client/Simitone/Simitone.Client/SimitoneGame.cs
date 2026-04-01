@@ -260,6 +260,7 @@ namespace Simitone.Client
 
             FSO.Vitaboy.Avatar.setVitaboyEffect(vitaboyEffect);
 
+            WeatherSounds.Load(System.IO.Path.GetDirectoryName(Content.RootDirectory) ?? "Content");
         }
 
         /// <summary>
@@ -269,6 +270,7 @@ namespace Simitone.Client
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
+            WeatherSounds.Unload();
         }
 
 

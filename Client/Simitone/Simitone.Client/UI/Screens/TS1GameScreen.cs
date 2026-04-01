@@ -62,6 +62,8 @@ namespace Simitone.Client.UI.Screens
         private WeatherType LastWeatherType = WeatherType.Rain;
         private bool LastThunder = false;
         private bool TerrainSnowApplied = false;
+        private float ThunderTimer = 0f;
+        private Random ThunderRandom = new Random();
 
         public bool InLot
         {
@@ -429,21 +431,30 @@ namespace Simitone.Client.UI.Screens
             var currentThunder = weather.IsThunder;
             var currentIntensity = weather.WeatherIntensity;
 
+            // Thunder timer runs every frame regardless of state changes
+            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f)
+            {
+                ThunderTimer -= 1f / 60f;
+                if (ThunderTimer <= 0)
+                {
+                    WeatherSounds.PlayThunder(LastSoundIntensity * 0.8f);
+                    ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
+                }
+            }
+
             bool stateChanged = currentType != LastWeatherType ||
                               currentThunder != LastThunder ||
                               Math.Abs(currentIntensity - LastSoundIntensity) > 0.05f;
 
             if (!stateChanged) return;
 
-            var ambience = vm.Context.Ambience;
-            var rainId = ambience.GetAmbienceFromGUID(0xde0bc1ad);    // LoopRain
-            var stormId = ambience.GetAmbienceFromGUID(0x1e0bc2b2);   // LoopStorm
-            var thunderId = ambience.GetAmbienceFromGUID(0xfdd887b5); // WeatherLightingThunder
-
-            bool isRaining = currentType == WeatherType.Rain && currentIntensity > 0.1f;
-            ambience.SetAmbience(rainId, isRaining && !currentThunder);
-            ambience.SetAmbience(stormId, isRaining && currentThunder);
-            ambience.SetAmbience(thunderId, isRaining && currentThunder);
+            if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
+                WeatherSounds.PlayRain(currentIntensity);
+            else
+            {
+                WeatherSounds.StopRain();
+                ThunderTimer = 0f;
+            }
 
             if (vm?.Context?.Blueprint?.Terrain != null)
             {
@@ -536,6 +547,7 @@ namespace Simitone.Client.UI.Screens
             LastWeatherType = WeatherType.Rain;
             LastThunder = false;
             TerrainSnowApplied = false;
+            ThunderTimer = 0f;
 
             LotControl = new UILotControl(vm, World);
             this.AddAt(0, LotControl);

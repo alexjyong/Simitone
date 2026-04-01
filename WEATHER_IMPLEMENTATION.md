@@ -30,7 +30,4 @@ For now, this is just to get it available for others to play with and use for st
 
 
 ## Sound Assets
-Uses The Sims 1's built-in ambience system (XA loop files and FSC scripts from the game's sounddata):
-- Rain: `sounddata/ambience/loops/rain_lp.xa`
-- Storm: `sounddata/ambience/loops/storm_lp.xa`
-- Thunder: `sounddata/ambience/thunder/thunder.fsc`
+Currently no sound. The TSO ambience XA files (rain_lp.xa, storm_lp.xa, thunder.fsc) are not part of The Sims 1 game data.
