@@ -17,8 +17,8 @@ namespace Simitone.Client
         {
             try
             {
-                var rainPath = Path.Combine(contentPath, "Sounds", "rain_loop.ogg");
-                var thunderPath = Path.Combine(contentPath, "Sounds", "thunder.ogg");
+                var rainPath = Path.Combine(contentPath, "Sounds", "rain_loop.wav");
+                var thunderPath = Path.Combine(contentPath, "Sounds", "thunder.wav");
 
                 if (File.Exists(rainPath))
                 {

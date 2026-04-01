@@ -430,6 +430,17 @@ namespace Simitone.Client.UI.Screens
             var currentThunder = weather.IsThunder;
             var currentIntensity = weather.WeatherIntensity;
 
+            // Thunder timer runs every frame regardless of state changes
+            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f)
+            {
+                ThunderTimer -= 1f / 60f;
+                if (ThunderTimer <= 0)
+                {
+                    WeatherSounds.PlayThunder(LastSoundIntensity * 0.8f);
+                    ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
+                }
+            }
+
             bool stateChanged = currentType != LastWeatherType ||
                               currentThunder != LastThunder ||
                               Math.Abs(currentIntensity - LastSoundIntensity) > 0.05f;
@@ -441,16 +452,6 @@ namespace Simitone.Client.UI.Screens
                 if (currentType == WeatherType.Rain && currentIntensity > 0.1f)
                 {
                     WeatherSounds.PlayRain(currentIntensity);
-
-                    if (currentThunder)
-                    {
-                        ThunderTimer -= 1f / 60f;
-                        if (ThunderTimer <= 0)
-                        {
-                            WeatherSounds.PlayThunder(currentIntensity * 0.8f);
-                            ThunderTimer = 5f + (float)ThunderRandom.NextDouble() * 10f;
-                        }
-                    }
                 }
                 else
                 {
