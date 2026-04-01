@@ -64,6 +64,7 @@ namespace Simitone.Client.UI.Screens
         private bool TerrainSnowApplied = false;
         private float ThunderTimer = 0f;
         private Random ThunderRandom = new Random();
+        private short? PendingWeatherData = null;
 
         public bool InLot
         {
@@ -424,6 +425,13 @@ namespace Simitone.Client.UI.Screens
 
         private void UpdateWeatherEffects()
         {
+            // Apply deferred weather state once Blueprint is available
+            if (PendingWeatherData.HasValue && vm?.Context?.Blueprint?.Weather != null)
+            {
+                vm.Context.Blueprint.Weather.SetWeather(PendingWeatherData.Value);
+                PendingWeatherData = null;
+            }
+
             if (vm?.Context?.Blueprint?.Weather == null) return;
 
             var weather = vm.Context.Blueprint.Weather;
@@ -432,7 +440,7 @@ namespace Simitone.Client.UI.Screens
             var currentIntensity = weather.WeatherIntensity;
 
             // Thunder timer runs every frame regardless of state changes
-            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f && vm?.SpeedMultiplier != 0)
+            if (LastThunder && LastWeatherType == WeatherType.Rain && LastSoundIntensity > 0.1f && vm?.SpeedMultiplier > 0)
             {
                 ThunderTimer -= 1f / 60f;
                 if (ThunderTimer <= 0)
@@ -443,7 +451,8 @@ namespace Simitone.Client.UI.Screens
             }
 
             // Pause/resume rain sound to match game speed
-            if (vm.SpeedMultiplier == 0)
+            // SpeedMultiplier is 0 when explicitly paused, -1 in build/buy/options mode
+            if (vm.SpeedMultiplier <= 0)
                 WeatherSounds.PauseRain();
             else
                 WeatherSounds.ResumeRain();
@@ -558,6 +567,7 @@ namespace Simitone.Client.UI.Screens
             LastThunder = false;
             TerrainSnowApplied = false;
             ThunderTimer = 0f;
+            PendingWeatherData = null;
 
             LotControl = new UILotControl(vm, World);
             this.AddAt(0, LotControl);
@@ -667,16 +677,17 @@ namespace Simitone.Client.UI.Screens
                     vm.TS1State.ActivateFamily(vm, ActiveFamily);
                 }
                 BlueprintReset(lotName, null);
-                // Default to manual-clear weather after blueprint is loaded (no auto-weather in TS1)
-                // Restore saved weather state, or default to manual-clear
-                short weatherData = (short)(1 << 8);
+                // Read saved weather state now; apply it deferred in UpdateWeatherEffects
+                // once Blueprint is available (BlueprintReset queues a command, so Blueprint
+                // may still be null when this line runs).
+                short pendingWeather = (short)(1 << 8);
                 var weatherPath = Path.Combine(FSOEnvironment.UserDir, "LocalHouse/cas.weather");
                 if (File.Exists(weatherPath))
                 {
                     var bytes = File.ReadAllBytes(weatherPath);
-                    if (bytes.Length >= 2) weatherData = BitConverter.ToInt16(bytes, 0);
+                    if (bytes.Length >= 2) pendingWeather = BitConverter.ToInt16(bytes, 0);
                 }
-                vm.Context.Blueprint?.Weather?.SetWeather(weatherData);
+                PendingWeatherData = pendingWeather;
 
                 if (vm.LoadErrors.Count > 0) GameThread.NextUpdate((state) => ShowLoadErrors(vm.LoadErrors, true));
 
