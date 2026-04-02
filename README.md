@@ -29,6 +29,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
 - Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper) and rotating camera by clicking mouse wheel.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
+- **Cosmetic weather system** - Rain, snow, hail, and storms, toggled via the cheat console (Ctrl+Shift+C). See [WEATHER_IMPLEMENTATION.md](WEATHER_IMPLEMENTATION.md) for details.
 
 # How to Install
 
@@ -530,6 +531,7 @@ If you do wanna contribute, I do recommend sending your PRs to [upstream](https:
 
 If upstream is ever dead (but this is still active) and/or you can't/won't contribute to upstream for whatever reason, make all your PRs against the [alex-main](https://github.com/alexjyong/Simitone/tree/alex-main) branch, as this branch is just for gathering up changes and updates that aren't available in upstream and packaging them for folks to enjoy. Don't make changes from this branch please.
 
+
 # Why is it called Simitone?
 
 Simitone -> Semitone -> musical term -> C# -> a note
@@ -541,3 +543,6 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 * Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
 
 * Icon for Free Will option: <a target="_blank" href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness">Creativity And Resourcefulness</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+
+* Rain loop sound - Rubaoliva (CC0) -  <a target="_blank" href="https://freesound.org/s/624645/">Original file here</a>
+* Thunder sound - Raclure (CC0) -  <a target="_blank" href="https://freesound.org/s/458870/">Original file here</a>

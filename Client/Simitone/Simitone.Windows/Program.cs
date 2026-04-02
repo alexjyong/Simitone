@@ -14,6 +14,10 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Eto.Forms;
+using Application = Eto.Forms.Application;
+using DialogResult = Eto.Forms.DialogResult;
+using MessageBox = Eto.Forms.MessageBox;
+using MessageBoxButtons = Eto.Forms.MessageBoxButtons;
 
 namespace Simitone.Windows
 {

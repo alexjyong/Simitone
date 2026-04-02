@@ -346,13 +346,13 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             //KEY SHORTCUTS
             var keys = state.NewKeys;
-            var nofocus = state.InputManager.GetFocus() == null; // No text input (like the cheat menu!) has focus
+            var nofocus = state.InputManager.GetFocus() == null; // Only process shortcuts when no text input has focus
             if (Game.InLot)
             {
-                if (keys.Contains(Keys.F1) && !LiveButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.LIVE);
-                if (keys.Contains(Keys.F2) && !BuyButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUY);
-                if (keys.Contains(Keys.F3) && !BuildButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUILD);
-                if (keys.Contains(Keys.F4)) OnModeClick?.Invoke(UIMainPanelMode.OPTIONS); // Options Panel
+                if (nofocus && keys.Contains(Keys.F1) && !LiveButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.LIVE);
+                if (nofocus && keys.Contains(Keys.F2) && !BuyButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUY);
+                if (nofocus && keys.Contains(Keys.F3) && !BuildButton.Disabled) OnModeClick?.Invoke(UIMainPanelMode.BUILD);
+                if (nofocus && keys.Contains(Keys.F4)) OnModeClick?.Invoke(UIMainPanelMode.OPTIONS); // Options Panel
 
                 // E key for eyedropper (only in Buy/Build mode and when no text input is focused)
                 if (nofocus && keys.Contains(Keys.E) && EyedropperButton.Visible)
