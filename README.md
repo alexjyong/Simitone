@@ -1,9 +1,9 @@
 ![image](https://user-images.githubusercontent.com/6294155/29047328-2bb60b54-7bc3-11e7-8d88-cee5309495ed.png)
 
-# Note: This is a forked version of Simitone with some updates and minor bug fixes that are not in the current version at the time of writing.
+# Note: This is a forked version of Simitone with some updates that are not in the current version at the time of writing.
 # This is not affliated with the Simitone Team!!
 
-[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.19-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.19-forked/Simitone-Linux-x64-Release.zip) 
+[Latest Pre-release](https://github.com/alexjyong/Simitone/releases/latest/) | [Download Windows](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Windows-Release.zip) | [Download Linux](https://github.com/alexjyong/Simitone/releases/download/v0.8.20-forked/Simitone-Linux-x64-Release.zip) 
 
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
@@ -12,7 +12,7 @@ Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
-NOTE! Currently does not support the entire Fame career track, saving on vacation and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work. While all objects run, many of them have bugs that can make certain lot types unplayable. 
+NOTE! Currently does not support the entire Fame career track, saving on vacation, evicting familes from lots, and a few other important things. Buy mode on community lots is also not functioning. Currently using a rudimentary blur for censoring since I'm having trouble getting the original to work.  Custom objects with custom animations may not work properly. While all stock objects run, many of them have bugs that can make certain lot types unplayable. 
 
 For current development progress on the original Simitone, see [this issue on the original repo.](https://github.com/riperiperi/Simitone/issues/8)
 
@@ -27,14 +27,14 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper)
+- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper) and rotating camera by clicking mouse wheel.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 
 # How to Install
 
 ## Prerequisites
 - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
-- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS _might_ work but is currently untested!)
+- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS is currently not functional! PRs welcome!)
 - For Windows [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
 ## Quick Install Windows
@@ -538,4 +538,6 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 
 # Attributions
 
-Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+* Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+
+* Icon for Free Will option: <a target="_blank" href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness">Creativity And Resourcefulness</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>

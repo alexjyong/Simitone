@@ -93,6 +93,10 @@ namespace Simitone.Client.UI.Panels
         private int RMBScrollX;
         private int RMBScrollY;
 
+        private bool MMBScroll;
+        private int MMBScrollX;
+        private int MMBScrollY;
+
         //1 = near, 0.5 = med, 0.25 = far
         //"target" because we rescale the game target to fit this zoom level.
         public float TargetZoom = 1; 
@@ -762,10 +766,51 @@ namespace Simitone.Client.UI.Panels
 
                 if (!FoundMe && ActiveEntity != null)
                 {
-                    vm.Context.World.State.CenterTile = new Vector2(ActiveEntity.VisualPosition.X, ActiveEntity.VisualPosition.Y);
+                    // Send change control command to ensure sim is properly selected
+                    // This sets PersistID, registers in ObjectQueries, sets Global 3, and centers camera
+                    vm.SendCommand(new VMNetChangeControlCmd() { TargetID = ActiveEntity.ObjectID });
+                    FoundMe = true;
+                }
+
+                // Fallback: if no sim with expected PersistID, take control of any available avatar
+                if (!FoundMe && ActiveEntity == null && vm.Context.ObjectQueries.Avatars.Count > 0)
+                {
+                    var fallbackAvatar = vm.Context.ObjectQueries.Avatars.FirstOrDefault();
+                    if (fallbackAvatar != null)
+                    {
+                        // Send change control command to properly select this sim
+                        // This sets PersistID, registers in ObjectQueries, sets Global 3, and centers camera
+                        vm.SendCommand(new VMNetChangeControlCmd() { TargetID = fallbackAvatar.ObjectID });
+                        FoundMe = true;
+                    }
+                }
+
+                // Fallback for empty lots (no avatars): center on mailbox, any placed object, or lot center
+                if (!FoundMe && vm.Context.ObjectQueries.Avatars.Count == 0)
+                {
+                    // Try to find mailbox first (GUIDs: 0xEF121974 or 0x1D95C9B0)
+                    var landmark = vm.Entities.FirstOrDefault(x => x.Object.OBJ.GUID == 0xEF121974 || x.Object.OBJ.GUID == 0x1D95C9B0);
+
+                    // If no mailbox, try to find any object that's placed on the lot (for community lots)
+                    if (landmark == null)
+                    {
+                        landmark = vm.Entities.FirstOrDefault(x => x.Position != LotTilePos.OUT_OF_WORLD && x.Position.Level == 1);
+                    }
+
+                    if (landmark != null)
+                    {
+                        vm.Context.World.State.CenterTile = new Vector2(landmark.VisualPosition.X, landmark.VisualPosition.Y);
+                    }
+                    else
+                    {
+                        // Default to lot center
+                        var lotSize = vm.Context.Architecture.Width;
+                        vm.Context.World.State.CenterTile = new Vector2(lotSize / 2f, lotSize / 2f);
+                    }
                     vm.Context.World.State.ScrollAnchor = null;
                     FoundMe = true;
                 }
+
                 Queue.QueueOwner = ActiveEntity;
             }
 
@@ -870,8 +915,59 @@ namespace Simitone.Client.UI.Panels
 
                 if (state.MouseState.RightButton != ButtonState.Pressed)
                 {
-                    if (RMBScroll) GameFacade.Cursor.SetCursor(CursorType.Normal);
+                    if (RMBScroll)
+                    {
+                        GameFacade.Cursor.SetCursor(CursorType.Normal);
+                        // Check if it was a click (not a drag) on a family member Sim
+                        var deltaX = Math.Abs(state.MouseState.X - RMBScrollX);
+                        var deltaY = Math.Abs(state.MouseState.Y - RMBScrollY);
+                        if (deltaX < 5 && deltaY < 5 && LiveMode && ActiveEntity != null)
+                        {
+                            // It was a click - check if clicking on a household Sim
+                            var clickedObjId = World.GetObjectIDAtScreenPos(RMBScrollX, RMBScrollY, GameFacade.GraphicsDevice);
+                            if (clickedObjId > 0)
+                            {
+                                var clickedObj = vm.GetObjectById(clickedObjId);
+                                if (clickedObj is VMAvatar && vm.TS1State.CurrentFamily?.RuntimeSubset.Contains(clickedObj.Object.OBJ.GUID) == true)
+                                {
+                                    // Switch to this family member
+                                    vm.SendCommand(new VMNetChangeControlCmd() { TargetID = clickedObj.ObjectID });
+                                    // Update local state immediately so interactions work right away
+                                    ActiveEntity = clickedObj;
+                                    Queue.QueueOwner = ActiveEntity;
+                                    HITVM.Get().PlaySoundEvent(UISounds.Click);
+                                }
+                            }
+                        }
+                    }
                     RMBScroll = false;
+                }
+
+                // Middle mouse button handling for camera rotation
+                if (state.MouseState.MiddleButton == ButtonState.Pressed)
+                {
+                    if (!MMBScroll)
+                    {
+                        MMBScroll = true;
+                        MMBScrollX = state.MouseState.X;
+                        MMBScrollY = state.MouseState.Y;
+                    }
+                }
+                else
+                {
+                    if (MMBScroll)
+                    {
+                        // Check if it was a click (not a drag)
+                        var deltaX = Math.Abs(state.MouseState.X - MMBScrollX);
+                        var deltaY = Math.Abs(state.MouseState.Y - MMBScrollY);
+                        if (deltaX < 5 && deltaY < 5)
+                        {
+                            // It was a click - rotate camera 90 degrees clockwise
+                            World.State.Rotation = (WorldRotation)(((int)World.State.Rotation + 1) % 4);
+                            HITVM.Get().PlaySoundEvent(UISounds.Click);
+                        }
+                    }
+                    MMBScroll = false;
                 }
 
                 if (!LiveMode && PieMenu != null)
