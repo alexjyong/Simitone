@@ -867,6 +867,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                     FilterCategory = PreSearchFilterCategory;
                     PreSearchFilterCategory = null;
                 }
+                // Restore the subcategory overlay if it was visible before the search
+                foreach (var btn in SelButtons) btn.Visible = true;
+                foreach (var label in SelLabels) label.Visible = true;
                 NoResultsLabel.Visible = false;
                 CatContainer.Reset();
                 return;
@@ -874,7 +877,12 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             // Save the pre-search FilterCategory the first time we enter search mode
             if (ActiveSearchTerm == null)
+            {
                 PreSearchFilterCategory = FilterCategory;
+                // Hide the subcategory overlay while searching so results aren't obscured
+                foreach (var btn in SelButtons) btn.Visible = false;
+                foreach (var label in SelLabels) label.Visible = false;
+            }
 
             ActiveSearchTerm = term;
 

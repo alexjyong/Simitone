@@ -372,6 +372,15 @@ namespace Simitone.Client.UI.Panels
 
         public override void Draw(UISpriteBatch batch)
         {
+            if (CatalogSearchField != null && CatalogSearchField.Visible)
+            {
+                // Draw a solid background behind the search field so it's readable against any backdrop
+                DrawLocalTexture(batch, WhitePx, null,
+                    new Vector2(CatalogSearchField.X - 2, CatalogSearchField.Y - 2),
+                    new Vector2(CatalogSearchField.Size.X + 4, CatalogSearchField.Size.Y + 4),
+                    UIStyle.Current.TitleBg);
+            }
+
             if (CurWidth > 211)
             {
                 if (ShowingSelect)
