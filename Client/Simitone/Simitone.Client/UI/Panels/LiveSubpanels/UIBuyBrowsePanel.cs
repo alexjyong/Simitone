@@ -862,11 +862,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             if (string.IsNullOrEmpty(term))
             {
                 ActiveSearchTerm = null;
-                if (PreSearchFilterCategory != null)
-                {
-                    FilterCategory = PreSearchFilterCategory;
-                    PreSearchFilterCategory = null;
-                }
+                // Always restore, even if PreSearchFilterCategory was null
+                FilterCategory = PreSearchFilterCategory;
+                PreSearchFilterCategory = null;
                 // Restore the subcategory overlay if it was visible before the search
                 foreach (var btn in SelButtons) btn.Visible = true;
                 foreach (var label in SelLabels) label.Visible = true;
@@ -886,26 +884,12 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             ActiveSearchTerm = term;
 
-            if (Mode == UICatalogMode.Build)
-            {
-                // Build-mode items (floors, walls, roofs, etc.) are not in WorldObjectCatalog,
-                // so search within the already-loaded FullCategory for the current build subcategory.
-                FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
-                    .Where(elem => elem.Item.GUID != uint.MaxValue &&
-                                   (elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                    elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .ToList();
-            }
-            else
-            {
-                // For Buy mode, search across all catalog categories.
-                FilterCategory = Content.Get().WorldCatalog.All()
-                    .Where(item => item.GUID != uint.MaxValue &&
-                                   (item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                    item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .Select(item => new UICatalogElement { Item = item, CalcPrice = (int)item.Price })
-                    .ToList();
-            }
+            // Search within the current category's items only
+            FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
+                .Where(elem => elem.Item.GUID != uint.MaxValue &&
+                               (elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToList();
 
             NoResultsLabel.Visible = !FilterCategory.Any();
             CatContainer.Reset();

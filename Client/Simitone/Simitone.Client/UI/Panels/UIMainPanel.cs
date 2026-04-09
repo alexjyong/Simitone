@@ -162,7 +162,7 @@ namespace Simitone.Client.UI.Panels
 
             CatalogSearchField = new UITextBox();
             CatalogSearchField.SetSize(200, 28);
-            CatalogSearchField.Position = new Vector2(263, -35);
+            CatalogSearchField.Position = new Vector2(263, -28);
             CatalogSearchField.Visible = false;
             CatalogSearchField.OnChange += (elem) =>
             {
@@ -171,8 +171,8 @@ namespace Simitone.Client.UI.Panels
             Add(CatalogSearchField);
 
             SearchPlaceholder = new UILabel();
-            SearchPlaceholder.Caption = "Search\u2026";
-            SearchPlaceholder.Position = new Vector2(271, -29);
+            SearchPlaceholder.Caption = "Search selected category\u2026";
+            SearchPlaceholder.Position = new Vector2(271, -22);
             SearchPlaceholder.Size = new Vector2(184, 20);
             SearchPlaceholder.CaptionStyle = SearchPlaceholder.CaptionStyle.Clone();
             SearchPlaceholder.CaptionStyle.Size = 12;
@@ -428,7 +428,7 @@ namespace Simitone.Client.UI.Panels
             if (CatalogSearchField != null && CatalogSearchField.Visible)
             {
                 var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
-                SearchPlaceholder.Visible = !CatalogSearchField.HasText && !searchFocused;
+                SearchPlaceholder.Visible = !CatalogSearchField.HasText;
 
                 // Two-stage Escape: clear text first; close panel only when field is already empty
                 if (searchFocused && state.NewKeys.Contains(Microsoft.Xna.Framework.Input.Keys.Escape))
