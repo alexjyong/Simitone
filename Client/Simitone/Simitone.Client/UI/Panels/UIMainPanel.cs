@@ -56,6 +56,7 @@ namespace Simitone.Client.UI.Panels
 
         private UITextBox CatalogSearchField;
         private UILabel SearchPlaceholder;
+        private bool _lastLeftButtonDown;
 
         public event Action OnEndSelect;
         public event Action<UIMainPanelMode> ModeChanged;
@@ -163,6 +164,7 @@ namespace Simitone.Client.UI.Panels
             CatalogSearchField = new UITextBox();
             CatalogSearchField.SetSize(200, 28);
             CatalogSearchField.Position = new Vector2(263, -28);
+            CatalogSearchField.TextMargin = new Rectangle(6, 6, 6, 6);
             CatalogSearchField.Visible = false;
             CatalogSearchField.OnChange += (elem) =>
             {
@@ -429,6 +431,19 @@ namespace Simitone.Client.UI.Panels
             {
                 var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
                 SearchPlaceholder.Visible = !CatalogSearchField.HasText;
+
+                // Click outside the search field → remove focus
+                var leftDown = state.MouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
+                if (searchFocused && leftDown && !_lastLeftButtonDown)
+                {
+                    var localMouse = LocalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
+                    var fieldBounds = new Rectangle(
+                        (int)CatalogSearchField.X, (int)CatalogSearchField.Y,
+                        (int)CatalogSearchField.Size.X, (int)CatalogSearchField.Size.Y);
+                    if (!fieldBounds.Contains((int)localMouse.X, (int)localMouse.Y))
+                        state.InputManager.SetFocus(null);
+                }
+                _lastLeftButtonDown = leftDown;
 
                 // Two-stage Escape: clear text first; close panel only when field is already empty
                 if (searchFocused && state.NewKeys.Contains(Microsoft.Xna.Framework.Input.Keys.Escape))
