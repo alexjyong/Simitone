@@ -162,9 +162,9 @@ namespace Simitone.Client.UI.Panels
             Add(Switcher);
 
             CatalogSearchField = new UITextBox();
-            CatalogSearchField.SetSize(200, 28);
-            CatalogSearchField.Position = new Vector2(263, -28);
-            CatalogSearchField.TextMargin = new Rectangle(6, 6, 6, 6);
+            CatalogSearchField.SetSize(230, 32);
+            CatalogSearchField.Position = new Vector2(263, -32);
+            CatalogSearchField.TextMargin = new Rectangle(8, 8, 8, 8);
             CatalogSearchField.Visible = false;
             CatalogSearchField.OnChange += (elem) =>
             {
@@ -174,8 +174,8 @@ namespace Simitone.Client.UI.Panels
 
             SearchPlaceholder = new UILabel();
             SearchPlaceholder.Caption = "Search selected category\u2026";
-            SearchPlaceholder.Position = new Vector2(271, -22);
-            SearchPlaceholder.Size = new Vector2(184, 20);
+            SearchPlaceholder.Position = new Vector2(271, -24);
+            SearchPlaceholder.Size = new Vector2(214, 20);
             SearchPlaceholder.CaptionStyle = SearchPlaceholder.CaptionStyle.Clone();
             SearchPlaceholder.CaptionStyle.Size = 12;
             SearchPlaceholder.CaptionStyle.Color = UIStyle.Current.Text * 0.4f;
@@ -436,7 +436,7 @@ namespace Simitone.Client.UI.Panels
                 var leftDown = state.MouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
                 if (searchFocused && leftDown && !_lastLeftButtonDown)
                 {
-                    var localMouse = LocalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
+                    var localMouse = GlobalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
                     var fieldBounds = new Rectangle(
                         (int)CatalogSearchField.X, (int)CatalogSearchField.Y,
                         (int)CatalogSearchField.Size.X, (int)CatalogSearchField.Size.Y);
