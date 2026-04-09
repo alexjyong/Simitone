@@ -17,6 +17,7 @@ using Simitone.Client.UI.Model;
 using FSO.Client.UI.Panels.LotControls;
 using FSO.Client.UI.Model;
 using FSO.LotView.Model;
+using FSO.Files.Formats.IFF.Chunks;
 
 namespace Simitone.Client.UI.Panels.LiveSubpanels
 {
@@ -482,6 +483,20 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             ItemID = itemID;
         }
 
+        public void Deselect()
+        {
+            var holder = Game.LotControl.ObjectHolder;
+            holder.ClearSelected();
+            Game.LotControl.QueryPanel.Active = false;
+            Game.Frontend.MainPanel.SetSubpanelPickup(1f);
+            if (Game.LotControl.CustomControl != null)
+            {
+                Game.LotControl.CustomControl.Release();
+                Game.LotControl.CustomControl = null;
+            }
+            ItemID = -1;
+        }
+
         public override void Removed()
         {
             RemoveEvents();
@@ -518,6 +533,26 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             FullCategory = FullCategory.OrderBy(x => (int)x.Item.Price).ToList();
             if (category == 13) AddWallStyles();
+
+            // Resolve CTSS display names so search can match "Soma Plasma TV" not just "TV Expensive"
+            foreach (var elem in FullCategory)
+            {
+                if (elem.Special != null)
+                {
+                    elem.DisplayName = elem.Special.Res?.GetName(elem.Special.ResID);
+                }
+                else if (elem.Item.GUID != 0 && elem.Item.GUID != uint.MaxValue)
+                {
+                    var worldObj = Content.Get().WorldObjects.Get(elem.Item.GUID);
+                    if (worldObj != null)
+                    {
+                        var ctss = worldObj.Resource.Get<CTSS>(worldObj.OBJ.CatalogStringsID);
+                        elem.DisplayName = ctss?.GetString(0);
+                    }
+                }
+                // Fall back to Item.CatalogName or Item.Name when DisplayName is null (handled by ToString)
+                elem.DisplayName = elem.DisplayName ?? elem.Item.CatalogName;
+            }
             //if we're not build mode, init the subcategory selection
             if (build) return;
 
@@ -887,7 +922,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             // Search within the current category's items only
             FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
                 .Where(elem => elem.Item.GUID != uint.MaxValue &&
-                               (elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                               (elem.DisplayName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
                                 elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
                 .ToList();
 
@@ -953,10 +989,11 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         public ObjectCatalogItem Item;
         public int CalcPrice;
         public UISpecialCatalogElement Special;
+        public string DisplayName; // CTSS catalog display name (e.g. "Soma Plasma TV"); null until resolved
 
         public override string ToString()
         {
-            return Item.Name ?? "(unknown)";
+            return DisplayName ?? Item.Name ?? "(unknown)";
         }
     }
 
