@@ -1209,9 +1209,9 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         public void ApplyNameFilter(string term)
         {
-            // In Build mode, FullCategory is only valid after a subcategory is chosen.
-            // Before that, it contains wrong (buy-mode) items, so skip filtering entirely.
-            if (ChoosingSub) return;
+            // In Build mode, FullCategory contains wrong (buy-mode) items until a subcategory
+            // is chosen, so skip filtering. In Buy mode, FullCategory is valid immediately.
+            if (ChoosingSub && Mode == UICatalogMode.Build) return;
 
             if (string.IsNullOrEmpty(term))
             {

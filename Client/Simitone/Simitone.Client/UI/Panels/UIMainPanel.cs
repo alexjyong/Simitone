@@ -437,8 +437,29 @@ namespace Simitone.Client.UI.Panels
             // Update search placeholder visibility
             if (CatalogSearchField != null && CatalogSearchField.Visible)
             {
+                // In build mode, FullCategory has wrong data until a subcategory is chosen.
+                // Disable and explain the field so it doesn't appear broken.
+                var browsePanel = SubPanel as UIBuyBrowsePanel;
+                bool buildNeedsSubcat = browsePanel != null
+                    && browsePanel.ChoosingSub
+                    && browsePanel.Mode == UICatalogMode.Build;
+
+                if (buildNeedsSubcat)
+                {
+                    SearchPlaceholder.Caption = "Select a subcategory first\u2026";
+                    CatalogSearchField.Mode = UITextEditMode.ReadOnly;
+                    CatalogSearchField.Opacity = 0.45f;
+                    SearchPlaceholder.Visible = true;
+                }
+                else
+                {
+                    SearchPlaceholder.Caption = "Search selected category\u2026";
+                    CatalogSearchField.Mode = UITextEditMode.Editor;
+                    CatalogSearchField.Opacity = 1f;
+                    SearchPlaceholder.Visible = !CatalogSearchField.HasText;
+                }
+
                 var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
-                SearchPlaceholder.Visible = !CatalogSearchField.HasText;
 
                 // Click outside the search field → remove focus
                 var leftDown = state.MouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
