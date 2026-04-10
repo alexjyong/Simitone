@@ -424,6 +424,13 @@ main section {
     font-style: italic;
 }
 
+/* Wider screenshots (UI shots, tools) */
+.feature-screenshot--wide {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* ---- Requirements Section ---- */
 .requirements-section {
     background: var(--color-bg-primary);
@@ -699,4 +706,48 @@ a:focus {
     .cli-table td {
         padding: var(--space-xs) var(--space-sm);
     }
+}
+
+/* ---- What's Different Section ---- */
+.whats-different-section {
+    background: var(--color-bg-primary);
+}
+
+.fork-features {
+    padding-left: var(--space-xl);
+    margin-bottom: var(--space-lg);
+}
+
+.fork-features li {
+    margin-bottom: var(--space-md);
+    color: var(--color-text-secondary);
+}
+
+/* ---- Building from Source Section ---- */
+.building-section {
+    background: var(--color-bg-secondary);
+}
+
+.building-section h3 {
+    margin-top: var(--space-xl);
+}
+
+.building-section h4 {
+    margin-top: var(--space-lg);
+}
+
+/* Install commands (nested list in requirements) */
+.install-cmds {
+    margin-top: var(--space-sm);
+    padding-left: var(--space-lg);
+}
+
+.install-cmds li {
+    margin-bottom: var(--space-xs);
+}
+
+.install-cmds code {
+    background: var(--color-bg-tertiary);
+    display: inline-block;
+    padding: 0.1em 0.4em;
 }

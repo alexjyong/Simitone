@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simitone — A Modern 3D Frontend for The Sims 1</title>
-    <meta name="description" content="Simitone is an alternative C# frontend for The Sims 1, based on FreeSO. Play in 3D with modern resolutions, custom lighting, and quality-of-life improvements.">
-    <meta property="og:title" content="Simitone — A Modern 3D Frontend for The Sims 1">
-    <meta property="og:description" content="Play The Sims 1 in 3D with modern resolutions, custom lighting, and quality-of-life improvements.">
+    <meta name="description" content="A forked version of Simitone — a modern 3D frontend for The Sims 1. Not affiliated with the original Simitone Team. Play in 3D with modern resolutions, custom lighting, and quality-of-life improvements.">
+    <meta name="author" content="alexjyong">
+    <meta property="og:title" content="Simitone (Fork) — A Modern 3D Frontend for The Sims 1">
+    <meta property="og:description" content="A forked version of Simitone with updates not in the original. Not affiliated with the Simitone Team. Play The Sims 1 in 3D with modern resolutions and custom lighting.">
     <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/images/screenshot-3d-mode.jpg">
+    <meta property="og:image:alt" content="The Sims 1 rendered in 3D with custom lighting via Simitone">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="assets/images/screenshot-3d-mode.jpg">
     <link rel="stylesheet" href="css/style.css">
     <!-- Favicon placeholder — replace with actual favicon -->
     <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
@@ -29,6 +33,7 @@
                 <li><a href="#requirements">Requirements</a></li>
                 <li><a href="#install">Install</a></li>
                 <li><a href="#limitations">Known Issues</a></li>
+                <li><a href="#building">Build from Source</a></li>
                 <li><a href="#community">Community</a></li>
             </ul>
         </div>
@@ -117,9 +122,45 @@
                     </div>
                 </div>
                 <figure class="feature-screenshot">
-                    <img src="assets/images/screenshot-3d-mode.jpg" alt="The Sims 1 rendered in 3D with custom lighting and modern resolutions" loading="lazy" width="1200" height="675">
-                    <figcaption>Simitone running The Sims 1 in full 3D mode</figcaption>
+                    <img src="assets/images/rain.jpg" alt="Rain weather system in The Sims 1" loading="lazy" width="1200" height="940">
+                    <figcaption>Rain weather system</figcaption>
                 </figure>
+                <figure class="feature-screenshot feature-screenshot--wide">
+                    <img src="assets/images/screenshot-eyedropper.webp" alt="Eyedropper tool in action" loading="lazy" width="600" height="462">
+                    <figcaption>Eyedropper tool from later games</figcaption>
+                </figure>
+                <figure class="feature-screenshot">
+                    <img src="assets/images/winter.jpg" alt="Snow weather system in The Sims 1" loading="lazy" width="1200" height="932">
+                    <figcaption>Snow weather system</figcaption>
+                </figure>
+                <figure class="feature-screenshot">
+                    <img src="assets/images/screenshot-multi-floor.jpg" alt="Multiple floor buildings in Simitone" loading="lazy" width="1200" height="932">
+                    <figcaption>Multi-floor buildings — more floors than the base game allowed!</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ==================== WHAT'S DIFFERENT SECTION ==================== -->
+        <section id="whats-different" class="whats-different-section">
+            <div class="container">
+                <h2>What's Different in This Fork?</h2>
+                <p>
+                    This is a <strong>forked version</strong> of Simitone with updates that may not be present in the
+                    <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener">original Simitone repository</a>.
+                    Key additions in this fork include:
+                </p>
+                <ul class="fork-features">
+                    <li><strong>Cosmetic Weather System</strong> — rain, snow, hail, and storms toggled via cheat console</li>
+                    <li><strong>Improved Linux/macOS Build Support</strong> — self-contained Linux builds, macOS build scripts</li>
+                    <li><strong>Streamlined Build Pipeline</strong> — GitHub Actions workflow for easy automated builds</li>
+                    <li><strong>Updated Dependencies</strong> — .NET 9.0, latest FreeSO submodule updates</li>
+                </ul>
+                <p>
+                    For a complete list of changes, compare
+                    <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener">the original</a>
+                    with <a href="https://github.com/alexjyong/Simitone" target="_blank" rel="noopener">this fork</a>,
+                    or check the <a href="https://github.com/riperiperi/Simitone/issues/8" target="_blank" rel="noopener">original development tracker</a>.
+                </p>
             </div>
         </section>
 
@@ -159,7 +200,15 @@
                 <h3>Runtime Requirements</h3>
                 <div class="runtime-list">
                     <div class="runtime-item"><strong>Windows:</strong> <a href="https://dotnet.microsoft.com/en-us/download/dotnet/9.0" target="_blank" rel="noopener">.NET 9.0 Runtime</a> and ASP.NET Core Runtime 9.0</div>
-                    <div class="runtime-item"><strong>Linux:</strong> <code>libsdl2-2.0-0</code>, <code>libopenal1</code> (Ubuntu/Debian) or equivalent</div>
+                    <div class="runtime-item"><strong>Linux:</strong>
+                        <code>libsdl2-2.0-0</code>, <code>libopenal1</code>
+                        <ul class="install-cmds">
+                            <li>Ubuntu/Debian: <code>sudo apt install libsdl2-2.0-0 libopenal1</code></li>
+                            <li>Fedora: <code>sudo dnf install SDL2 openal-soft</code></li>
+                            <li>Arch: <code>sudo pacman -S sdl2 openal</code></li>
+                        </ul>
+                    </div>
+                    <div class="runtime-item"><strong>macOS:</strong> <code>brew install sdl2</code></div>
                 </div>
 
                 <h3>Game Files</h3>
@@ -285,7 +334,70 @@
             </div>
         </section>
 
-        <!-- ==================== ATTRIBUTIONS SECTION ==================== -->
+        <!-- ==================== BUILDING FROM SOURCE SECTION ==================== -->
+        <section id="building" class="building-section">
+            <div class="container">
+                <h2>Building from Source</h2>
+
+                <h3>Easy Mode: GitHub Actions</h3>
+                <p>Don't want to set up a build environment? Fork this repository and use GitHub Actions:</p>
+                <ol class="install-steps">
+                    <li>Fork <a href="https://github.com/alexjyong/Simitone" target="_blank" rel="noopener">this repository</a> on GitHub.</li>
+                    <li>Go to the <strong>Actions</strong> tab (you may need to activate actions).</li>
+                    <li>Click <strong>"Build Simitone"</strong> in the left sidebar.</li>
+                    <li>Click <strong>"Run workflow"</strong>, select <strong>Release</strong>, pick your platforms, and click <strong>"Run workflow"</strong>.</li>
+                    <li>Wait ~4–5 minutes, refresh the job page, and download the release artifact.</li>
+                </ol>
+
+                <h3 id="building-windows">Windows</h3>
+                <h4>Prerequisites</h4>
+                <ul>
+                    <li><a href="https://git-scm.com/downloads" target="_blank" rel="noopener">Git</a> (2.13+)</li>
+                    <li><a href="https://dotnet.microsoft.com/en-us/download/dotnet/9.0" target="_blank" rel="noopener">.NET 9.0 SDK</a></li>
+                </ul>
+
+                <h4>Steps</h4>
+                <pre><code>git clone https://github.com/alexjyong/Simitone.git
+cd Simitone
+git submodule update --init --recursive
+dotnet restore Client\Simitone\Simitone.sln
+dotnet restore FreeSO\TSOClient\FreeSO.sln
+dotnet build Client\Simitone\Simitone.sln -c Release --no-restore</code></pre>
+
+                <p>Or use the PowerShell build script:</p>
+                <pre><code>.\build.ps1          # Build (Release)
+.\build.ps1 -Run     # Build and run
+.\build.ps1 -Clean   # Clean before building</code></pre>
+
+                <h3 id="building-linux">Linux / macOS</h3>
+                <h4>Prerequisites</h4>
+                <p>Install runtime dependencies first (see <a href="#requirements">System Requirements</a> above).</p>
+
+                <h4>Steps</h4>
+                <pre><code>git clone https://github.com/alexjyong/Simitone.git
+cd Simitone
+git submodule update --init --recursive
+./build-mac-linux.sh
+
+# Optional: self-contained release build (no system dependencies needed)
+./build-mac-linux.sh --publish</code></pre>
+
+                <p>Run the built executable:</p>
+                <pre><code># Standard build
+cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
+./Simitone -path"/path/to/The Sims/"
+
+# Self-contained build
+cd publish/Simitone-Linux-x64/
+./Simitone -path"/path/to/The Sims/"</code></pre>
+
+                <h4>Troubleshooting</h4>
+                <ul>
+                    <li><strong>"FreeSO folder is empty"</strong> — Run <code>rm -rf FreeSO &amp;&amp; git submodule update --init --recursive --force</code></li>
+                    <li><strong>"Unable to locate the .NET SDK"</strong> — Install the .NET 9.0 SDK (not just runtime), restart your terminal, and verify with <code>dotnet --info</code>.</li>
+                </ul>
+            </div>
+        </section>
         <section id="attributions" class="attributions-section">
             <div class="container">
                 <h2>Attributions</h2>
