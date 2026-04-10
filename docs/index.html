@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simitone — A Modern 3D Frontend for The Sims 1</title>
+    <meta name="description" content="Simitone is an alternative C# frontend for The Sims 1, based on FreeSO. Play in 3D with modern resolutions, custom lighting, and quality-of-life improvements.">
+    <meta property="og:title" content="Simitone — A Modern 3D Frontend for The Sims 1">
+    <meta property="og:description" content="Play The Sims 1 in 3D with modern resolutions, custom lighting, and quality-of-life improvements.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Favicon placeholder — replace with actual favicon -->
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- ==================== NAVIGATION ==================== -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container nav-container">
+            <a href="#hero" class="nav-brand">Simitone</a>
+            <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+            </button>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#requirements">Requirements</a></li>
+                <li><a href="#install">Install</a></li>
+                <li><a href="#limitations">Known Issues</a></li>
+                <li><a href="#community">Community</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- ==================== HERO SECTION ==================== -->
+        <section id="hero" class="hero-section">
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <img src="assets/images/logo.png" alt="Simitone logo" class="hero-logo">
+                    <h1>Simitone</h1>
+                    <p class="hero-tagline">A Modern 3D Frontend for The Sims 1</p>
+                    <p class="hero-description">
+                        A forked version of Simitone with updates not in the current release of the original.
+                        Not affiliated with the Simitone Team. Play in stunning 3D with modern resolutions,
+                        custom lighting, and quality-of-life improvements.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="https://github.com/alexjyong/Simitone/releases/latest/" class="btn btn-primary" target="_blank" rel="noopener">
+                            Download for Windows
+                        </a>
+                        <a href="https://github.com/alexjyong/Simitone/releases/latest/" class="btn btn-secondary" target="_blank" rel="noopener">
+                            Download for Linux
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ABOUT SECTION ==================== -->
+        <section id="about" class="about-section">
+            <div class="container">
+                <h2>About This Project</h2>
+                <div class="notice notice-info">
+                    This is a <strong>forked version</strong> of Simitone with updates that are not in the
+                    current release of the original. This is <strong>not affiliated with the Simitone Team</strong>.
+                    View the <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener">original Simitone repository</a> by riperiperi.
+                </div>
+                <p>
+                    Simitone is an alternative C# frontend for <strong>The Sims 1</strong>, built on top of
+                    <a href="http://freeso.org" target="_blank" rel="noopener">FreeSO</a>.
+                    It reimagines the classic game with modern graphics technology, providing a playable
+                    3D experience that works on contemporary operating systems.
+                </p>
+                <p>
+                    On modern operating systems, The Sims 1 has nagging issues that make it less than
+                    playable. Simitone serves as a tool to improve the playability of your existing
+                    installation of The Sims.
+                </p>
+                <div class="notice notice-warning">
+                    <strong>Requires</strong> a legitimate copy of <strong>The Sims: Complete Collection</strong>
+                    or <strong>The Sims: Legacy Collection</strong>.
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== FEATURES SECTION ==================== -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2>Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Playable in 3D</h3>
+                        <p>Experience The Sims 1 in full 3D using a combination of models generated from the 2D sprites and created by the community.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Custom User Interface</h3>
+                        <p>A modern UI that works at contemporary resolutions, with a desktop-oriented layout for comfortable gameplay.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Improved Performance</h3>
+                        <p>Better graphical performance with support for high resolutions and refresh rates on modern hardware.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Custom Lighting</h3>
+                        <p>Directional lights with smooth falloffs and shadows using generated 3D meshes for realistic illumination.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Quality of Life</h3>
+                        <p>Improvements from later games in the series — eyedropper tool, camera rotation via mouse wheel, and more.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Cosmetic Weather</h3>
+                        <p>Rain, snow, hail, and storms — toggled via the cheat console (Ctrl+Shift+C) for atmospheric gameplay.</p>
+                    </div>
+                </div>
+                <figure class="feature-screenshot">
+                    <img src="assets/images/screenshot-3d-mode.jpg" alt="The Sims 1 rendered in 3D with custom lighting and modern resolutions" loading="lazy" width="1200" height="675">
+                    <figcaption>Simitone running The Sims 1 in full 3D mode</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ==================== REQUIREMENTS SECTION ==================== -->
+        <section id="requirements" class="requirements-section">
+            <div class="container">
+                <h2>System Requirements</h2>
+
+                <h3>Supported Platforms</h3>
+                <table class="platform-table">
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Windows</strong></td>
+                            <td><span class="status-supported">Supported</span></td>
+                            <td>Windows 10/11 recommended. Requires .NET 9.0 Runtime + ASP.NET Core 9.0.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Linux</strong></td>
+                            <td><span class="status-supported">Supported</span></td>
+                            <td>Tested with Ubuntu and Linux Mint. Requires SDL2 and OpenAL.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>macOS</strong></td>
+                            <td><span class="status-not-functional">Not Functional</span></td>
+                            <td>Builds but does not work. PRs welcome!</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Runtime Requirements</h3>
+                <div class="runtime-list">
+                    <div class="runtime-item"><strong>Windows:</strong> <a href="https://dotnet.microsoft.com/en-us/download/dotnet/9.0" target="_blank" rel="noopener">.NET 9.0 Runtime</a> and ASP.NET Core Runtime 9.0</div>
+                    <div class="runtime-item"><strong>Linux:</strong> <code>libsdl2-2.0-0</code>, <code>libopenal1</code> (Ubuntu/Debian) or equivalent</div>
+                </div>
+
+                <h3>Game Files</h3>
+                <p>A legitimate copy of <strong>The Sims: Complete Collection</strong> or <strong>The Sims: Legacy Collection</strong>.</p>
+            </div>
+        </section>
+
+        <!-- ==================== INSTALL SECTION ==================== -->
+        <section id="install" class="install-section">
+            <div class="container">
+                <h2>Quick Install</h2>
+
+                <!-- Windows Install -->
+                <h3 id="install-windows">Windows</h3>
+                <ol class="install-steps">
+                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/Simitone/releases/latest/" target="_blank" rel="noopener">latest release</a> for Windows.</li>
+                    <li><strong>Extract</strong> the ZIP to your preferred location.</li>
+                    <li><strong>Run</strong> <code>Simitone.exe</code>.</li>
+                </ol>
+
+                <h4>First-Time Setup</h4>
+                <p>On first launch, Simitone automatically scans for The Sims 1 installations:</p>
+                <ul>
+                    <li>Portable install (relative path <code>../The Sims/</code>)</li>
+                    <li>Windows Registry (<code>HKEY_LOCAL_MACHINE\SOFTWARE\Maxis\The Sims</code>)</li>
+                    <li>Steam installation (via Steam registry and libraryfolders.vdf)</li>
+                    <li>Default install (<code>C:\Program Files (x86)\Maxis\The Sims\</code>)</li>
+                </ul>
+                <p>If one installation is found, it's auto-configured. If multiple, a selection dialog appears. If none, you can browse manually.</p>
+
+                <h4>User Data Location</h4>
+                <p>Configuration and save files are stored to: <code>%USERPROFILE%\Documents\Simitone\</code></p>
+                <p>Simitone uses <strong>separate save files</strong> from The Sims 1. Your original saves remain untouched.</p>
+
+                <!-- Linux Install -->
+                <h3 id="install-linux">Linux / macOS</h3>
+                <ol class="install-steps">
+                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/Simitone/releases/latest/" target="_blank" rel="noopener">latest release</a> for your OS.</li>
+                    <li><strong>Extract</strong> the archive to your preferred location.</li>
+                    <li><strong>Run</strong> <code>./Simitone</code>.</li>
+                </ol>
+
+                <h4>First-Time Setup</h4>
+                <p>Auto-detection scans: Portable (<code>../The Sims/</code>), Steam Proton (<code>~/.steam/steam/steamapps/common/The Sims/</code>), Wine prefixes, or fallback.</p>
+                <p>Alternatively, specify the path directly:</p>
+                <pre><code>./Simitone -path"/fully/qualified/path/to/The Sims/"</code></pre>
+
+                <h4>User Data Location</h4>
+                <p><strong>Linux:</strong> <code>~/.local/share/Simitone/</code> (or <code>~/Documents/Simitone/</code> if MyDocuments exists)</p>
+                <p><strong>macOS:</strong> <code>~/Documents/Simitone/</code></p>
+
+                <!-- Command Line Arguments -->
+                <h3>Optional Command-Line Arguments</h3>
+                <table class="cli-table">
+                    <thead>
+                        <tr>
+                            <th>Argument</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>-path"&lt;path&gt;"</code></td><td>Specify custom Sims 1 installation path</td></tr>
+                        <tr><td><code>-dx</code> / <code>-gl</code></td><td>Force DirectX or OpenGL rendering</td></tr>
+                        <tr><td><code>-3d</code></td><td>Enable 3D mode in the game (toggle with F12)</td></tr>
+                        <tr><td><code>-jit</code></td><td>Enable JIT compilation for SimAntics</td></tr>
+                        <tr><td><code>-hz &lt;rate&gt;</code></td><td>Set refresh rate</td></tr>
+                        <tr><td><code>-ide</code></td><td>Launch Volcanic object editor</td></tr>
+                        <tr><td><code>-lang &lt;code&gt;</code></td><td>Set language</td></tr>
+                        <tr><td><code>-nosound</code></td><td>Disable audio</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== KNOWN LIMITATIONS SECTION ==================== -->
+        <section id="limitations" class="limitations-section">
+            <div class="container">
+                <h2>Known Limitations</h2>
+                <p>The following features are currently incomplete or have known issues:</p>
+                <ul class="limitations-list">
+                    <li>Incomplete Fame career track</li>
+                    <li>Cannot save while on vacation</li>
+                    <li>Cannot evict families from lots</li>
+                    <li>Buy mode on community lots is non-functional</li>
+                    <li>Rudimentary blur censoring (original censor difficult to implement)</li>
+                    <li>Custom objects with custom animations may not work properly</li>
+                    <li>Some stock objects have bugs that can make certain lot types unplayable</li>
+                </ul>
+                <p>For the latest development progress, see <a href="https://github.com/riperiperi/Simitone/issues/8" target="_blank" rel="noopener">the original Simitone issue tracker</a>.</p>
+            </div>
+        </section>
+
+        <!-- ==================== COMMUNITY & RESOURCES SECTION ==================== -->
+        <section id="community" class="community-section">
+            <div class="container">
+                <h2>Community & Resources</h2>
+                <div class="community-links">
+                    <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">Original Simitone Repository</span>
+                        <span class="community-link-desc">The original project by riperiperi.</span>
+                    </a>
+                    <a href="http://freeso.org" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">FreeSO Website</span>
+                        <span class="community-link-desc">The Free Sim Online project — the foundation Simitone is built on.</span>
+                    </a>
+                    <a href="https://github.com/alexjyong/Simitone" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">This Fork — GitHub Repository</span>
+                        <span class="community-link-desc">Source code, releases, and project information.</span>
+                    </a>
+                    <a href="https://github.com/alexjyong/Simitone/issues" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">Issue Tracker</span>
+                        <span class="community-link-desc">Report bugs and request features for this fork.</span>
+                    </a>
+                    <a href="http://forum.freeso.org/forums/3d-remeshing.40/" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">3D Mesh Pack</span>
+                        <span class="community-link-desc">Download community-created 3D meshes for the game.</span>
+                    </a>
+                    <a href="https://github.com/alexjyong/Simitone/releases/latest/" target="_blank" rel="noopener" class="community-link">
+                        <span class="community-link-title">Latest Releases</span>
+                        <span class="community-link-desc">Get the most recent version of this fork for your platform.</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ATTRIBUTIONS SECTION ==================== -->
+        <section id="attributions" class="attributions-section">
+            <div class="container">
+                <h2>Attributions</h2>
+                <ul class="attribution-list">
+                    <li>
+                        <strong>Eyedropper Tool Icon:</strong>
+                        <a href="https://icons8.com/icon/78728/color-dropper" target="_blank" rel="noopener">"Color Dropper"</a> icon by <a href="https://icons8.com" target="_blank" rel="noopener">Icons8</a>.
+                    </li>
+                    <li>
+                        <strong>Free Will Option Icon:</strong>
+                        <a href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness" target="_blank" rel="noopener">"Creativity And Resourcefulness"</a> icon by <a href="https://icons8.com" target="_blank" rel="noopener">Icons8</a>.
+                    </li>
+                    <li>
+                        <strong>Rain Loop Sound:</strong> Rubaoliva (CC0) — <a href="https://freesound.org/s/624645/" target="_blank" rel="noopener">Original file on Freesound</a>.
+                    </li>
+                    <li>
+                        <strong>Thunder Sound:</strong> Raclure (CC0) — <a href="https://freesound.org/s/458870/" target="_blank" rel="noopener">Original file on Freesound</a>.
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>
+                This is a forked version of Simitone, not affiliated with the original Simitone Team.
+                View the <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener">original Simitone repository</a>.
+                Based on <a href="http://freeso.org" target="_blank" rel="noopener">FreeSO</a>.
+            </p>
+            <p>
+                The Sims&trade; is a trademark or registered trademark of Electronic Arts Inc. in the United States and/or other countries.
+                This project is not affiliated with or endorsed by Electronic Arts.
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
