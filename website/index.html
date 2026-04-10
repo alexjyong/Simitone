@@ -120,22 +120,41 @@
                         <p>Rain, snow, hail, and storms; toggled via the cheat console (Ctrl+Shift+C) for atmospheric gameplay. (Currently has no impact on gameplay)</p>
                     </div>
                 </div>
-                <figure class="feature-screenshot">
-                    <img src="assets/images/rain.jpg" alt="Rain weather system in The Sims 1" loading="lazy" width="1200" height="940">
-                    <figcaption>Rain weather system in 3D mode</figcaption>
-                </figure>
-                <figure class="feature-screenshot feature-screenshot--wide">
-                    <img src="assets/images/screenshot-eyedropper.gif" alt="Eyedropper tool in action" loading="lazy" width="600" height="462">
-                    <figcaption>Eyedropper tool from later games now in The Sims 1!</figcaption>
-                </figure>
-                <figure class="feature-screenshot">
-                    <img src="assets/images/winter.jpg" alt="Snow weather system in The Sims 1" loading="lazy" width="1200" height="932">
-                    <figcaption>Snow weather system in 3D mode</figcaption>
-                </figure>
-                <figure class="feature-screenshot">
-                    <img src="assets/images/screenshot-multi-floor.jpg" alt="Multiple floor buildings in Simitone" loading="lazy" width="1200" height="888">
-                    <figcaption>Multi-floor buildings;  more floors than the base game allowed!</figcaption>
-                </figure>
+                <p class="gallery-hint">Click a photo to view full size</p>
+                <div class="screenshot-gallery">
+                    <div class="gallery-item" data-full="assets/images/rain.jpg" data-alt="Rain weather system in The Sims 1">
+                        <img src="assets/images/rain.jpg" alt="Rain weather system in The Sims 1" loading="lazy" width="600" height="470">
+                        <div class="gallery-overlay">
+                            <span class="gallery-caption">Rain weather system in 3D mode</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item" data-full="assets/images/screenshot-eyedropper.gif" data-alt="Eyedropper tool in action">
+                        <img src="assets/images/screenshot-eyedropper.gif" alt="Eyedropper tool in action" loading="lazy" width="600" height="462">
+                        <div class="gallery-overlay">
+                            <span class="gallery-caption">Eyedropper tool from later games now in The Sims 1!</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item" data-full="assets/images/winter.jpg" data-alt="Snow weather system in The Sims 1">
+                        <img src="assets/images/winter.jpg" alt="Snow weather system in The Sims 1" loading="lazy" width="600" height="466">
+                        <div class="gallery-overlay">
+                            <span class="gallery-caption">Snow weather system in 3D mode</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item" data-full="assets/images/screenshot-multi-floor.jpg" data-alt="Multiple floor buildings in Simitone">
+                        <img src="assets/images/screenshot-multi-floor.jpg" alt="Multiple floor buildings in Simitone" loading="lazy" width="600" height="444">
+                        <div class="gallery-overlay">
+                            <span class="gallery-caption">Multi-floor buildings — more floors than the base game allowed!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lightbox -->
+                <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" hidden>
+                    <div class="lightbox-backdrop" data-lightbox-close></div>
+                    <button class="lightbox-close" aria-label="Close image viewer">&times;</button>
+                    <img class="lightbox-img" src="" alt="">
+                    <div class="lightbox-caption"></div>
+                </div>
             </div>
         </section>
 
@@ -207,7 +226,7 @@
                 </div>
 
                 <h3>Game Files</h3>
-                <p>A legitimate copy of <strong>The Sims: Complete Collection</strong> or <strong>The Sims: Legacy Collection</strong>.</p>
+                <p>A legitimate copy of <strong>The Sims: Complete Collection</strong> or <strong>The Sims: Legacy Collection</strong>. Windows version only, although it will work with Linux, as Simitone just needs the data files.</p>
             </div>
         </section>
 
@@ -241,7 +260,7 @@
                 <!-- Linux Install -->
                 <h3 id="install-linux">Linux</h3>
                 <ol class="install-steps">
-                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Linux-x64-Release.zip" target="_blank" rel="noopener">latest release</a> for your OS.</li>
+                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Linux-x64-Release.zip" target="_blank" rel="noopener">latest release</a> (Note: This has only been tested on Ubuntu and Mint.)</li>
                     <li><strong>Extract</strong> the archive to your preferred location.</li>
                     <li><strong>Run</strong> <code>./Simitone</code>.</li>
                 </ol>
@@ -252,8 +271,7 @@
                 <pre><code>./Simitone -path"/fully/qualified/path/to/The Sims/"</code></pre>
 
                 <h4>User Data Location</h4>
-                <p><strong>Linux:</strong> <code>~/.local/share/Simitone/</code> (or <code>~/Documents/Simitone/</code> if MyDocuments exists)</p>
-                <p><strong>macOS:</strong> <code>~/Documents/Simitone/</code></p>
+                <p><strong>Linux:</strong> <code>~/.local/share/Simitone/</code></p>
 
                 <!-- Command Line Arguments -->
                 <h3>Optional Command-Line Arguments</h3>
@@ -363,7 +381,7 @@ dotnet build Client\Simitone\Simitone.sln -c Release --no-restore</code></pre>
 .\build.ps1 -Run     # Build and run
 .\build.ps1 -Clean   # Clean before building</code></pre>
 
-                <h3 id="building-linux">Linux / macOS</h3>
+                <h3 id="building-linux">Linux</h3>
                 <h4>Prerequisites</h4>
                 <p>Install runtime dependencies first (see <a href="#requirements">System Requirements</a> above).</p>
 

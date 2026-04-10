@@ -46,4 +46,61 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // ---- Lightbox ----
+    var lightbox = document.getElementById('lightbox');
+    var lightboxImg = lightbox ? lightbox.querySelector('.lightbox-img') : null;
+    var lightboxCaption = lightbox ? lightbox.querySelector('.lightbox-caption') : null;
+    var galleryItems = document.querySelectorAll('.gallery-item');
+
+    function openLightbox(fullSrc, altText, caption) {
+        if (!lightbox || !lightboxImg) return;
+        lightboxImg.src = fullSrc;
+        lightboxImg.alt = altText;
+        if (lightboxCaption) lightboxCaption.textContent = caption;
+        lightbox.removeAttribute('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        if (!lightbox) return;
+        lightbox.setAttribute('hidden', '');
+        if (lightboxImg) lightboxImg.src = '';
+        document.body.style.overflow = '';
+    }
+
+    galleryItems.forEach(function (item) {
+        item.addEventListener('click', function () {
+            var fullSrc = this.getAttribute('data-full');
+            var alt = this.getAttribute('data-alt');
+            var caption = this.querySelector('.gallery-caption');
+            var captionText = caption ? caption.textContent : alt;
+            openLightbox(fullSrc, alt, captionText);
+        });
+
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('role', 'button');
+        item.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+
+    if (lightbox) {
+        var closeBtn = lightbox.querySelector('.lightbox-close');
+        var closeTriggers = lightbox.querySelectorAll('[data-lightbox-close]');
+
+        if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+        closeTriggers.forEach(function (el) {
+            el.addEventListener('click', closeLightbox);
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !lightbox.hasAttribute('hidden')) {
+                closeLightbox();
+            }
+        });
+    }
 });
