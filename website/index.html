@@ -48,15 +48,14 @@
                     <h1>Simitone</h1>
                     <p class="hero-tagline">A Modern 3D Frontend for The Sims 1</p>
                     <p class="hero-description">
-                        A forked version of Simitone with updates not in the current release of the original.
-                        Not affiliated with the Simitone Team. Play in stunning 3D with modern resolutions,
-                        custom lighting, and quality-of-life improvements.
+                        Alternative C# Frontend for The Sims 1, based off of FreeSO. Play in 3D with modern resolutions,
+                        custom lighting, greater than 2 story buildings, and quality-of-life improvements.
                     </p>
                     <div class="hero-buttons">
-                        <a href="https://github.com/alexjyong/Simitone/releases/latest/" class="btn btn-primary" target="_blank" rel="noopener">
+                        <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Windows-Release.zip" class="btn btn-primary" target="_blank" rel="noopener">
                             Download for Windows
                         </a>
-                        <a href="https://github.com/alexjyong/Simitone/releases/latest/" class="btn btn-secondary" target="_blank" rel="noopener">
+                        <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Linux-x64-Release.zip" class="btn btn-secondary" target="_blank" rel="noopener">
                             Download for Linux
                         </a>
                     </div>
@@ -102,7 +101,7 @@
                     </div>
                     <div class="feature-card">
                         <h3>Custom User Interface</h3>
-                        <p>A modern UI that works at contemporary resolutions, with a desktop-oriented layout for comfortable gameplay.</p>
+                        <p>Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.</p>
                     </div>
                     <div class="feature-card">
                         <h3>Improved Performance</h3>
@@ -114,28 +113,28 @@
                     </div>
                     <div class="feature-card">
                         <h3>Quality of Life</h3>
-                        <p>Improvements from later games in the series — eyedropper tool, camera rotation via mouse wheel, and more.</p>
+                        <p>Improvements from later games in the series; eyedropper tool, catalog search, camera rotation via mouse wheel, and more.</p>
                     </div>
                     <div class="feature-card">
                         <h3>Cosmetic Weather</h3>
-                        <p>Rain, snow, hail, and storms — toggled via the cheat console (Ctrl+Shift+C) for atmospheric gameplay.</p>
+                        <p>Rain, snow, hail, and storms; toggled via the cheat console (Ctrl+Shift+C) for atmospheric gameplay. (Currently has no impact on gameplay)</p>
                     </div>
                 </div>
                 <figure class="feature-screenshot">
                     <img src="assets/images/rain.jpg" alt="Rain weather system in The Sims 1" loading="lazy" width="1200" height="940">
-                    <figcaption>Rain weather system</figcaption>
+                    <figcaption>Rain weather system in 3D mode</figcaption>
                 </figure>
                 <figure class="feature-screenshot feature-screenshot--wide">
-                    <img src="assets/images/screenshot-eyedropper.webp" alt="Eyedropper tool in action" loading="lazy" width="600" height="462">
-                    <figcaption>Eyedropper tool from later games</figcaption>
+                    <img src="assets/images/screenshot-eyedropper.gif" alt="Eyedropper tool in action" loading="lazy" width="600" height="462">
+                    <figcaption>Eyedropper tool from later games now in The Sims 1!</figcaption>
                 </figure>
                 <figure class="feature-screenshot">
                     <img src="assets/images/winter.jpg" alt="Snow weather system in The Sims 1" loading="lazy" width="1200" height="932">
-                    <figcaption>Snow weather system</figcaption>
+                    <figcaption>Snow weather system in 3D mode</figcaption>
                 </figure>
                 <figure class="feature-screenshot">
                     <img src="assets/images/screenshot-multi-floor.jpg" alt="Multiple floor buildings in Simitone" loading="lazy" width="1200" height="888">
-                    <figcaption>Multi-floor buildings — more floors than the base game allowed!</figcaption>
+                    <figcaption>Multi-floor buildings;  more floors than the base game allowed!</figcaption>
                 </figure>
             </div>
         </section>
@@ -150,16 +149,13 @@
                     Key additions in this fork include:
                 </p>
                 <ul class="fork-features">
-                    <li><strong>Cosmetic Weather System</strong> — rain, snow, hail, and storms toggled via cheat console</li>
-                    <li><strong>Improved Linux Build Support</strong> — self-contained Linux builds</li>
-                    <li><strong>Streamlined Build Pipeline</strong> — GitHub Actions workflow for easy automated builds</li>
-                    <li><strong>Updated Dependencies</strong> — .NET 9.0, latest FreeSO submodule updates</li>
+                    <li><strong>Cosmetic Weather System</strong>; rain, snow, hail, and storms toggled via cheat console (currently has no impact on gameplay)</li>
+                    <li><strong>Linux Support</strong>; Will now run on Linux!</li>
+                    <li><strong>QOL Features</strong>; improvements from later games in the series; eyedropper tool, catalog search, camera rotation via mouse wheel</li>
+                    <li><strong>And More!</strong></li>
                 </ul>
                 <p>
-                    For a complete list of changes, compare
-                    <a href="https://github.com/riperiperi/Simitone" target="_blank" rel="noopener">the original</a>
-                    with <a href="https://github.com/alexjyong/Simitone" target="_blank" rel="noopener">this fork</a>,
-                    or check the <a href="https://github.com/riperiperi/Simitone/issues/8" target="_blank" rel="noopener">original development tracker</a>.
+                    For a complete list of changes, compare the original repository with this fork <a href="https://github.com/riperiperi/Simitone/compare/master...alexjyong:Simitone:simitone-forked" target="_blank" rel="noopener">on GitHub</a>.
                 </p>
             </div>
         </section>
@@ -208,7 +204,6 @@
                             <li>Arch: <code>sudo pacman -S sdl2 openal</code></li>
                         </ul>
                     </div>
-                    <div class="runtime-item"><strong>macOS:</strong> <code>brew install sdl2</code></div>
                 </div>
 
                 <h3>Game Files</h3>
@@ -224,7 +219,7 @@
                 <!-- Windows Install -->
                 <h3 id="install-windows">Windows</h3>
                 <ol class="install-steps">
-                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/Simitone/releases/latest/" target="_blank" rel="noopener">latest release</a> for Windows.</li>
+                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Windows-Release.zip" target="_blank" rel="noopener">latest release</a> for Windows.</li>
                     <li><strong>Extract</strong> the ZIP to your preferred location.</li>
                     <li><strong>Run</strong> <code>Simitone.exe</code>.</li>
                 </ol>
@@ -244,9 +239,9 @@
                 <p>Simitone uses <strong>separate save files</strong> from The Sims 1. Your original saves remain untouched.</p>
 
                 <!-- Linux Install -->
-                <h3 id="install-linux">Linux / macOS</h3>
+                <h3 id="install-linux">Linux</h3>
                 <ol class="install-steps">
-                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/Simitone/releases/latest/" target="_blank" rel="noopener">latest release</a> for your OS.</li>
+                    <li><strong>Download</strong> the <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Linux-x64-Release.zip" target="_blank" rel="noopener">latest release</a> for your OS.</li>
                     <li><strong>Extract</strong> the archive to your preferred location.</li>
                     <li><strong>Run</strong> <code>./Simitone</code>.</li>
                 </ol>
@@ -297,7 +292,6 @@
                     <li>Custom objects with custom animations may not work properly</li>
                     <li>Some stock objects have bugs that can make certain lot types unplayable</li>
                 </ul>
-                <p>For the latest development progress, see <a href="https://github.com/riperiperi/Simitone/issues/8" target="_blank" rel="noopener">the original Simitone issue tracker</a>.</p>
             </div>
         </section>
 
@@ -312,10 +306,10 @@
                     </a>
                     <a href="http://freeso.org" target="_blank" rel="noopener" class="community-link">
                         <span class="community-link-title">FreeSO Website</span>
-                        <span class="community-link-desc">The Free Sim Online project — the foundation Simitone is built on.</span>
+                        <span class="community-link-desc">The FreeSO project; the foundation Simitone is built on.</span>
                     </a>
                     <a href="https://github.com/alexjyong/Simitone" target="_blank" rel="noopener" class="community-link">
-                        <span class="community-link-title">This Fork — GitHub Repository</span>
+                        <span class="community-link-title">This Fork's Github Repo</span>
                         <span class="community-link-desc">Source code, releases, and project information.</span>
                     </a>
                     <a href="https://github.com/alexjyong/Simitone/issues" target="_blank" rel="noopener" class="community-link">
@@ -346,7 +340,7 @@
                     <li>Go to the <strong>Actions</strong> tab (you may need to activate actions).</li>
                     <li>Click <strong>"Build Simitone"</strong> in the left sidebar.</li>
                     <li>Click <strong>"Run workflow"</strong>, select <strong>Release</strong>, pick your platforms, and click <strong>"Run workflow"</strong>.</li>
-                    <li>Wait ~4–5 minutes, refresh the job page, and download the release artifact.</li>
+                    <li>Wait ~4-5 minutes or so, refresh the job page, and download the release artifact.</li>
                 </ol>
 
                 <h3 id="building-windows">Windows</h3>
@@ -402,6 +396,10 @@ cd publish/Simitone-Linux-x64/
             <div class="container">
                 <h2>Attributions</h2>
                 <ul class="attribution-list">
+                    <li>
+                        <strong>Rhys/riperiperi</strong>
+                        The creator of the original Simitone project. Check out his other work <a href="https://github.com/riperiperi" target="_blank" rel="noopener">here</a>.
+                    </li>
                     <li>
                         <strong>Eyedropper Tool Icon:</strong>
                         <a href="https://icons8.com/icon/78728/color-dropper" target="_blank" rel="noopener">"Color Dropper"</a> icon by <a href="https://icons8.com" target="_blank" rel="noopener">Icons8</a>.
