@@ -254,6 +254,13 @@ if ($Publish) {
         $localeDir = "$finalDir\lib\$locale"
         if (Test-Path $localeDir) { Remove-Item -Recurse -Force $localeDir }
     }
+    # Keep only win/ and win-x64/ native runtimes — drop android, iOS, linux, osx, etc.
+    $runtimesDir = "$finalDir\lib\runtimes"
+    if (Test-Path $runtimesDir) {
+        Get-ChildItem $runtimesDir -Directory |
+            Where-Object { $_.Name -notin @("win", "win-x64") } |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+    }
 
     # Clean up temporary directories
     Remove-Item -Path "publish\launcher-win" -Recurse -Force -ErrorAction SilentlyContinue

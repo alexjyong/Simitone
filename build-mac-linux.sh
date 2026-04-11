@@ -426,6 +426,17 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
         rm -rf "$FINAL_DIR/lib/$locale"
     done
+    # Keep only target-platform native runtimes — drop android, iOS, and other-platform dirs
+    if [ -d "$FINAL_DIR/lib/runtimes" ]; then
+        for d in "$FINAL_DIR/lib/runtimes/"/*/; do
+            dirname="$(basename "$d")"
+            if [[ "$PLATFORM_NAME" == "Linux" ]]; then
+                [[ "$dirname" == linux* || "$dirname" == unix* ]] || rm -rf "$d"
+            elif [[ "$PLATFORM_NAME" == "macOS" ]]; then
+                [[ "$dirname" == osx* || "$dirname" == unix* ]] || rm -rf "$d"
+            fi
+        done
+    fi
 
     # Copy .desktop file for Linux
     if [[ "$(uname)" != "Darwin" ]]; then

@@ -100,6 +100,13 @@ jobs:
           $d = "release/Simitone-Windows/lib/$locale"
           if (Test-Path $d) { Remove-Item -Recurse -Force $d }
         }
+        # Keep only win/ and win-x64/ native runtimes — drop android, iOS, linux, osx, etc.
+        $runtimesDir = "release/Simitone-Windows/lib/runtimes"
+        if (Test-Path $runtimesDir) {
+          Get-ChildItem $runtimesDir -Directory |
+            Where-Object { $_.Name -notin @("win", "win-x64") } |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+        }
 
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4
@@ -163,6 +170,12 @@ jobs:
         for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
           rm -rf "release/Simitone-Linux-x64/lib/$locale"
         done
+        # Keep only linux* and unix* native runtimes
+        if [ -d release/Simitone-Linux-x64/lib/runtimes ]; then
+          for d in release/Simitone-Linux-x64/lib/runtimes/*/; do
+            case "$(basename "$d")" in linux*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
         cp Client/Simitone/Simitone.Launcher/simitone.desktop release/Simitone-Linux-x64/
         chmod +x release/Simitone-Linux-x64/simitone.desktop
         # Convert icon to PNG
@@ -244,6 +257,12 @@ jobs:
         for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
           rm -rf "release/Simitone-macOS-x64/lib/$locale"
         done
+        # Keep only osx* and unix* native runtimes
+        if [ -d release/Simitone-macOS-x64/lib/runtimes ]; then
+          for d in release/Simitone-macOS-x64/lib/runtimes/*/; do
+            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
 
     - name: Create macOS ARM release structure
       run: |
@@ -258,6 +277,12 @@ jobs:
         for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
           rm -rf "release/Simitone-macOS-arm64/lib/$locale"
         done
+        # Keep only osx* and unix* native runtimes
+        if [ -d release/Simitone-macOS-arm64/lib/runtimes ]; then
+          for d in release/Simitone-macOS-arm64/lib/runtimes/*/; do
+            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
 
     - name: Upload macOS Intel artifacts
       uses: actions/upload-artifact@v4
