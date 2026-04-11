@@ -401,7 +401,32 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     
     # Move all published files to lib/
     mv "$TEMP_PUBLISH_DIR"/* "$FINAL_DIR/lib/"
-    
+
+    # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+    echo "  Removing unused TSO content files..."
+    # TSO object/patch data — Simitone uses TS1 game FAR files instead
+    rm -rf "$FINAL_DIR/lib/Content/Objects"
+    rm -rf "$FINAL_DIR/lib/Content/Patch"
+    # TSO avatar IFFs — TS1 avatar data comes from game FAR files
+    rm -rf "$FINAL_DIR/lib/Content/Avatar"
+    # FreeSO mesh overrides for TSO objects
+    rm -rf "$FINAL_DIR/lib/Content/MeshReplace"
+    # OpenGL ES2 shaders — desktop always uses GLVer 3+
+    rm -rf "$FINAL_DIR/lib/Content/iOS"
+    # TSO online city data
+    rm -rf "$FINAL_DIR/lib/Content/Cities"
+    # FreeSO lot blueprint
+    rm -rf "$FINAL_DIR/lib/Content/Blueprints"
+    # Server-only
+    rm -rf "$FINAL_DIR/lib/DatabaseScripts"
+    rm -rf "$FINAL_DIR/lib/MailTemplates"
+    # SimAntics visual debugger resources
+    rm -rf "$FINAL_DIR/lib/IDERes"
+    # .NET locale satellite assemblies (Roslyn/IDE strings — not game content)
+    for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
+        rm -rf "$FINAL_DIR/lib/$locale"
+    done
+
     # Copy .desktop file for Linux
     if [[ "$(uname)" != "Darwin" ]]; then
         cp "Client/Simitone/Simitone.Launcher/simitone.desktop" "$FINAL_DIR/"

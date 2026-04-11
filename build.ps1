@@ -222,7 +222,39 @@ if ($Publish) {
     # Copy all build output files to lib/
     Write-Host "  Copying build output to lib/..." -ForegroundColor Gray
     Copy-Item -Path "$buildOutput\*" -Destination "$finalDir\lib\" -Recurse -Force
-    
+
+    # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+    Write-Host "  Removing unused TSO content files..." -ForegroundColor Gray
+    $unusedDirs = @(
+        # TSO object/patch data — Simitone uses TS1 game FAR files instead
+        "$finalDir\lib\Content\Objects",
+        "$finalDir\lib\Content\Patch",
+        # TSO avatar IFFs — TS1 avatar data comes from game FAR files
+        "$finalDir\lib\Content\Avatar",
+        # FreeSO mesh overrides for TSO objects
+        "$finalDir\lib\Content\MeshReplace",
+        # OpenGL ES2 shaders — desktop always uses GLVer 3+
+        "$finalDir\lib\Content\iOS",
+        # TSO online city data
+        "$finalDir\lib\Content\Cities",
+        # FreeSO lot blueprint
+        "$finalDir\lib\Content\Blueprints",
+        # Server-only
+        "$finalDir\lib\DatabaseScripts",
+        "$finalDir\lib\MailTemplates",
+        # SimAntics visual debugger resources
+        "$finalDir\lib\IDERes"
+    )
+    foreach ($dir in $unusedDirs) {
+        if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+    }
+    # .NET locale satellite assemblies (Roslyn/IDE strings — not game content)
+    $localeDirs = @("ru","ja","fr","de","it","pl","ko","es","pt-BR","tr","cs","zh-Hans","zh-Hant","sv","ro","hu")
+    foreach ($locale in $localeDirs) {
+        $localeDir = "$finalDir\lib\$locale"
+        if (Test-Path $localeDir) { Remove-Item -Recurse -Force $localeDir }
+    }
+
     # Clean up temporary directories
     Remove-Item -Path "publish\launcher-win" -Recurse -Force -ErrorAction SilentlyContinue
     
