@@ -55,6 +55,10 @@ namespace Simitone.Client.UI.Panels
         public bool PanelActive;
         public UIMainPanelMode Mode;
 
+        private UITextBox CatalogSearchField;
+        private UILabel SearchPlaceholder;
+        private bool _lastLeftButtonDown;
+
         public event Action OnEndSelect;
         public event Action<UIMainPanelMode> ModeChanged;
 
@@ -163,7 +167,28 @@ namespace Simitone.Client.UI.Panels
             Switcher.OnCategorySelect += Switcher_OnCategorySelect;
             Switcher.OnOpen += Switcher_OnOpen;
             Add(Switcher);
-            
+
+            CatalogSearchField = new UITextBox();
+            CatalogSearchField.SetSize(230, 32);
+            CatalogSearchField.Position = new Vector2(263, -32);
+            CatalogSearchField.TextMargin = new Rectangle(8, 8, 8, 8);
+            CatalogSearchField.Visible = false;
+            CatalogSearchField.OnChange += (elem) =>
+            {
+                (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter(CatalogSearchField.CurrentText);
+            };
+            Add(CatalogSearchField);
+
+            SearchPlaceholder = new UILabel();
+            SearchPlaceholder.Caption = "Search selected category\u2026";
+            SearchPlaceholder.Position = new Vector2(271, -24);
+            SearchPlaceholder.Size = new Vector2(214, 20);
+            SearchPlaceholder.CaptionStyle = SearchPlaceholder.CaptionStyle.Clone();
+            SearchPlaceholder.CaptionStyle.Size = 12;
+            SearchPlaceholder.CaptionStyle.Color = UIStyle.Current.Text * 0.4f;
+            SearchPlaceholder.Visible = false;
+            Add(SearchPlaceholder);
+
             foreach (var fade in GetFadeables())
             {
                 fade.Opacity = 0;
@@ -278,9 +303,18 @@ namespace Simitone.Client.UI.Panels
         {
             if (SubPanel != null)
             {
+                // Clear any active search before replacing the panel
+                (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter("");
                 SubPanel.Kill();
             }
             SubPanel = sub;
+            var isBrowsePanel = sub is UIBuyBrowsePanel;
+            if (CatalogSearchField != null)
+            {
+                CatalogSearchField.CurrentText = "";
+                CatalogSearchField.Visible = isBrowsePanel;
+                SearchPlaceholder.Visible = isBrowsePanel;
+            }
             if (sub != null)
             {
                 SubPanel.Position = new Vector2(263, 0);
@@ -348,6 +382,15 @@ namespace Simitone.Client.UI.Panels
 
         public override void Draw(UISpriteBatch batch)
         {
+            if (CatalogSearchField != null && CatalogSearchField.Visible)
+            {
+                // Draw a solid background behind the search field so it's readable against any backdrop
+                DrawLocalTexture(batch, WhitePx, null,
+                    new Vector2(CatalogSearchField.X - 2, CatalogSearchField.Y - 2),
+                    new Vector2(CatalogSearchField.Size.X + 4, CatalogSearchField.Size.Y + 4),
+                    UIStyle.Current.TitleBg);
+            }
+
             if (CurWidth > 211)
             {
                 if (ShowingSelect)
@@ -389,6 +432,58 @@ namespace Simitone.Client.UI.Panels
             } else if (Game.vm.SpeedMultiplier == -1)
             {
                 Game.vm.SpeedMultiplier = 0;
+            }
+
+            // Update search placeholder visibility
+            if (CatalogSearchField != null && CatalogSearchField.Visible)
+            {
+                // In build mode, FullCategory has wrong data until a subcategory is chosen.
+                // Disable and explain the field so it doesn't appear broken.
+                var browsePanel = SubPanel as UIBuyBrowsePanel;
+                bool buildNeedsSubcat = browsePanel != null
+                    && browsePanel.ChoosingSub
+                    && browsePanel.Mode == UICatalogMode.Build;
+
+                if (buildNeedsSubcat)
+                {
+                    SearchPlaceholder.Caption = "Select a subcategory first\u2026";
+                    CatalogSearchField.Mode = UITextEditMode.ReadOnly;
+                    CatalogSearchField.Opacity = 0.45f;
+                    SearchPlaceholder.Visible = true;
+                }
+                else
+                {
+                    SearchPlaceholder.Caption = "Search selected category\u2026";
+                    CatalogSearchField.Mode = UITextEditMode.Editor;
+                    CatalogSearchField.Opacity = 1f;
+                    SearchPlaceholder.Visible = !CatalogSearchField.HasText;
+                }
+
+                var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
+
+                // Click outside the search field → remove focus
+                var leftDown = state.MouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
+                if (searchFocused && leftDown && !_lastLeftButtonDown)
+                {
+                    var localMouse = GlobalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
+                    var fieldBounds = new Rectangle(
+                        (int)CatalogSearchField.X, (int)CatalogSearchField.Y,
+                        (int)CatalogSearchField.Size.X, (int)CatalogSearchField.Size.Y);
+                    if (!fieldBounds.Contains((int)localMouse.X, (int)localMouse.Y))
+                        state.InputManager.SetFocus(null);
+                }
+                _lastLeftButtonDown = leftDown;
+
+                // Two-stage Escape: clear text first; close panel only when field is already empty
+                if (searchFocused && state.NewKeys.Contains(Microsoft.Xna.Framework.Input.Keys.Escape))
+                {
+                    if (CatalogSearchField.HasText)
+                    {
+                        CatalogSearchField.CurrentText = "";
+                        (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter("");
+                    }
+                    // When field is empty, Escape falls through to normal panel behaviour (none currently)
+                }
             }
         }
 

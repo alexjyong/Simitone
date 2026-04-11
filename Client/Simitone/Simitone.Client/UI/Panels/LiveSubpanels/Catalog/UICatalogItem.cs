@@ -67,8 +67,17 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels.Catalog
 
         public override void Selected()
         {
-            Outlined = true;
-            BudgetProvider.Selected(ItemID);
+            if (BudgetProvider.ItemID == ItemID)
+            {
+                // Re-clicking the already-selected item: deselect it
+                Outlined = false;
+                BudgetProvider.Deselect();
+            }
+            else
+            {
+                Outlined = true;
+                BudgetProvider.Selected(ItemID);
+            }
         }
 
         public override void Deselected()
