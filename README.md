@@ -27,7 +27,10 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom user interface that works at modern resolutions. Working on a more desktop oriented interface.
 - Improved graphical performance, support for high resolutions and refresh rates.
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
-- Quality of life fixes that were available in later installations of the series such as the eyedropper tool. (note eyedropper currently doesn't work with wallpaper) and rotating camera by clicking mouse wheel.
+- Quality of life fixes that were available in later installations of the series such as:
+  -  The eyedropper tool. (Note: eyedropper currently doesn't work with wallpaper)
+  -  Rotating camera by clicking mouse wheel.
+  -  Catalog search for build and buy mode. (Help wanted for the UI) 
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO, Windows-only)
 - **Cosmetic weather system** - Rain, snow, hail, and storms, toggled via the cheat console (Ctrl+Shift+C). See [WEATHER_IMPLEMENTATION.md](WEATHER_IMPLEMENTATION.md) for details.
 
