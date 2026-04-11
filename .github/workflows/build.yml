@@ -80,6 +80,33 @@ jobs:
         New-Item -ItemType Directory -Path "release/Simitone-Windows/lib" -Force
         Copy-Item -Path "publish/launcher-win/Simitone.exe" -Destination "release/Simitone-Windows/Simitone.exe"
         Copy-Item -Path "$buildOutput/*" -Destination "release/Simitone-Windows/lib/" -Recurse
+        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+        $unusedDirs = @(
+          "release/Simitone-Windows/lib/Content/Objects",
+          "release/Simitone-Windows/lib/Content/Patch",
+          "release/Simitone-Windows/lib/Content/Avatar",
+          "release/Simitone-Windows/lib/Content/MeshReplace",
+          "release/Simitone-Windows/lib/Content/iOS",
+          "release/Simitone-Windows/lib/Content/Cities",
+          "release/Simitone-Windows/lib/Content/Blueprints",
+          "release/Simitone-Windows/lib/DatabaseScripts",
+          "release/Simitone-Windows/lib/MailTemplates",
+          "release/Simitone-Windows/lib/IDERes"
+        )
+        foreach ($dir in $unusedDirs) {
+          if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+        }
+        foreach ($locale in @("ru","ja","fr","de","it","pl","ko","es","pt-BR","tr","cs","zh-Hans","zh-Hant","sv","ro","hu")) {
+          $d = "release/Simitone-Windows/lib/$locale"
+          if (Test-Path $d) { Remove-Item -Recurse -Force $d }
+        }
+        # Keep only win/ and win-x64/ native runtimes — drop android, iOS, linux, osx, etc.
+        $runtimesDir = "release/Simitone-Windows/lib/runtimes"
+        if (Test-Path $runtimesDir) {
+          Get-ChildItem $runtimesDir -Directory |
+            Where-Object { $_.Name -notin @("win", "win-x64") } |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+        }
 
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v4
@@ -136,6 +163,19 @@ jobs:
         cp publish/launcher-native/Simitone release/Simitone-Linux-x64/Simitone
         chmod +x release/Simitone-Linux-x64/Simitone
         cp -r publish/linux-x64/* release/Simitone-Linux-x64/lib/
+        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+        for d in Content/Objects Content/Patch Content/Avatar Content/MeshReplace Content/iOS Content/Cities Content/Blueprints DatabaseScripts MailTemplates IDERes; do
+          rm -rf "release/Simitone-Linux-x64/lib/$d"
+        done
+        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
+          rm -rf "release/Simitone-Linux-x64/lib/$locale"
+        done
+        # Keep only linux* and unix* native runtimes
+        if [ -d release/Simitone-Linux-x64/lib/runtimes ]; then
+          for d in release/Simitone-Linux-x64/lib/runtimes/*/; do
+            case "$(basename "$d")" in linux*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
         cp Client/Simitone/Simitone.Launcher/simitone.desktop release/Simitone-Linux-x64/
         chmod +x release/Simitone-Linux-x64/simitone.desktop
         # Convert icon to PNG
@@ -210,6 +250,19 @@ jobs:
         cp publish/launcher-native-x64/Simitone release/Simitone-macOS-x64/Simitone
         chmod +x release/Simitone-macOS-x64/Simitone
         cp -r publish/osx-x64/* release/Simitone-macOS-x64/lib/
+        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+        for d in Content/Objects Content/Patch Content/Avatar Content/MeshReplace Content/iOS Content/Cities Content/Blueprints DatabaseScripts MailTemplates IDERes; do
+          rm -rf "release/Simitone-macOS-x64/lib/$d"
+        done
+        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
+          rm -rf "release/Simitone-macOS-x64/lib/$locale"
+        done
+        # Keep only osx* and unix* native runtimes
+        if [ -d release/Simitone-macOS-x64/lib/runtimes ]; then
+          for d in release/Simitone-macOS-x64/lib/runtimes/*/; do
+            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
 
     - name: Create macOS ARM release structure
       run: |
@@ -217,6 +270,19 @@ jobs:
         cp publish/launcher-native-arm64/Simitone release/Simitone-macOS-arm64/Simitone
         chmod +x release/Simitone-macOS-arm64/Simitone
         cp -r publish/osx-arm64/* release/Simitone-macOS-arm64/lib/
+        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+        for d in Content/Objects Content/Patch Content/Avatar Content/MeshReplace Content/iOS Content/Cities Content/Blueprints DatabaseScripts MailTemplates IDERes; do
+          rm -rf "release/Simitone-macOS-arm64/lib/$d"
+        done
+        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
+          rm -rf "release/Simitone-macOS-arm64/lib/$locale"
+        done
+        # Keep only osx* and unix* native runtimes
+        if [ -d release/Simitone-macOS-arm64/lib/runtimes ]; then
+          for d in release/Simitone-macOS-arm64/lib/runtimes/*/; do
+            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
+          done
+        fi
 
     - name: Upload macOS Intel artifacts
       uses: actions/upload-artifact@v4
