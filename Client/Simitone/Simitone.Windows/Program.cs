@@ -192,6 +192,7 @@ namespace Simitone.Windows
                             // Only one installation found, use it automatically
                             path = installations[0].path;
                             bool isSteam = installations[0].type == TS1InstallationType.Steam;
+                            if (isSteam && !CheckSteamSavesExist()) return;
                             SaveInstallationConfig(path, isSteam);
                             
                             // Show info dialog
@@ -219,15 +220,16 @@ namespace Simitone.Windows
                                 // Normalize path - ensure it ends with /
                                 path = result.Path.Replace('\\', '/');
                                 if (!path.EndsWith("/")) path += "/";
+                                if (result.IsSteam && !CheckSteamSavesExist()) return;
                                 SaveInstallationConfig(path, result.IsSteam);
-                                
+
                                 // Show info dialog using the existing app instance
                                 string savesPath = result.IsSteam
                                     ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                                                  "Saved Games", "Electronic Arts", "The Sims 25", "UserData")
                                     : Path.Combine(result.Path, "UserData");
                                 string simitoneSavesPath = Path.Combine(FSOEnvironment.UserDir, "UserData");
-                                
+
                                 var infoDialog = new InstallationInfoDialog(path, savesPath, simitoneSavesPath, result.IsSteam);
                                 infoDialog.ShowModal();
                             }
@@ -243,11 +245,16 @@ namespace Simitone.Windows
                     {
                         // Already configured, use saved settings
                         path = GlobalSettings.Default.TS1HybridPath;
-                        
+
+                        // For Steam installs, check that save data exists before proceeding.
+                        // Also need an Application instance for any MessageBox that may follow.
+                        var configuredApp = new Application(Eto.Platform.Detect);
+
+                        if (GlobalSettings.Default.TS1IsSteamInstall && !CheckSteamSavesExist()) return;
+
                         // Validate the path still exists
                         if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, "GameData", "Behavior.iff")))
                         {
-                            var app = new Application(Eto.Platform.Detect);
                             var result = MessageBox.Show(
                                 $"The configured installation path is no longer valid:\n{path}\n\n" +
                                 "Would you like to reconfigure your installation?\n\n" +
@@ -447,6 +454,39 @@ namespace Simitone.Windows
             GlobalSettings.Default.TS1InstallationConfigured = true;
             GlobalSettings.Default.StartupPath = path;
             GlobalSettings.Default.Save();
+        }
+
+        /// <summary>
+        /// Returns the path where the Steam Legacy Collection saves UserData, or null if it doesn't exist.
+        /// The folder is only created after the user has launched the game and loaded a family at least once.
+        /// </summary>
+        private static string GetSteamSavesPath(string udName = "UserData")
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "Saved Games", "Electronic Arts", "The Sims 25", udName
+            );
+        }
+
+        /// <summary>
+        /// Shows an error if the Steam saves directory doesn't exist yet.
+        /// Returns true if it's safe to proceed, false if the user needs to run the Steam game first.
+        /// </summary>
+        private static bool CheckSteamSavesExist()
+        {
+            var savesPath = GetSteamSavesPath();
+            if (Directory.Exists(savesPath)) return true;
+
+            MessageBox.Show(
+                "The Sims: Legacy Collection save data was not found.\n\n" +
+                "Expected location:\n" + savesPath + "\n\n" +
+                "This folder is only created after launching The Sims: Legacy\n" +
+                "Collection via Steam and loading a family at least once.\n\n" +
+                "Please do that first, then restart Simitone.",
+                "Steam Save Data Not Found",
+                MessageBoxType.Error
+            );
+            return false;
         }
     }
 #endif
