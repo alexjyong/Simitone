@@ -103,4 +103,25 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // ---- Version Badge (fetches latest release from GitHub API) ----
+    var versionBadge = document.getElementById('version-badge');
+    if (versionBadge) {
+        fetch('https://api.github.com/repos/alexjyong/simitone/releases/latest')
+            .then(function (res) {
+                if (!res.ok) throw new Error('API error');
+                return res.json();
+            })
+            .then(function (data) {
+                if (data.tag_name) {
+                    var tagEl = versionBadge.querySelector('.version-tag');
+                    if (tagEl) tagEl.textContent = data.tag_name;
+                    versionBadge.removeAttribute('hidden');
+                }
+            })
+            .catch(function () {
+                // Silently hide badge if API fails
+                if (versionBadge) versionBadge.setAttribute('hidden', '');
+            });
+    }
 });

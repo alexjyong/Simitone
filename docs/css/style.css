@@ -12,6 +12,7 @@
     --color-bg-card: #1c2128;
     --color-text-primary: #e6edf3;
     --color-text-secondary: #8b949e;
+    --color-text-muted: #484f58;
     --color-text-link: #58a6ff;
     --color-text-link-hover: #79c0ff;
     --color-accent: #3fb950;
@@ -178,6 +179,20 @@ li {
     text-decoration: none;
 }
 
+/* CTA nav link (Releases button) */
+.nav-cta {
+    color: var(--color-accent) !important;
+    background: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: var(--border-radius-sm) !important;
+    padding: var(--space-xs) var(--space-sm) !important;
+}
+
+.nav-cta:hover {
+    background: rgba(88, 166, 255, 0.2) !important;
+    color: var(--color-accent-hover) !important;
+}
+
 .nav-links {
     display: none;
     list-style: none;
@@ -281,7 +296,46 @@ main section {
 .hero-tagline {
     font-size: var(--font-size-lg);
     color: var(--color-text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+/* Version badge */
+.version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
     margin-bottom: var(--space-md);
+}
+
+.version-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.version-tag {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-mono);
+}
+
+.hero-releases-link {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+}
+
+.hero-releases-link a {
+    color: var(--color-text-muted);
+}
+
+.hero-releases-link a:hover {
+    color: var(--color-text-link);
 }
 
 .hero-description {
@@ -320,12 +374,12 @@ main section {
 
 .btn-primary {
     background: var(--color-accent);
-    color: #fff;
+    color: #0d1117;
 }
 
 .btn-primary:hover {
     background: var(--color-accent-hover);
-    color: #fff;
+    color: #0d1117;
 }
 
 .btn-secondary {
@@ -875,4 +929,137 @@ a:focus {
     background: var(--color-bg-tertiary);
     display: inline-block;
     padding: 0.1em 0.4em;
+}
+
+/* ---- Releases Page ---- */
+.releases-header-section {
+    padding: var(--space-3xl) 0 var(--space-xl);
+    margin-top: var(--nav-height);
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+    text-align: center;
+}
+
+.releases-header-section h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-sm);
+    border: none;
+}
+
+.releases-subtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.releases-api-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.releases-list-section {
+    background: var(--color-bg-secondary);
+    padding: var(--space-2xl) 0;
+}
+
+.releases-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.releases-loading,
+.releases-error {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+    color: var(--color-text-secondary);
+}
+
+.releases-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+/* Release Card */
+.release-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-lg);
+}
+
+.release-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-md);
+    gap: var(--space-md);
+}
+
+.release-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.release-title {
+    font-size: var(--font-size-xl);
+    margin: 0;
+    border: none;
+    color: var(--color-text-primary);
+}
+
+.release-prerelease-badge {
+    display: inline-block;
+    padding: 2px var(--space-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-warning-text);
+    background: var(--color-warning-bg);
+    border: 1px solid var(--color-warning-border);
+    border-radius: 12px;
+}
+
+.release-date {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.release-body {
+    margin-bottom: var(--space-lg);
+}
+
+.release-body p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-sm);
+    line-height: 1.7;
+}
+
+.release-body ul {
+    margin-bottom: var(--space-sm);
+}
+
+.release-body li {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.release-notes-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.release-downloads {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+/* Small button variant for release downloads */
+.btn-sm {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-sm);
+    min-width: auto;
 }
