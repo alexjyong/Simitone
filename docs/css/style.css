@@ -19,6 +19,8 @@
     --color-accent-hover: #4cc764;
     --color-accent-secondary: #1f6feb;
     --color-accent-secondary-hover: #388bfd;
+    --color-accent-info: #17a2b8;
+    --color-accent-info-hover: #138496;
     --color-warning-bg: rgba(210, 153, 34, 0.15);
     --color-warning-border: #d29922;
     --color-warning-text: #e3b341;
@@ -390,6 +392,16 @@ main section {
 .btn-secondary:hover {
     background: var(--color-accent-secondary-hover);
     color: #fff;
+}
+
+.btn-info {
+    color: #fff;
+    background: var(--color-accent-info);
+}
+
+.btn-info:hover {
+    color: #fff;
+    background: var(--color-accent-info-hover);
 }
 
 /* ---- About Section ---- */
