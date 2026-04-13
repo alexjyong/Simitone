@@ -25,7 +25,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
     {
         public UITouchScroll CatContainer;
         public List<UICatalogElement> FullCategory;
-        public IEnumerable<UICatalogElement> FilterCategory;
+        public IList<UICatalogElement> FilterCategory;
         public UICatalogMode Mode;
         public List<UICatButton> SelButtons = new List<UICatButton>();
         public List<UILabel> SelLabels = new List<UILabel>();
@@ -34,7 +34,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         public int ItemID = -1;
 
         private string ActiveSearchTerm;
-        private IEnumerable<UICatalogElement> PreSearchFilterCategory;
+        private IList<UICatalogElement> PreSearchFilterCategory;
         public UILabel NoResultsLabel;
 
         public static int[] RemapString = new int[]
@@ -337,7 +337,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         private bool CheckedPendingEyedropper;
 
         public UIBuyBrowsePanel(TS1GameScreen screen, sbyte category, UICatalogMode mode) : base(screen) {
-            CatContainer = new UITouchScroll(() => FilterCategory?.Count() ?? 0, CatalogElemProvider);
+            CatContainer = new UITouchScroll(() => FilterCategory?.Count ?? 0, CatalogElemProvider);
             CatContainer.ItemWidth = 90;
             CatContainer.DrawBounds = false;
             CatContainer.Margin = 15;
@@ -630,7 +630,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 SelLabels.Clear();
 
                 // Show all items in this category
-                FilterCategory = FullCategory.Where(x => GetSubsort(x.Item) > 0);
+                FilterCategory = FullCategory.Where(x => GetSubsort(x.Item) > 0).ToList();
                 CatContainer.Opacity = 1f;
                 CatContainer.Reset();
             }
@@ -751,7 +751,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             var holder = Game.LotControl.ObjectHolder;
             var control = Game.LotControl;
             holder.ClearSelected();
-            var item = FilterCategory.ElementAt(itemID);
+            var item = FilterCategory[itemID];
 
             //todo: check if over budget?
 
@@ -1155,7 +1155,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         public UITSContainer CatalogElemProvider(int index)
         {
-            var elem = new Catalog.UICatalogItem(FilterCategory.ElementAt(index), this);
+            var elem = new Catalog.UICatalogItem(FilterCategory[index], this);
             return elem;
         }
 
@@ -1228,15 +1228,16 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             ActiveSearchTerm = term;
 
-            // Search within the current category's items only
+            // Search within the current category's items only.
+            // Use CatalogName/Name (already in memory) instead of DisplayName
+            // to avoid triggering lazy IFF loads for every item in the category.
             FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
                 .Where(elem => elem.Item.GUID != uint.MaxValue &&
-                               (elem.DisplayName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
+                               (elem.Item.CatalogName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
                 .ToList();
 
-            NoResultsLabel.Visible = !FilterCategory.Any();
+            NoResultsLabel.Visible = FilterCategory.Count == 0;
             CatContainer.Reset();
         }
 
@@ -1267,7 +1268,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             }
             else if (index == 8)
             {
-                FilterCategory = FullCategory.Where(x => (GetSubsort(x.Item)) > 0);
+                FilterCategory = FullCategory.Where(x => (GetSubsort(x.Item)) > 0).ToList();
             }
             else
             {
@@ -1276,7 +1277,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     mask |= 16;
                 }
-                FilterCategory = FullCategory.Where(x => (GetSubsort(x.Item) & mask) > 0);
+                FilterCategory = FullCategory.Where(x => (GetSubsort(x.Item) & mask) > 0).ToList();
             }
             CatContainer.Reset();
         }
