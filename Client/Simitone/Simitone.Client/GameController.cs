@@ -100,6 +100,9 @@ namespace Simitone.Client
                     "IOException" => "I/O error",
                     "CatalogError" => "catalog error",
                     "DecodeError" => "decode failed",
+                    "MalformedIFF" => "malformed object file",
+                    "MissingSemiGlobal" => "missing semiglobal",
+                    "MalformedSound" => "bad sound file",
                     _ => file.ErrorType
                 };
                 message.AppendLine($"• {file.Filename} ({shortReason})");
