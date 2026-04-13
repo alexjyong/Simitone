@@ -846,17 +846,14 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             FullCategory = FullCategory.OrderBy(x => (int)x.Item.Price).ToList();
             if (category == 13) AddWallStyles();
 
-            // Resolve CTSS display names lazily — use catalog name for now.
-            // Loading every IFF to read CTSS strings would freeze the UI when
-            // custom content adds hundreds of objects to a single category.
+            // DisplayName is resolved lazily by UICatalogElement when first accessed,
+            // so we only set it here for Special items that have their own resource.
             foreach (var elem in FullCategory)
             {
                 if (elem.Special != null)
                 {
                     elem.DisplayName = elem.Special.Res?.GetName(elem.Special.ResID);
                 }
-                // Fall back to Item.CatalogName or Item.Name when DisplayName is null (handled by ToString)
-                elem.DisplayName = elem.DisplayName ?? elem.Item.CatalogName;
             }
             //if we're not build mode, init the subcategory selection
             if (build) return;
@@ -1301,7 +1298,43 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         public ObjectCatalogItem Item;
         public int CalcPrice;
         public UISpecialCatalogElement Special;
-        public string DisplayName; // CTSS catalog display name (e.g. "Soma Plasma TV"); null until resolved
+        private string _displayName;
+        private bool _nameResolved;
+
+        /// <summary>
+        /// CTSS catalog display name (e.g. "Soma Plasma TV").
+        /// Resolved lazily on first access to avoid loading every IFF upfront.
+        /// </summary>
+        public string DisplayName
+        {
+            get
+            {
+                if (!_nameResolved)
+                {
+                    _nameResolved = true;
+                    if (_displayName == null && Item.GUID != 0 && Item.GUID != uint.MaxValue)
+                    {
+                        try
+                        {
+                            var worldObj = FSO.Content.Content.Get().WorldObjects.Get(Item.GUID);
+                            if (worldObj != null)
+                            {
+                                var ctss = worldObj.Resource.Get<FSO.Files.Formats.IFF.Chunks.CTSS>(worldObj.OBJ.CatalogStringsID);
+                                _displayName = ctss?.GetString(0);
+                            }
+                        }
+                        catch { }
+                    }
+                    _displayName = _displayName ?? Item.CatalogName;
+                }
+                return _displayName;
+            }
+            set
+            {
+                _displayName = value;
+                _nameResolved = value != null;
+            }
+        }
 
         public override string ToString()
         {
