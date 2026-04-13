@@ -265,6 +265,9 @@ namespace Simitone.Client.UI.Screens
             InitializeLot(Content.Get().Neighborhood.GetHousePath(house), false);// "UserData/Houses/House21.iff"
             Remove(TS1NeighPanel);
             if (switcher != null) Remove(switcher);
+
+            // Show warnings for any content that failed during lot load
+            GameController.ShowFailedContentNotification();
         }
 
         public void MoveInAndPlay(short house, int family, UIElement switcher)

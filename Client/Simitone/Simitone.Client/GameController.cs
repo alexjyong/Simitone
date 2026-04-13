@@ -67,20 +67,23 @@ namespace Simitone.Client
         
         /// <summary>
         /// Shows a notification to the user about any content files that failed to load.
-        /// This is called after entering game mode so the user can see which custom content
-        /// files are problematic.
+        /// Can be called multiple times — only shows NEW failures since the last call.
         /// </summary>
-        private static void ShowFailedContentNotification()
+        private static int _lastShownFailureCount = 0;
+        public static void ShowFailedContentNotification()
         {
             var failedFiles = Content.FailedContentFiles;
-            if (failedFiles == null || failedFiles.Count == 0)
+            if (failedFiles == null || failedFiles.Count <= _lastShownFailureCount)
                 return;
             
             var realFailures = failedFiles
+                .Skip(_lastShownFailureCount)
                 .Where(f => f.ErrorType != "DebugInfo")
                 .GroupBy(f => f.Filename)
                 .Select(g => g.First())
                 .ToList();
+            
+            _lastShownFailureCount = failedFiles.Count;
             
             if (realFailures.Count == 0)
                 return;

@@ -846,21 +846,14 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             FullCategory = FullCategory.OrderBy(x => (int)x.Item.Price).ToList();
             if (category == 13) AddWallStyles();
 
-            // Resolve CTSS display names so search can match "Soma Plasma TV" not just "TV Expensive"
+            // Resolve CTSS display names lazily — use catalog name for now.
+            // Loading every IFF to read CTSS strings would freeze the UI when
+            // custom content adds hundreds of objects to a single category.
             foreach (var elem in FullCategory)
             {
                 if (elem.Special != null)
                 {
                     elem.DisplayName = elem.Special.Res?.GetName(elem.Special.ResID);
-                }
-                else if (elem.Item.GUID != 0 && elem.Item.GUID != uint.MaxValue)
-                {
-                    var worldObj = Content.Get().WorldObjects.Get(elem.Item.GUID);
-                    if (worldObj != null)
-                    {
-                        var ctss = worldObj.Resource.Get<CTSS>(worldObj.OBJ.CatalogStringsID);
-                        elem.DisplayName = ctss?.GetString(0);
-                    }
                 }
                 // Fall back to Item.CatalogName or Item.Name when DisplayName is null (handled by ToString)
                 elem.DisplayName = elem.DisplayName ?? elem.Item.CatalogName;
