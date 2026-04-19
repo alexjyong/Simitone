@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | Simitone</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+            padding: 2rem;
+        }
+        .error-content h1 {
+            font-size: 6rem;
+            margin-bottom: 0;
+            border: none;
+            color: var(--color-accent);
+        }
+        .error-content p {
+            color: var(--color-text-secondary);
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-page">
+        <div class="error-content">
+            <h1>404</h1>
+            <p>Page not found. The lot you're looking for doesn't exist.</p>
+            <a href="/" class="btn btn-primary">Back to Homepage</a>
+        </div>
+    </div>
+</body>
+</html>
