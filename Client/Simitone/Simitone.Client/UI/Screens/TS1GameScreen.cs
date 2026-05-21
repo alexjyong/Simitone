@@ -26,8 +26,10 @@ using FSO.SimAntics.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Ninject.Selection;
 using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Panels;
+using Simitone.Client.UI.Panels.Options;
 using Simitone.Client.UI.Panels.WorldUI;
 using Simitone.Client.Utils;
 using Simitone.Client.Services;
@@ -67,6 +69,9 @@ namespace Simitone.Client.UI.Screens
         private float ThunderTimer = 0f;
         private Random ThunderRandom = new Random();
         private short? PendingWeatherData = null;
+
+        //for Options Dialog
+        UIOptionsAlert _openOptionsDialog;
 
         public bool InLot
         {
@@ -210,6 +215,13 @@ namespace Simitone.Client.UI.Screens
                 UpdateChecker.CheckForUpdatesAsync();
             }
         }
+
+        /// <summary>
+        /// Use this function to change the game language at runtime.
+        /// </summary>
+        public void RuntimeChangeLanguage(STRLangCode NewLanguage) => 
+            UITransDialog.CreateWithCustomUIIcon("opt_lang.png", () => (GameFacade.Game as SimitoneGame)?.ChangeLanguage(NewLanguage));
+
         public int? MoveInFamily;
 
         public void StartMoveIn(int familyID)
@@ -245,7 +257,7 @@ namespace Simitone.Client.UI.Screens
                             confirmDialog.Close();
                             MoveInAndPlay((short)house, MoveInFamily.Value, switcher);
                         },
-                        (b) => confirmDialog.Close())
+                        (b) => { confirmDialog.Close(); TS1NeighPanel.ResetZoom(); })
                     });
                     UIScreen.GlobalShowDialog(confirmDialog, true);
                 }
@@ -256,6 +268,7 @@ namespace Simitone.Client.UI.Screens
             };
             Add(TS1NeighPanel);
             Add(switcher);
+            Bg.Visible = true;            
         }
 
         public void PlayHouse(short house, UIElement switcher)
@@ -269,6 +282,10 @@ namespace Simitone.Client.UI.Screens
 
         public void MoveInAndPlay(short house, int family, UIElement switcher)
         {
+            // ** ensure previous lot iff is cleaned up
+            CleanUpPeopleInternal(house);
+            // ** 
+
             MoveInFamily = null;
             var neigh = Content.Get().Neighborhood;
             var fami = neigh.GetFamily((ushort)family);
@@ -276,19 +293,38 @@ namespace Simitone.Client.UI.Screens
             PlayHouse(house, switcher);
         }
 
+        /// <summary>
+        /// Opens up a lot and cleans up any remaining people on the lot, saves it and closes it again.
+        /// </summary>
+        /// <param name="houseID"></param>
+        private void CleanUpPeopleInternal(short houseID)
+        {
+            //TODO: using this function is compliant with how to load a lot, but a little wasteful for what we're accomplishing
+            InitializeLot(Content.Get().Neighborhood.GetHousePath(houseID), false);
+            vm.TS1State.CleanUpAllPeople(vm);            
+            Save();
+            CleanupLastWorld(); // delete the loaded lot
+        }
+
         public void EvictLot(FAMI family, short houseID)
         {
+            //load the vm for the lot, delete everything, save it.
+
             family.Budget += family.ValueInArch;
             family.ValueInArch = 0;
             Content.Get().Neighborhood.MoveOut(houseID);
+            CleanUpPeopleInternal(houseID);
+            //TODO: delete owned objects, likely run a sum total of the resale value of the objects, add that value to FAMI budget
+
+            //please be aware that as of this point the neighborhood changes are now saved.
             TS1NeighPanel.SelectHouse(houseID);
         }
-
+        
         public override void GameResized()
         {
             base.GameResized();
             Bg.Position = (new Vector2(ScreenWidth, ScreenHeight)) / 2;
-            World?.GameResized();
+            World?.GameResized();            
         }
 
         public void Initialize(string propertyName, bool external)
@@ -300,6 +336,18 @@ namespace Simitone.Client.UI.Screens
 
         private int SwitchLot = -1;
 
+        /// <summary>
+        /// Opens a new <see cref="UIOptionsAlert"/>
+        /// </summary>
+        public void ShowOptionsDialog()
+        {
+            if (_openOptionsDialog != null)
+                UIScreen.RemoveDialog(_openOptionsDialog);
+
+            _openOptionsDialog = new UIOptionsAlert(GlobalSettings.Default);
+            UIScreen.GlobalShowDialog(_openOptionsDialog, true);
+        }
+
         public void ChangeSpeedTo(int speed)
         {
             //0 speed is 0x
@@ -307,9 +355,7 @@ namespace Simitone.Client.UI.Screens
             //2 speed is 3x
             //3 speed is 10x
 
-            if (vm == null) return;
-            if (vm.SpeedMultiplier == -1) return;
-
+            if (vm.SpeedMultiplier == GameplaySpeed.Disabled) return;
             switch (vm.SpeedMultiplier)
             {
                 case 0:
@@ -326,7 +372,7 @@ namespace Simitone.Client.UI.Screens
                 case 1:
                     switch (speed)
                     {
-                        case 0:
+                        case 4:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed1ToP); break;
                         case 2:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed1To2); break;
@@ -337,7 +383,7 @@ namespace Simitone.Client.UI.Screens
                 case 3:
                     switch (speed)
                     {
-                        case 0:
+                        case 4:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed2ToP); break;
                         case 1:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed2To1); break;
@@ -348,7 +394,7 @@ namespace Simitone.Client.UI.Screens
                 case 10:
                     switch (speed)
                     {
-                        case 0:
+                        case 4:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed3ToP); break;
                         case 1:
                             HITVM.Get().PlaySoundEvent(UISounds.Speed3To1); break;
@@ -360,10 +406,10 @@ namespace Simitone.Client.UI.Screens
 
             switch (speed)
             {
-                case 0: vm.SpeedMultiplier = 0; break;
-                case 1: vm.SpeedMultiplier = 1; break;
-                case 2: vm.SpeedMultiplier = 3; break;
-                case 3: vm.SpeedMultiplier = 10; break;
+                case 4: vm.SpeedMultiplier = GameplaySpeed.ReverseRemap[GameplaySpeed.Pause]; break;
+                case 1: vm.SpeedMultiplier = GameplaySpeed.ReverseRemap[GameplaySpeed.Play]; break;
+                case 2: vm.SpeedMultiplier = GameplaySpeed.ReverseRemap[GameplaySpeed.FastForward]; break;
+                case 3: vm.SpeedMultiplier = GameplaySpeed.ReverseRemap[GameplaySpeed.FastFastForward]; break;
             }
             vm.ResetTickAlign();
         }
@@ -711,6 +757,16 @@ namespace Simitone.Client.UI.Screens
                 PendingWeatherData = pendingWeather;
 
                 if (vm.LoadErrors.Count > 0) GameThread.NextUpdate((state) => ShowLoadErrors(vm.LoadErrors, true));
+                // center to the middle of the lot because 0,0 is very jarring
+                if (World.State.CameraMode < CameraRenderMode._3D) // 2D mode only
+                {
+                    Blueprint arch = World?.Architecture?.Blueprint;
+                    if (arch != null) { // center on the center of the lot by default
+                        Vector3 anchor = new Vector3(arch.Width / 2, arch.Height / 2,0);
+                        World.State.CenterTile = World.State.Project2DCenterTile(anchor);
+                        World.State.Camera2D.RotationAnchor = anchor;
+                    }
+                }
 
                 vm.MyUID = 65537;
                 var settings = GlobalSettings.Default;
@@ -753,6 +809,15 @@ namespace Simitone.Client.UI.Screens
 
                 var server = (VMServerDriver)Driver;
                 server.ConnectClient(myClient);
+
+                //select any avatar -- for multiplayer, we should select avatar by client join order
+                if (!Downtown && ActiveFamily != null && ActiveFamily.RuntimeSubset.Any())
+                { // for now, select the first sim in the runtime subset -- todo: sims 1 stores last selected sim to file?
+                    var avatar = vm.Context.ObjectQueries.Avatars.FirstOrDefault(x => x.Object.OBJ.GUID == ActiveFamily.RuntimeSubset[0]);
+                    if (avatar != null) 
+                        vm.SendCommand(new VMNetChangeControlCmd() { TargetID = avatar.ObjectID });
+                }
+
                 LoadSurrounding(short.Parse(lotName.Substring(lotName.Length - 6, 2)));
 
                 GameFacade.Cursor.SetCursor(CursorType.Normal);
@@ -849,12 +914,8 @@ namespace Simitone.Client.UI.Screens
             var isSimless = (ActiveFamily == null && !isSurrounding);
             vm.SpeedMultiplier = -1;
             vm.Tick();
-            vm.SpeedMultiplier = 1;
+            vm.SpeedMultiplier = !isSimless ? 1 : -1;
 
-            if (isSimless)
-            {
-                vm.SpeedMultiplier = -1;
-            }
             vm.SetGlobalValue(32, (short)(isSimless ? 1 : 0));
         }
 
@@ -1026,6 +1087,29 @@ namespace Simitone.Client.UI.Screens
             NeighSelection(CurrentNeighborhoodMode);
             Downtown = false;
             SavedLot = null;
+        }
+
+        int _underlyingSimSpeed = -1;
+
+        /// <summary>
+        /// If leaving a mode that is forcing paused gameplay speed, resets the gameplay speed to the one set before <see cref="LockSimSpeed"/>
+        /// </summary>
+        internal void UnlockSimSpeed()
+        {
+            if (vm.SpeedMultiplier != -1) return; // unlocked already
+            vm.SpeedMultiplier = _underlyingSimSpeed;
+            if (vm.SpeedMultiplier < 0) // oops?
+                vm.SpeedMultiplier = GameplaySpeed.ReverseRemap[GameplaySpeed.Play]; // force speed 1
+            vm.ResetTickAlign();
+        }
+        /// <summary>
+        /// If the gameplay is not already locked (<see cref="GameplaySpeed.Disabled"/>), saves the current gameplay speed and disables changing gameplay speed.
+        /// </summary>
+        internal void LockSimSpeed()
+        {
+            if (vm.SpeedMultiplier == -1) return; // locked already
+            _underlyingSimSpeed = vm.SpeedMultiplier;
+            vm.SpeedMultiplier = GameplaySpeed.Disabled;
         }
     }
 

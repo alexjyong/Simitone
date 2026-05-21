@@ -543,6 +543,8 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 
 # Attributions
 
+* **[JDrocks450](https://github.com/JDrocks450)** — UI fixes, localization groundwork, in-game options menu (General/Graphics/Audio tabs), neighborhood visit panel, gameplay speed overhaul, and various bug fixes, merged from [his Simitone fork](https://github.com/JDrocks450/Simitone).
+
 * Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
 
 * Icon for Free Will option: <a target="_blank" href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness">Creativity And Resourcefulness</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
