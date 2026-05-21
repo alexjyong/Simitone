@@ -227,7 +227,7 @@ namespace Simitone.Client
             CurrentLanguage = NewLanguage;
             
             ContentStrings.TS1 = true;            
-            GameFacade.Strings = new ContentStrings(CurrentLanguage);
+            GameFacade.Strings = new ContentStrings();
         }
 
         private void SaveGraphicsModePreference(GlobalGraphicsMode obj)
