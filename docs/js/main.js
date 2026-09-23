@@ -2,6 +2,30 @@
    Minimal interactivity: smooth scroll, mobile nav toggle */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ---- Theme toggle (dark mode is opt-in, persisted in localStorage) ----
+    var themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        function isDark() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
+        function syncThemeToggle() {
+            themeToggle.textContent = isDark() ? 'Light mode' : 'Dark mode';
+            themeToggle.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+            themeToggle.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        syncThemeToggle();
+        themeToggle.addEventListener('click', function () {
+            if (isDark()) {
+                document.documentElement.removeAttribute('data-theme');
+                try { localStorage.setItem('theme', 'light'); } catch (e) {}
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                try { localStorage.setItem('theme', 'dark'); } catch (e) {}
+            }
+            syncThemeToggle();
+        });
+    }
+
     // ---- Mobile Navigation Toggle ----
     var navToggle = document.querySelector('.nav-toggle');
     var navLinks = document.querySelector('.nav-links');

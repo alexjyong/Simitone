@@ -14,6 +14,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://alexjyong.dev/Simitone/assets/images/previewlogo.png">
     <link rel="stylesheet" href="css/style.css">
+    <script>try { if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}</script>
     <!-- Favicon placeholder — replace with actual favicon -->
     <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
 </head>
@@ -37,6 +38,7 @@
                 <li><a href="#community">Community</a></li>
                 <li><a href="releases.html" class="nav-cta">Releases</a></li>
             </ul>
+            <button class="theme-toggle" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
         </div>
     </nav>
 
@@ -45,16 +47,14 @@
         <section id="hero" class="hero-section">
             <div class="container hero-container">
                 <div class="hero-content">
-                    <img src="assets/images/logo.png" alt="Simitone logo" class="hero-logo">
-                    <h1>Simitone</h1>
-                    <p class="hero-tagline">A Modern Frontend for The Sims 1</p>
                     <span id="version-badge" class="version-badge" hidden>
                         <span class="version-label">Latest</span>
                         <span class="version-tag"></span>
                     </span>
+                    <h1>A modern frontend for <em>The Sims 1</em></h1>
                     <p class="hero-description">
-                        Alternative C# frontend for The Sims 1, based off of FreeSO. Play with modern resolutions,
-                        custom lighting, 5 story buildings, and quality-of-life improvements. Optional 3D mode.
+                        Simitone is an alternative C# frontend based on FreeSO — modern resolutions,
+                        directional lighting, and quality-of-life improvements from later games. Optional 3D mode.
                     </p>
                     <div class="hero-buttons">
                         <a href="https://github.com/alexjyong/simitone/releases/latest/download/Simitone-Windows-Release.zip" class="btn btn-primary" target="_blank" rel="noopener">
@@ -64,10 +64,18 @@
                             Download for Linux
                         </a>
                     </div>
-                    <br/>
-                    <div class="hero-buttons">
-                        <a href="releases.html" class="btn btn-info">View all releases</a>
+                </div>
+                <div class="hero-visual">
+                    <div class="game-window">
+                        <div class="game-window-bar">
+                            <span class="game-window-dot"></span>
+                            <span class="game-window-dot"></span>
+                            <span class="game-window-dot"></span>
+                            <span class="game-window-title">Simitone — rain weather</span>
+                        </div>
+                        <img src="assets/images/rain.jpg" alt="Simitone running The Sims 1 with rain weather and 3D mode" width="600" height="470">
                     </div>
+                    <a href="releases.html" class="hero-releases-link">All releases &amp; changelogs →</a>
                 </div>
             </div>
         </section>
@@ -130,7 +138,14 @@
                         <p>Rain, snow, hail, and storms — toggled via the cheat console (Ctrl+Shift+C) for atmosphere. (No gameplay impact.)</p>
                     </div>
                 </div>
-                <p class="gallery-hint">Click a photo to view full size</p>
+            </div>
+        </section>
+
+        <!-- ==================== SCREENSHOTS SECTION ==================== -->
+        <section id="screenshots" class="screenshots-section">
+            <div class="container">
+                <h2>Screenshots</h2>
+                <p class="gallery-hint">Click a photo to view full size.</p>
                 <div class="screenshot-gallery">
                     <div class="gallery-item" data-full="assets/images/rain.jpg" data-alt="Rain weather system in The Sims 1">
                         <img src="assets/images/rain.jpg" alt="Rain weather system in The Sims 1" loading="lazy" width="600" height="470">
