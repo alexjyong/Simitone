@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Headless lot runner: plays a TS1 lot without a window or graphics device and reports
+       SimAntics exceptions, dialogs and objects coming and going. See Program.cs for usage. -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Simitone.LotRunner</RootNamespace>
+    <AssemblyName>Simitone.LotRunner</AssemblyName>
+    <!-- Suppress NU1605 (package downgrade) errors from FreeSO submodule dependencies -->
+    <NoWarn>$(NoWarn);NU1605</NoWarn>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- for MonoGame's types (vectors, colours); no window or device is created -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.common\FSO.Common.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.files\FSO.Files.csproj" />
+    <ProjectReference Include="..\..\..\FreeSO\TSOClient\tso.simantics\FSO.SimAntics.csproj" />
+    <ProjectReference Include="..\Simitone.Client\Simitone.Client.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -534,6 +534,23 @@ If you do wanna contribute, I do recommend sending your PRs to [upstream](https:
 
 If upstream is ever dead (but this is still active) and/or you can't/won't contribute to upstream for whatever reason, make all your PRs against the [alex-main](https://github.com/alexjyong/Simitone/tree/alex-main) branch, as this branch is just for gathering up changes and updates that aren't available in upstream and packaging them for folks to enjoy. Don't make changes from this branch please.
 
+## Testing lots without the game
+
+`Simitone.LotRunner` plays lots with no window, graphics or sound, as fast as the simulation can run (a game day on a family lot takes about a second). It reports SimAntics exceptions, dialogs, family members leaving and coming back, and objects such as cars and visitors arriving and leaving. It never saves.
+
+```bash
+dotnet build -c Release Client/Simitone/Simitone.LotRunner/Simitone.LotRunner.csproj
+cd Client/Simitone/Simitone.LotRunner/bin/Release/net9.0
+# play the Goths' lot (house 5) for two game days
+./Simitone.LotRunner -path "/path/to/The Sims/" -hours 48 5
+# every house a family lives in, only exceptions and a summary; the exit code is 0 only if there were no exceptions or crashes
+./Simitone.LotRunner -path "/path/to/The Sims/" -hours 48 -quiet all
+```
+
+It plays like a careful player, so households stay the same between runs: it answers No to yes/no questions (such as adopting a baby) and OK to everything else, and when a fire starts it has a family member call the fire department, calling again if nobody has come within an hour. Both show in the log.
+
+Saved lot states are read from Simitone's user folder like the game does (`-user` to choose another one). Rendering, sound and anything on screen aren't covered, so check those in the game.
+
 
 # Why is it called Simitone?
 

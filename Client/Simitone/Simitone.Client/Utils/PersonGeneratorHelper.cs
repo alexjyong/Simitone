@@ -19,18 +19,27 @@ namespace Simitone.Client.Utils
         private static VM TempVM;
         private static void InitVM()
         {
-            var world = new World(GameFacade.GraphicsDevice);
-            world.Initialize(GameFacade.Scenes);
+            //without a world (the headless lot runner) the VM needs no blueprint, as on the FreeSO server
+            World world = null;
+            Blueprint blueprint = null;
+            if (VM.UseWorld)
+            {
+                world = new World(GameFacade.GraphicsDevice);
+                world.Initialize(GameFacade.Scenes);
+            }
             var context = new VMContext(world);
 
             TempVM = new VM(context, new VMServerDriver(new VMTSOGlobalLinkStub()), new VMNullHeadlineProvider());
             TempVM.Init();
 
-            var blueprint = new Blueprint(3, 3);
-            world.InitBlueprint(blueprint);
-            context.Blueprint = blueprint;
+            if (world != null)
+            {
+                blueprint = new Blueprint(3, 3);
+                world.InitBlueprint(blueprint);
+                context.Blueprint = blueprint;
+            }
             context.Architecture = new VMArchitecture(3, 3, blueprint, TempVM.Context);
-            blueprint.Terrain = new FSO.LotView.Components.TerrainComponent(new Rectangle(0, 0, 3, 3), blueprint);
+            if (blueprint != null) blueprint.Terrain = new FSO.LotView.Components.TerrainComponent(new Rectangle(0, 0, 3, 3), blueprint);
             TempVM.Tick();
         }
 
