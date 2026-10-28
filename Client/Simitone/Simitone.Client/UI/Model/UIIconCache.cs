@@ -2,13 +2,17 @@
 using FSO.Common.Rendering.Framework;
 using FSO.Common.Rendering.Framework.Camera;
 using FSO.Common.Utils;
+using FSO.Client.UI.Framework;
 using FSO.Content;
+using FSO.LotView.Components;
 using FSO.LotView.Model;
 using FSO.SimAntics;
 using FSO.SimAntics.Engine.TSOTransaction;
+using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
 using FSO.SimAntics.NetPlay.Drivers;
 using FSO.Vitaboy;
+using Simitone.Client.UI.Screens;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -74,6 +78,44 @@ namespace Simitone.Client.UI.Model
             finally
             {
                 world.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// A catalog picture for an object that has none (many Makin' Magic objects, and some downloads): the object
+        /// itself, drawn by the current lot's world on a square transparent background. Null when no lot is open.
+        /// </summary>
+        public static Texture2D RenderCatalogThumb(uint guid)
+        {
+            var vm = (UIScreen.Current as TS1GameScreen)?.vm;
+            if (vm?.Context?.World == null || !VM.UseWorld) return null;
+            var group = vm.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true);
+            if (group == null) return null;
+            try
+            {
+                if (!(group.BaseObject is VMGameObject)) return null;
+                var comps = group.Objects.Select(x => (ObjectComponent)x.WorldUI).ToArray();
+                var gd = GameFacade.GraphicsDevice;
+                using (var thumb = vm.Context.World.GetObjectThumb(comps, group.GetBasePositions(), gd))
+                {
+                    if (thumb == null) return null;
+                    var data = new Color[thumb.Width * thumb.Height];
+                    thumb.GetData(data);
+                    //square, so the catalog draws it whole rather than as half of a two-frame picture
+                    var size = Math.Max(thumb.Width, thumb.Height);
+                    var result = new Texture2D(gd, size, size);
+                    result.SetData(new Color[size * size]);
+                    result.SetData(0, new Rectangle((size - thumb.Width) / 2, (size - thumb.Height) / 2, thumb.Width, thumb.Height), data, 0, data.Length);
+                    return result;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                group.Delete(vm.Context);
             }
         }
 
