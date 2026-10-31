@@ -85,6 +85,7 @@ namespace Simitone.Client.Utils
                 load(CursorType.MoveIn, "MOVEIN.cur");
                 load(CursorType.Bulldoze, "BULLDOZE.cur");
                 load(CursorType.NoDrop, "NODROP.CUR");
+                load(CursorType.Rezone, "Rezone2.cur"); //the sign and shovel of the Rezone button (Rezone.cur is an older bulldozer)
                 if (GameFacade.Linux)
                 {
                     foreach (var item in cursors.GenMap()) load(item.Key, item.Value);

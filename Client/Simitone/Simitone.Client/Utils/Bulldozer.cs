@@ -1,6 +1,8 @@
 using FSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
 using FSO.LotView.Model;
 using FSO.SimAntics;
+using FSO.SimAntics.Marshals;
 using FSO.SimAntics.Model;
 using System;
 using System.Collections.Generic;
@@ -16,7 +18,8 @@ namespace Simitone.Client.Utils
     /// hedges), and the fixtures the game puts on every lot: the mailbox, the newspaper, and the hidden objects (named with a "*": the outdoor
     /// trash can, the phone line and the car and walking portals). The terrain stays as it is, and the controllers
     /// kept off the lot are left alone. The lot's price then comes from its land alone, as the save works out the
-    /// rest from what's left. The house's file is copied to UserData/Backups first.
+    /// rest from what's left. The house's file is copied to UserData/Backups first. A lot with nothing to bulldoze
+    /// (IsEmpty) is left alone, as in the game.
     /// </summary>
     public static class Bulldozer
     {
@@ -49,15 +52,20 @@ namespace Simitone.Client.Utils
             File.Copy(path, Path.Combine(backup, Path.GetFileName(path)));
         }
 
-        private static bool Keep(VMEntity obj)
+        private static bool Keep(VMEntity obj) =>
+            Keep(obj.MasterDefinition?.GUID ?? obj.Object.OBJ.GUID, obj.Object.OBJ.ChunkLabel ?? "", obj.ToString());
+
+        /// <summary>
+        /// If an empty lot has the object (by its main object's GUID), given its part's object label and its name.
+        /// </summary>
+        private static bool Keep(uint guid, string label, string name)
         {
-            var guid = obj.MasterDefinition?.GUID ?? obj.Object.OBJ.GUID;
             var item = Content.Get().WorldCatalog.GetItemByGUID(guid);
             //the tree tool also sells flowers, shrubs and topiaries; only the trees stay, which their (untranslated)
             //object labels name: "Trees - Pine", "Tree - Curb"
-            if (item != null) return item.Value.Category == TreeCategory && obj.Object.OBJ.ChunkLabel.StartsWith("Tree");
+            if (item != null) return item.Value.Category == TreeCategory && label.StartsWith("Tree");
             //the hidden objects' names start with a "*" (other towns have their own portals)
-            return Fixtures.Contains(guid) || obj.ToString().StartsWith("*") || obj.Object.OBJ.ChunkLabel.StartsWith("*");
+            return Fixtures.Contains(guid) || name.StartsWith("*") || label.StartsWith("*");
         }
 
         /// <summary>
@@ -68,6 +76,75 @@ namespace Simitone.Client.Utils
             if (x < 0 || y < 0 || x >= arch.Width || y >= arch.Height) return false;
             var fine = arch.FineBuildableArea;
             return (fine != null) ? fine[x + y * arch.Width] : arch.BuildableArea.Contains(x, y);
+        }
+
+        private static Dictionary<int, bool> EmptyLots = new Dictionary<int, bool>();
+
+        /// <summary>
+        /// If the lot has nothing to bulldoze: what Clear leaves, which is also what the game's empty lots have. Kept
+        /// until Forget, as reading a lot takes a moment.
+        /// </summary>
+        public static bool IsEmpty(int houseID)
+        {
+            if (!EmptyLots.TryGetValue(houseID, out var empty)) EmptyLots[houseID] = empty = FindEmpty(houseID);
+            return empty;
+        }
+
+        /// <summary>
+        /// Lots may have changed since they were read: the neighbourhood is shown again after playing or bulldozing one.
+        /// </summary>
+        public static void Forget() => EmptyLots.Clear();
+
+        /// <summary>
+        /// The game's own saves of a lot have nothing built when their architecture value is 0 (it doesn't count the
+        /// trees there). Simitone saves the whole lot (FSOV), whose value does count them, so that's read instead:
+        /// no walls or floors on the lot, and no objects there but the ones an empty lot keeps.
+        /// </summary>
+        private static bool FindEmpty(int houseID)
+        {
+            var house = Content.Get().Neighborhood.GetHouse(houseID);
+            var fsov = house.List<FSOV>()?.FirstOrDefault();
+            if (fsov == null) return (house.Get<SIMI>(1)?.ArchitectureValue ?? 0) == 0;
+            var lot = new VMMarshal();
+            try
+            {
+                using (var read = new BinaryReader(new MemoryStream(fsov.Data))) lot.Deserialize(read);
+            }
+            catch (Exception)
+            {
+                return false; //then bulldozing it is still offered
+            }
+
+            var arch = lot.Context.Architecture;
+            var fine = arch.FineBuildableArea;
+            if (fine == null) return false;
+            for (int level = 0; level < arch.Stories; level++)
+            {
+                for (int i = 0; i < fine.Length; i++)
+                {
+                    if (fine[i] && (arch.Walls[level][i].Segments != 0 || arch.Floors[level][i].Pattern != 0)) return false;
+                }
+            }
+
+            var groupNames = new Dictionary<short, string>();
+            foreach (var group in lot.MultitileGroups)
+            {
+                foreach (var id in group.Objects) groupNames[id] = group.Name ?? "";
+            }
+            foreach (var ent in lot.Entities.OfType<VMGameObjectMarshal>())
+            {
+                var pos = ent.Position;
+                if (pos == LotTilePos.OUT_OF_WORLD || pos.TileX >= arch.Width || pos.TileY >= arch.Height) continue;
+                if (!fine[pos.TileX + pos.TileY * arch.Width]) continue;
+                var obj = Content.Get().WorldObjects.Get(ent.GUID);
+                if (obj == null) continue;
+                var label = obj.OBJ.ChunkLabel ?? "";
+                //the name as the lot gives it: the group's, else the catalog's, else the label
+                groupNames.TryGetValue(ent.ObjectID, out var name);
+                if (string.IsNullOrEmpty(name)) name = obj.Resource.Get<CTSS>(obj.OBJ.CatalogStringsID)?.GetString(0) ?? label;
+                if (!Keep((ent.MasterGUID != 0) ? ent.MasterGUID : ent.GUID, label, name)) return false;
+            }
+            return true;
         }
 
         /// <summary>

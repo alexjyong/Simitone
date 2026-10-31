@@ -23,13 +23,14 @@ namespace Simitone.Client.UI.Panels.Desktop
     /// The classic neighbourhood screen, over Simitone's view of the neighbourhood: the game's banner along the top with
     /// its buttons, and a popup about the house under the mouse. Clicking a house plays it; the family button opens the
     /// family bin, which can send a family to move in (the moving van cursor), and the bulldozer evicts a family or
-    /// bulldozes an empty house (Bulldozer), as the other towns' bulldozer does their lots. The other
+    /// bulldozes an empty house (Bulldozer), as the other towns' bulldozer does their lots. Unleashed's Rezone does both
+    /// as needed, then makes an empty lot residential or community (LotZoning). The other
     /// towns are reached from the main neighbourhood's banner, and each has a button to return to it.
     /// </summary>
     public class UIClassicNeighbourhood : UIContainer
     {
         private const int BarWidth = 800;
-        private enum ClickMode { Normal, MoveIn, Evict }
+        private enum ClickMode { Normal, MoveIn, Evict, Rezone }
 
         private TS1GameScreen Game;
         private UINeighborhoodSelectionPanel Panel;
@@ -38,7 +39,9 @@ namespace Simitone.Client.UI.Panels.Desktop
         private ushort Mode;
         private ClickMode Clicking;
         private UIButton EvictButton;
+        private UIButton RezoneButton;
         private int? Hovered;
+        private bool HoveredEmpty; //nothing built there to bulldoze
         private bool RightWasDown;
         private bool EscWasDown;
         public static bool OpenFamilyBinOnStart; //coming back from Create-a-Family
@@ -51,6 +54,7 @@ namespace Simitone.Client.UI.Panels.Desktop
             Panel.OnHouseHover += Hover;
             Add(Bar = new UIContainer());
             Add(Popup = new UIClassicHousePopup());
+            Bulldozer.Forget(); //back from a lot, which may have been bulldozed
             SimitoneCursors.SetClassic(true);
             SetMode(mode);
             if (OpenFamilyBinOnStart)
@@ -107,6 +111,10 @@ namespace Simitone.Client.UI.Panels.Desktop
             if (!main) left("NghUI/Return.bmp", Str(tips, 0), () => SetMode(4));
             if (main || mode == 7) left("NghUI/MoveIn.bmp", main ? Str(151, 0) : Str(174, 5), OpenFamilyBin);
             EvictButton = left("NghUI/Bulldoze.bmp", main ? Str(151, 1) : Str(tips, 4), () => SetClicking((Clicking == ClickMode.Evict) ? ClickMode.Normal : ClickMode.Evict));
+            //Unleashed's lots are in the main neighbourhood, which it can rezone
+            RezoneButton = (main && Tex("NghUI/Rezone.bmp") != null)
+                ? left("NghUI/Rezone.bmp", Str(151, 10), () => SetClicking((Clicking == ClickMode.Rezone) ? ClickMode.Normal : ClickMode.Rezone))
+                : null;
 
             //right, from the far end: quit, the exported web pages, and the other towns
             x = BarWidth - 14;
@@ -129,7 +137,8 @@ namespace Simitone.Client.UI.Panels.Desktop
                 right("NghUI/Vacation.bmp", Str(151, 9), () => SetMode(3));
                 right("NghUI/Downtown.bmp", Str(151, 7), () => SetMode(2));
             }
-            SetClicking((Clicking == ClickMode.MoveIn && mode != 4 && mode != 7) ? ClickMode.Normal : Clicking);
+            var keep = (Clicking == ClickMode.MoveIn) ? (mode == 4 || mode == 7) : (Clicking != ClickMode.Rezone || RezoneButton != null);
+            SetClicking(keep ? Clicking : ClickMode.Normal);
             GameResized();
         }
 
@@ -216,6 +225,7 @@ namespace Simitone.Client.UI.Panels.Desktop
             Clicking = mode;
             if (mode != ClickMode.MoveIn) Game.MoveInFamily = null;
             if (EvictButton != null) EvictButton.Selected = mode == ClickMode.Evict;
+            if (RezoneButton != null) RezoneButton.Selected = mode == ClickMode.Rezone;
             if (Hovered != null) Hover(Hovered.Value, true);
         }
 
@@ -235,10 +245,12 @@ namespace Simitone.Client.UI.Panels.Desktop
             Hovered = house;
             var neigh = Content.Get().Neighborhood;
             var family = neigh.GetFamilyForHouse((short)house);
+            HoveredEmpty = family == null && Bulldozer.IsEmpty(house);
+            var tool = Clicking == ClickMode.Evict || Clicking == ClickMode.Rezone;
             string text;
             if (family != null)
             {
-                text = (Clicking == ClickMode.Evict)
+                text = tool
                     ? GameFacade.Strings.GetString("134", "9", new string[] { HouseRollover.FamilyName(family), "§" + (family.ValueInArch + family.Budget).ToString("##,#0"), family.FamilyFriends.ToString() })
                     : HouseRollover.Status(house, MovingFamily, out _);
             }
@@ -248,8 +260,13 @@ namespace Simitone.Client.UI.Panels.Desktop
                 var address = HouseRollover.Address(house);
                 var name = neigh.GetHouseNameDesc(house).Item1;
                 var heading = (name == "" || name == address) ? address : (address == "") ? name : address + "\r\n" + name;
-                //with the bulldozer: that it can be demolished, or not the tutorial house
-                var status = (Clicking == ClickMode.Evict) ? Str(134, Bulldozer.Allowed(house) ? 10 : 12) : HouseRollover.Status(house, MovingFamily, out _);
+                //with the bulldozer: that it can be demolished, or not the tutorial house, or that there's nothing
+                //there; Rezone demolishes the same way, then rezones an empty lot
+                var status = !tool ? HouseRollover.Status(house, MovingFamily, out _)
+                    : !Bulldozer.Allowed(house) ? Str(134, 12)
+                    : !HoveredEmpty ? Str(134, 10)
+                    : (Clicking == ClickMode.Rezone) ? GameFacade.Strings.GetString("134", "19", new string[] { "", "" }).TrimStart()
+                    : Str(134, 11);
                 text = heading + "\r\n" + status;
             }
             Popup.Show(family, text.TrimEnd(), family == null && !HouseRollover.IsCommunity(house));
@@ -284,6 +301,11 @@ namespace Simitone.Client.UI.Panels.Desktop
                             Alert(Str(131, 12), Str(131, 13));
                             return;
                         }
+                        if (Bulldozer.IsEmpty(house))
+                        {
+                            Alert(Str(131, 4), Str(131, 5));
+                            return;
+                        }
                         //a house, or a community lot
                         var community = HouseRollover.IsCommunity(house);
                         Confirm(Str(131, community ? 14 : 0), Str(131, community ? 15 : 1), () => Game.BulldozeHouse((short)house, this));
@@ -294,6 +316,20 @@ namespace Simitone.Client.UI.Panels.Desktop
                         Game.EvictLot(family, (short)house);
                         SetClicking(ClickMode.Normal);
                     });
+                    return;
+                case ClickMode.Rezone:
+                    //a lot is rezoned empty: the family is evicted, then the house bulldozed, each asked first
+                    if (family != null)
+                    {
+                        Confirm(Str(131, 6), GameFacade.Strings.GetString("131", "7", new string[] { HouseRollover.FamilyName(family), "§" + (family.ValueInArch + family.Budget).ToString("##,#0") }), () =>
+                        {
+                            Game.EvictLot(family, (short)house);
+                            SetClicking(ClickMode.Normal);
+                        });
+                    }
+                    else if (!Bulldozer.Allowed(house)) Alert(Str(131, 12), Str(131, 13));
+                    else if (!Bulldozer.IsEmpty(house)) Confirm(Str(131, 8), Str(131, 9), () => Game.BulldozeHouse((short)house, this));
+                    else Rezone(house);
                     return;
                 case ClickMode.MoveIn:
                     var moving = MovingFamily;
@@ -312,6 +348,33 @@ namespace Simitone.Client.UI.Panels.Desktop
                     Game.PlayHouse((short)house, this);
                     return;
             }
+        }
+
+        /// <summary>
+        /// The game's choice of residential or community for an empty lot.
+        /// </summary>
+        private void Rezone(int house)
+        {
+            var community = HouseRollover.IsCommunity(house);
+            UIClassicAlert alert = null;
+            void pick(bool toCommunity)
+            {
+                alert.Close();
+                if (toCommunity != community) LotZoning.Set(house, toCommunity);
+                SetClicking(ClickMode.Normal);
+            }
+            alert = new UIClassicAlert(new UIAlertOptions
+            {
+                Title = Str(250, 0),
+                Message = GameFacade.Strings.GetString("250", "1", new string[] { Str(251, community ? 1 : 0) }),
+                Buttons = new UIAlertButton[]
+                {
+                    new UIAlertButton(UIAlertButtonType.Yes, (b) => pick(false), Str(251, 0)),
+                    new UIAlertButton(UIAlertButtonType.No, (b) => pick(true), Str(251, 1)),
+                    new UIAlertButton(UIAlertButtonType.Cancel, (b) => alert.Close())
+                }
+            }, null, false);
+            UIScreen.GlobalShowDialog(alert, true);
         }
 
         private void Confirm(string title, string message, Action yes)
@@ -352,10 +415,12 @@ namespace Simitone.Client.UI.Panels.Desktop
                 var can = true;
                 if (Hovered != null)
                 {
-                    if (Clicking == ClickMode.Evict) can = Content.Get().Neighborhood.GetFamilyForHouse((short)Hovered.Value) != null || Bulldozer.Allowed(Hovered.Value);
+                    var occupied = Content.Get().Neighborhood.GetFamilyForHouse((short)Hovered.Value) != null;
+                    if (Clicking == ClickMode.Evict) can = occupied || (Bulldozer.Allowed(Hovered.Value) && !HoveredEmpty);
+                    else if (Clicking == ClickMode.Rezone) can = occupied || Bulldozer.Allowed(Hovered.Value);
                     else HouseRollover.Status(Hovered.Value, MovingFamily, out can);
                 }
-                cursor = !can ? CursorType.NoDrop : (Clicking == ClickMode.Evict) ? CursorType.Bulldoze : CursorType.MoveIn;
+                cursor = !can ? CursorType.NoDrop : (Clicking == ClickMode.Evict) ? CursorType.Bulldoze : (Clicking == ClickMode.Rezone) ? CursorType.Rezone : CursorType.MoveIn;
             }
             GameFacade.Cursor.SetCursor(cursor);
         }
