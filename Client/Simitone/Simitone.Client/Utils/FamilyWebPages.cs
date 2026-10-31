@@ -24,7 +24,6 @@ namespace Simitone.Client.Utils
     /// </summary>
     public static class FamilyWebPages
     {
-        private static readonly string[] Zodiac = { "", "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces" };
         private static readonly (string Name, VMPersonDataVariable Var)[] Traits =
         {
             ("Neat", VMPersonDataVariable.NeatPersonality), ("Outgoing", VMPersonDataVariable.OutgoingPersonality), ("Active", VMPersonDataVariable.ActivePersonality),
@@ -127,9 +126,10 @@ tr:nth-child(even) { background: rgba(255,255,255,0.05); }
                 body.Append(face == null ? "<div style=\"width:74px\"></div>" : "<img src=\"" + face + "\" alt=\"\">");
                 body.Append("<div style=\"flex:1;min-width:240px\"><h2>" + Html(simName) + "</h2>");
                 var adult = get(VMPersonDataVariable.PersonsAge) >= 18;
-                var zodiac = get(VMPersonDataVariable.TS1Zodiac);
+                var sign = ZodiacSign.Of(get(VMPersonDataVariable.NeatPersonality) / 100, get(VMPersonDataVariable.OutgoingPersonality) / 100,
+                    get(VMPersonDataVariable.ActivePersonality) / 100, get(VMPersonDataVariable.PlayfulPersonality) / 100, get(VMPersonDataVariable.NicePersonality) / 100);
                 body.Append("<p>" + (get(VMPersonDataVariable.Gender) == 1 ? "Female" : "Male") + ", " + (adult ? "adult" : "child")
-                    + ((zodiac > 0 && zodiac < Zodiac.Length) ? ", " + Zodiac[zodiac] : "") + "</p>");
+                    + ((data != null) ? ", " + Html(ZodiacSign.Name(sign)) : "") + "</p>");
                 body.Append("<p>" + Html(strings?.GetString(1) ?? "") + "</p>");
                 var job = Content.Get().Jobs.GetJob((ushort)get(VMPersonDataVariable.JobType));
                 var level = get(VMPersonDataVariable.JobPromotionLevel);

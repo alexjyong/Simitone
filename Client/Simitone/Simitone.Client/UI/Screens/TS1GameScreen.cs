@@ -268,6 +268,18 @@ namespace Simitone.Client.UI.Screens
             Add(switcher);
         }
 
+        /// <summary>
+        /// Switches to another of the player's neighbourhoods (0 is UserData, 1 UserData2, and so on), from the classic
+        /// neighbourhood screen, which is replaced along with the view.
+        /// </summary>
+        public void SwitchNeighbourhood(int id, UIElement screen)
+        {
+            Remove(TS1NeighPanel);
+            Remove(screen);
+            Content.Get().Neighborhood.InitSpecific(id);
+            NeighSelection(4);
+        }
+
         public void PlayHouse(short house, UIElement switcher)
         {
             ActiveFamily = Content.Get().Neighborhood.GetFamilyForHouse((short)house);

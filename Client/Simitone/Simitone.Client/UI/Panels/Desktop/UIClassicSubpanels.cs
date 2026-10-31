@@ -142,9 +142,11 @@ namespace Simitone.Client.UI.Panels.Desktop
             JobLabel.Caption = Level.JobName;
             CareerLabel.Caption = job.Name + ", level " + (level + 1);
             SalaryLabel.Caption = "§" + Level.Salary + "   " + ToTime(Level.StartTime) + " - " + ToTime(Level.EndTime);
-            //MinRequired is friends, then the skills (in hundredths of a point)
+            //MinRequired is friends, then the skills (in hundredths of a point). The family's count is the one the game's
+            //promotions read, kept with the family
             var friends = Level.MinRequired[0];
-            FriendsLabel.Caption = (friends > 0) ? "Family friends needed: " + friends : "";
+            var have = Game.vm.TS1State.CurrentFamily?.FamilyFriends ?? 0;
+            FriendsLabel.Caption = (friends > 0) ? "Family friends: " + have + " of " + friends : "";
         }
 
         private static string ToTime(int hour)
@@ -206,7 +208,8 @@ namespace Simitone.Client.UI.Panels.Desktop
 
     /// <summary>
     /// The classic Relationships panel: framed faces of everyone the Sim knows, coloured red to green by their daily
-    /// relationship, with a smiley for friends (50 or more). The buttons show friends, family or everyone; the arrows page.
+    /// relationship, with a smiley for friends (50 or more) and a heart for love: pink when the Sim loves them, red
+    /// when it's mutual. Love is a relationship's second value being 1, as the game's "Do I Love temp 0?" tests. The buttons show friends, family or everyone; the arrows page.
     /// </summary>
     public class UIClassicRelationshipPanel : UIClassicSubpanel
     {
@@ -290,12 +293,21 @@ namespace Simitone.Client.UI.Panels.Desktop
                     Add(cell);
                 }
             }
-            for (int i = 0; i < Cells.Count; i++) Cells[i].Value = Daily(me, shown[i].NeighbourID);
+            for (int i = 0; i < Cells.Count; i++)
+            {
+                Cells[i].Value = Daily(me, shown[i].NeighbourID);
+                Cells[i].Love = Loves(me, shown[i]) ? (Loves(shown[i], me) ? 2 : 1) : 0;
+            }
         }
 
         private static int Daily(Neighbour me, short id)
         {
             return (me.Relationships.TryGetValue(id, out var values) && values.Count > 0) ? values[0] : 0;
+        }
+
+        private static bool Loves(Neighbour from, Neighbour to)
+        {
+            return from.Relationships.TryGetValue(to.NeighbourID, out var values) && values.Count > 1 && values[1] == 1;
         }
 
         private Texture2D Face(uint guid)
@@ -330,14 +342,19 @@ namespace Simitone.Client.UI.Panels.Desktop
         private Texture2D Frame;
         private Texture2D Face;
         private Texture2D Smiley;
+        private Texture2D Heart;
+        private Texture2D DeepHeart;
         private Texture2D Px;
         public int Value;
+        public int Love; //0 none, 1 one way, 2 mutual
 
         public UIClassicRelationship(Texture2D face, string name)
         {
             Face = face;
             Frame = ClassicUIGraphics.Get("cpanel/People/PeopleTemplate.bmp");
             Smiley = ClassicUIGraphics.Get("cpanel/Buttons/Smiley.bmp");
+            Heart = ClassicUIGraphics.Get("cpanel/Buttons/Heart.bmp");
+            DeepHeart = ClassicUIGraphics.Get("cpanel/Buttons/HeartDeep.bmp");
             Px = TextureGenerator.GetPxWhite(GameFacade.GraphicsDevice);
             Tooltip = name;
             ListenForMouse(new Rectangle(0, 0, 45, 45), (type, state) => { });
@@ -359,6 +376,7 @@ namespace Simitone.Client.UI.Panels.Desktop
                 DrawLocalTexture(batch, Face, crop, new Vector2(3), new Vector2(39f / crop.Width, 39f / crop.Height));
             }
             if (Value >= 50) DrawLocalTexture(batch, Smiley, new Vector2(34, 34));
+            if (Love > 0) DrawLocalTexture(batch, (Love == 2) ? DeepHeart : Heart, new Vector2(34, 2));
         }
     }
 

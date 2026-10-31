@@ -925,7 +925,10 @@ namespace Simitone.Client.UI.Screens
             var info = new SimTemplateCreateInfo(code, x.SkinColor);
             info.Name = x.Name;
             info.Bio = x.Bio;
-            info.PersonalityPoints = x.Personality;
+            //the panel lists neat, outgoing, active, playful, nice; the generator takes them in person data order
+            //(nice, active, playful, outgoing, neat)
+            var p = x.Personality;
+            info.PersonalityPoints = new short[] { p[4], p[2], p[3], p[1], p[0] };
 
             info.BodyStringReplace[1] = x.Body + ",BODY=" + x.BodyTex;
             info.BodyStringReplace[2] = x.Head + ",HEAD-HEAD=" + x.HeadTex;

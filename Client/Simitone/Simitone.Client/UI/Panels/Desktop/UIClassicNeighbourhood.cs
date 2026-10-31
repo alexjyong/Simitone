@@ -75,7 +75,23 @@ namespace Simitone.Client.UI.Panels.Desktop
 
             var main = mode == 4;
             Bar.Add(new UIImage(Tex(main ? "NghUI/banner_neighborhood.bmp" : "NghUI/banner_downtown.bmp")));
-            Bar.Add(new UIImage(Tex("NghUI/TheSimsLogo.bmp")) { Position = new Vector2((BarWidth - 70) / 2, 0) });
+            //the logo is the credits button
+            var logo = new UIButton(Tex("NghUI/TheSimsLogo.bmp")) { Position = new Vector2((BarWidth - 70) / 2, 0), Tooltip = Str(151, 8), ImageStates = 1 };
+            logo.OnButtonClick += (b) => UIScreen.GlobalShowDialog(new UIClassicCredits(), true);
+            Bar.Add(logo);
+            if (main)
+            {
+                //the player's other neighbourhoods, left of it
+                var hoods = Neighbourhoods();
+                var current = CurrentNeighbourhood();
+                var index = hoods.IndexOf(current);
+                var prev = Button("NghUI/Previous.bmp", 280, Str(151, 4), () => SwitchTo(hoods[index - 1]));
+                var next = Button("NghUI/Next.bmp", 339, Str(151, 5), () => SwitchTo(hoods[index + 1]));
+                prev.Disabled = index <= 0;
+                next.Disabled = index == -1 || index >= hoods.Count - 1;
+                Bar.Add(new UIImage(Tex("Nbhd/Current.bmp")) { Position = new Vector2(308, 3) });
+                Bar.Add(new UILabel() { Caption = (current + 1).ToString(), CaptionStyle = NumberStyle(), Position = new Vector2(308, 3), Size = new Vector2(29, 46), Alignment = TextAlignment.Center | TextAlignment.Middle });
+            }
 
             //left: the family bin (where families can live), eviction, and the way back from the other towns
             var x = 14;
@@ -118,6 +134,52 @@ namespace Simitone.Client.UI.Panels.Desktop
             }
             SetClicking((mode == 4 || mode == 7) ? Clicking : ClickMode.Normal);
             GameResized();
+        }
+
+        private bool Switching;
+
+        /// <summary>
+        /// Loads another neighbourhood after this frame, so the new screen's buttons don't also take this click.
+        /// </summary>
+        private void SwitchTo(int id)
+        {
+            if (Switching) return;
+            Switching = true;
+            GameThread.NextUpdate((state) => Game.SwitchNeighbourhood(id, this));
+        }
+
+        private static TextStyle NumberStyle()
+        {
+            var style = ClassicFont.Style(14);
+            style.Color = Color.White;
+            return style;
+        }
+
+        private static string Folder(int id) => "UserData" + ((id == 0) ? "" : (id + 1).ToString());
+
+        /// <summary>
+        /// The neighbourhoods there are: UserData, then UserData2 to UserData8, where the neighbourhood provider copies
+        /// them from (the install, or the Legacy Collection's saved games) or already copied to Simitone's.
+        /// </summary>
+        private static List<int> Neighbourhoods()
+        {
+            var source = Content.TS1SteamInstall
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Saved Games", "Electronic Arts", "The Sims 25")
+                : Content.Get().TS1BasePath;
+            var result = new List<int>();
+            for (int id = 0; id < 8; id++)
+            {
+                if (Directory.Exists(Path.Combine(FSO.Common.FSOEnvironment.UserDir, Folder(id)))
+                    || Directory.Exists(Path.Combine(source, Folder(id)))) result.Add(id);
+            }
+            return result;
+        }
+
+        private static int CurrentNeighbourhood()
+        {
+            var folder = Path.GetFileName(Content.Get().Neighborhood.UserPath.TrimEnd('/', '\\'));
+            for (int id = 0; id < 8; id++) if (string.Equals(folder, Folder(id), StringComparison.OrdinalIgnoreCase)) return id;
+            return 0;
         }
 
         private UIButton Button(string name, int x, string tooltip, Action click)
