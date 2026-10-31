@@ -280,6 +280,30 @@ namespace Simitone.Client.UI.Screens
             NeighSelection(4);
         }
 
+        private int BulldozeStep; //0 none; 1 waiting for the lot; then frames since it was emptied
+
+        /// <summary>
+        /// The neighbourhood's Bulldoze: opens the house, empties it (Bulldozer), saves it and returns.
+        /// </summary>
+        public void BulldozeHouse(short house, UIElement switcher)
+        {
+            Bulldozer.Backup(house);
+            BulldozeStep = 1;
+            PlayHouse(house, switcher);
+        }
+
+        private void UpdateBulldoze()
+        {
+            //the house arrives a tick after the lot opens (VMBlueprintRestoreCmd)
+            if (BulldozeStep == 0 || vm == null || !vm.Ready || vm.Context.Blueprint == null || vm.Entities.Count == 0) return;
+            if (BulldozeStep == 1) Bulldozer.Clear(vm);
+            //a few frames for the world to redraw without the house, for the saved thumbnail
+            if (++BulldozeStep < 6) return;
+            BulldozeStep = 0;
+            Save();
+            ExitLot();
+        }
+
         public void PlayHouse(short house, UIElement switcher)
         {
             ActiveFamily = Content.Get().Neighborhood.GetFamilyForHouse((short)house);
@@ -434,6 +458,7 @@ namespace Simitone.Client.UI.Screens
             }
             base.Update(state);
             UpdateBackgroundPause();
+            UpdateBulldoze();
             Undo?.Update();
 
             // Update weather effects (sounds and terrain)

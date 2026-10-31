@@ -22,7 +22,8 @@ namespace Simitone.Client.UI.Panels.Desktop
     /// <summary>
     /// The classic neighbourhood screen, over Simitone's view of the neighbourhood: the game's banner along the top with
     /// its buttons, and a popup about the house under the mouse. Clicking a house plays it; the family button opens the
-    /// family bin, which can send a family to move in (the moving van cursor), and the bulldozer evicts. The other
+    /// family bin, which can send a family to move in (the moving van cursor), and the bulldozer evicts a family or
+    /// bulldozes an empty house (Bulldozer), as the other towns' bulldozer does their lots. The other
     /// towns are reached from the main neighbourhood's banner, and each has a button to return to it.
     /// </summary>
     public class UIClassicNeighbourhood : UIContainer
@@ -104,12 +105,8 @@ namespace Simitone.Client.UI.Panels.Desktop
             //the other towns name their buttons in their own tooltip tables
             var tips = (mode == 2) ? 169 : (mode == 3) ? 170 : (mode == 5) ? 173 : 174;
             if (!main) left("NghUI/Return.bmp", Str(tips, 0), () => SetMode(4));
-            if (main || mode == 7)
-            {
-                left("NghUI/MoveIn.bmp", main ? Str(151, 0) : Str(174, 5), OpenFamilyBin);
-                EvictButton = left("NghUI/Bulldoze.bmp", main ? Str(151, 1) : Str(174, 4), () => SetClicking((Clicking == ClickMode.Evict) ? ClickMode.Normal : ClickMode.Evict));
-            }
-            else EvictButton = null;
+            if (main || mode == 7) left("NghUI/MoveIn.bmp", main ? Str(151, 0) : Str(174, 5), OpenFamilyBin);
+            EvictButton = left("NghUI/Bulldoze.bmp", main ? Str(151, 1) : Str(tips, 4), () => SetClicking((Clicking == ClickMode.Evict) ? ClickMode.Normal : ClickMode.Evict));
 
             //right, from the far end: quit, the exported web pages, and the other towns
             x = BarWidth - 14;
@@ -132,7 +129,7 @@ namespace Simitone.Client.UI.Panels.Desktop
                 right("NghUI/Vacation.bmp", Str(151, 9), () => SetMode(3));
                 right("NghUI/Downtown.bmp", Str(151, 7), () => SetMode(2));
             }
-            SetClicking((mode == 4 || mode == 7) ? Clicking : ClickMode.Normal);
+            SetClicking((Clicking == ClickMode.MoveIn && mode != 4 && mode != 7) ? ClickMode.Normal : Clicking);
             GameResized();
         }
 
@@ -251,7 +248,9 @@ namespace Simitone.Client.UI.Panels.Desktop
                 var address = HouseRollover.Address(house);
                 var name = neigh.GetHouseNameDesc(house).Item1;
                 var heading = (name == "" || name == address) ? address : (address == "") ? name : address + "\r\n" + name;
-                text = heading + ((Clicking == ClickMode.Evict) ? "" : "\r\n" + HouseRollover.Status(house, MovingFamily, out _));
+                //with the bulldozer: that it can be demolished, or not the tutorial house
+                var status = (Clicking == ClickMode.Evict) ? Str(134, Bulldozer.Allowed(house) ? 10 : 12) : HouseRollover.Status(house, MovingFamily, out _);
+                text = heading + "\r\n" + status;
             }
             Popup.Show(family, text.TrimEnd(), family == null && !HouseRollover.IsCommunity(house));
             PlacePopup();
@@ -278,7 +277,18 @@ namespace Simitone.Client.UI.Panels.Desktop
             switch (Clicking)
             {
                 case ClickMode.Evict:
-                    if (family == null) return;
+                    if (family == null)
+                    {
+                        if (!Bulldozer.Allowed(house))
+                        {
+                            Alert(Str(131, 12), Str(131, 13));
+                            return;
+                        }
+                        //a house, or a community lot
+                        var community = HouseRollover.IsCommunity(house);
+                        Confirm(Str(131, community ? 14 : 0), Str(131, community ? 15 : 1), () => Game.BulldozeHouse((short)house, this));
+                        return;
+                    }
                     Confirm(Str(131, 2), GameFacade.Strings.GetString("131", "3", new string[] { HouseRollover.FamilyName(family), "§" + (family.ValueInArch + family.Budget).ToString("##,#0") }), () =>
                     {
                         Game.EvictLot(family, (short)house);
@@ -342,7 +352,7 @@ namespace Simitone.Client.UI.Panels.Desktop
                 var can = true;
                 if (Hovered != null)
                 {
-                    if (Clicking == ClickMode.Evict) can = Content.Get().Neighborhood.GetFamilyForHouse((short)Hovered.Value) != null;
+                    if (Clicking == ClickMode.Evict) can = Content.Get().Neighborhood.GetFamilyForHouse((short)Hovered.Value) != null || Bulldozer.Allowed(Hovered.Value);
                     else HouseRollover.Status(Hovered.Value, MovingFamily, out can);
                 }
                 cursor = !can ? CursorType.NoDrop : (Clicking == ClickMode.Evict) ? CursorType.Bulldoze : CursorType.MoveIn;
