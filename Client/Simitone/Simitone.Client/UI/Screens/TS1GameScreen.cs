@@ -205,6 +205,7 @@ namespace Simitone.Client.UI.Screens
 
             if (Content.Get().TS1)
             {
+                RestoreNeighbourhood();
                 NeighSelection(mode);
 
                 // Check for updates from GitHub releases
@@ -277,7 +278,24 @@ namespace Simitone.Client.UI.Screens
             Remove(TS1NeighPanel);
             Remove(screen);
             Content.Get().Neighborhood.InitSpecific(id);
+            GlobalSettings.Default.TS1Neighbourhood = id;
+            GlobalSettings.Default.Save();
             NeighSelection(4);
+        }
+
+        private static bool NeighbourhoodRestored;
+
+        /// <summary>
+        /// The classic neighbourhood can switch between the player's neighbourhoods, so the game starts in the one played
+        /// last, as the original does. Only once, when the game starts: the setting is kept up to date after that.
+        /// </summary>
+        private static void RestoreNeighbourhood()
+        {
+            if (NeighbourhoodRestored) return;
+            NeighbourhoodRestored = true;
+            var id = GlobalSettings.Default.TS1Neighbourhood;
+            if (!GlobalSettings.Default.TS1ClassicUI || !ClassicUIGraphics.Available || id == 0) return;
+            if (UIClassicNeighbourhood.Neighbourhoods().Contains(id)) Content.Get().Neighborhood.InitSpecific(id);
         }
 
         private int BulldozeStep; //0 none; 1 waiting for the lot; then frames since it was emptied

@@ -367,10 +367,10 @@ namespace Simitone.Client.UI.Panels.Desktop
     /// <summary>
     /// The personality panel: each trait's name and its ten lights (DesignCharPersLED.bmp over the background's unlit
     /// ones), clicked to set; the star sign closest to the personality, which is clicked to try the next sign's own
-    /// personality; and the points left to give out (CACPointRemainingBars.bmp). The points are kept in Simitone's own
+    /// personality and explains itself when the mouse is over it; and the points left to give out (CACPointRemainingBars.bmp). The points are kept in Simitone's own
     /// panel.
     /// </summary>
-    public class UIClassicPersonality : UIElement
+    public class UIClassicPersonality : UIContainer
     {
         private const int LedX = 228;
         private const int LedPitch = 6; //each light and the gap after it
@@ -380,6 +380,7 @@ namespace Simitone.Client.UI.Panels.Desktop
         private Texture2D Lit;
         private Texture2D Remaining;
         private TextStyle LabelStyle;
+        private UIClassicTip SignTip;
 
         public UIClassicPersonality(UISimCASPanel panel)
         {
@@ -403,15 +404,16 @@ namespace Simitone.Client.UI.Panels.Desktop
                 Panel.UpdateTotalPoints();
                 FSO.HIT.HITVM.Get().PlaySoundEvent(FSO.Client.UI.Model.UISounds.Click);
             });
-            //clicking the sign gives the Sim the next sign's own personality
-            ListenForMouse(SignArea, (type, state) =>
+            //the sign explains itself (its own element, as a tooltip shows at the top of its element), and clicking it
+            //gives the Sim the next sign's own personality
+            Add(SignTip = new UIClassicTip(null, Rectangle.Empty, new Rectangle(0, 0, SignArea.Width, SignArea.Height), null) { Position = SignArea.Location.ToVector2() });
+            SignTip.OnClick = () =>
             {
-                if (type != UIMouseEventType.MouseDown) return;
                 var next = ZodiacSign.Personalities[(Sign() + 1) % 12];
                 for (int i = 0; i < 5; i++) Panel.Personalities[i].Points = next[i];
                 Panel.UpdateTotalPoints();
                 FSO.HIT.HITVM.Get().PlaySoundEvent(FSO.Client.UI.Model.UISounds.Click);
-            });
+            };
         }
 
         public void Refresh() => Panel.UpdateTotalPoints();
@@ -435,7 +437,9 @@ namespace Simitone.Client.UI.Panels.Desktop
                 var points = Panel.Personalities[i].Points;
                 if (Lit != null && points > 0) DrawLocalTexture(batch, Lit, new Rectangle(0, 0, Math.Min(Lit.Width, points * LedPitch), Lit.Height), new Vector2(LedX, Rows[i]));
             }
-            DrawLocalString(batch, ZodiacSign.Name(Sign()), Vector2.Zero, LabelStyle, SignArea, TextAlignment.Center | TextAlignment.Middle);
+            var sign = Sign();
+            DrawLocalString(batch, ZodiacSign.Name(sign), Vector2.Zero, LabelStyle, SignArea, TextAlignment.Center | TextAlignment.Middle);
+            SignTip.Tooltip = ZodiacSign.Tooltip(sign);
             var left = Panel.AllowedPoints - Panel.TotalPoints;
             if (Remaining != null && left > 0) DrawLocalTexture(batch, Remaining, new Rectangle(0, 0, Math.Min(Remaining.Width, left * LedPitch), Remaining.Height), new Vector2(117, 342));
         }

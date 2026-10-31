@@ -1,6 +1,8 @@
 using FSO.Client;
 using FSO.Client.UI.Controls;
 using FSO.Client.UI.Framework;
+using FSO.Client.Utils;
+using FSO.Common.Rendering.Framework.IO;
 using FSO.Common.Rendering.Framework.Model;
 using FSO.Common.Utils;
 using FSO.Content;
@@ -169,7 +171,8 @@ namespace Simitone.Client.UI.Panels.Desktop
     }
 
     /// <summary>
-    /// The classic Personality panel: the five traits as 10 point bars.
+    /// The classic Personality panel: the five traits as 10 point bars, and the Sim's star sign (the one closest to
+    /// its personality, as the game shows it), which explains itself when the mouse is over it.
     /// </summary>
     public class UIClassicPersonalityPanel : UIClassicSubpanel
     {
@@ -182,6 +185,9 @@ namespace Simitone.Client.UI.Panels.Desktop
 
         private Texture2D BarsOn;
         private Texture2D BarsOff;
+        private UILabel SignLabel;
+        private UIClassicTip SignTip;
+        private int ShownSign = -1;
 
         public UIClassicPersonalityPanel(TS1GameScreen game) : base(game)
         {
@@ -189,6 +195,20 @@ namespace Simitone.Client.UI.Panels.Desktop
             BarsOff = Tex("Backgrounds/PersBkg.bmp");
             AddLabel("Personality", 12, new Vector2(8, 1));
             for (int i = 0; i < 5; i++) AddLabel(TraitNames[i], 9, TraitPos(i) + new Vector2(-70, -2));
+            SignLabel = AddLabel("", 10, new Vector2(8, 26));
+            Add(SignTip = new UIClassicTip(null, Rectangle.Empty, new Rectangle(0, 0, 130, 18), null) { Position = new Vector2(8, 26) });
+        }
+
+        public override void Update(UpdateState state)
+        {
+            base.Update(state);
+            var sim = Game.SelectedAvatar;
+            var sign = (sim == null) ? -1 : ZodiacSign.Of(sim.GetPersonData(TraitVars[0]) / 100, sim.GetPersonData(TraitVars[1]) / 100,
+                sim.GetPersonData(TraitVars[2]) / 100, sim.GetPersonData(TraitVars[3]) / 100, sim.GetPersonData(TraitVars[4]) / 100);
+            if (sign == ShownSign) return;
+            ShownSign = sign;
+            SignLabel.Caption = (sign == -1) ? "" : ZodiacSign.Name(sign);
+            SignTip.Tooltip = (sign == -1) ? null : ZodiacSign.Tooltip(sign);
         }
 
         private static Vector2 TraitPos(int i)
@@ -649,14 +669,23 @@ namespace Simitone.Client.UI.Panels.Desktop
     {
         private Texture2D Picture;
         private Rectangle Source;
+        private Rectangle Area;
+        public Action OnClick;
 
         public UIClassicTip(Texture2D picture, Rectangle source, Rectangle area, string tooltip)
         {
             Picture = picture;
             Source = source;
+            Area = area;
             Tooltip = tooltip;
-            ListenForMouse(area, (type, state) => { });
+            ListenForMouse(area, (type, state) =>
+            {
+                if (type == UIMouseEventType.MouseDown) OnClick?.Invoke();
+            });
+            UIUtils.GiveTooltip(this); //shown while the mouse is inside the bounds
         }
+
+        public override Rectangle GetBounds() => Area;
 
         public override void Draw(UISpriteBatch batch)
         {

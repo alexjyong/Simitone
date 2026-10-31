@@ -55,5 +55,14 @@ namespace Simitone.Client.Utils
         /// </summary>
         public static (string Title, string Text) About(int sign) =>
             (GameFacade.Strings.GetString("165", (sign * 2).ToString()), GameFacade.Strings.GetString("165", (sign * 2 + 1).ToString()));
+
+        /// <summary>
+        /// The popup as a tooltip: its title, then its text.
+        /// </summary>
+        public static string Tooltip(int sign)
+        {
+            var (title, text) = About(sign);
+            return title + "\n" + text;
+        }
     }
 }

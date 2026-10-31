@@ -167,7 +167,7 @@ namespace Simitone.Client.UI.Panels.Desktop
         /// The neighbourhoods there are: UserData, then UserData2 to UserData8, where the neighbourhood provider copies
         /// them from (the install, or the Legacy Collection's saved games) or already copied to Simitone's.
         /// </summary>
-        private static List<int> Neighbourhoods()
+        public static List<int> Neighbourhoods()
         {
             var source = Content.TS1SteamInstall
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Saved Games", "Electronic Arts", "The Sims 25")
