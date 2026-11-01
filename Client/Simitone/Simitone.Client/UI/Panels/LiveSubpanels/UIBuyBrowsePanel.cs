@@ -333,6 +333,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         }
 
         public bool HoldingEvents;
+        //off when another panel (the classic UI's) shows this catalog and picks eyedropped items itself
+        public bool HandleEyedropper = true;
 
         private bool CheckedPendingEyedropper;
 
@@ -439,6 +441,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         private void ObjectHolder_OnEyedropperPick(uint guid)
         {
+            if (!HandleEyedropper) return;
             // Turn off eyedropper mode (button state is synced in UIDesktopUCP)
             Game.LotControl.ObjectHolder.EyedropperMode = false;
 
@@ -448,6 +451,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
         private void ObjectHolder_OnEyedropperArchitecturePick(ushort patternID, ArchitectureType archType)
         {
+            if (!HandleEyedropper) return;
             // Turn off eyedropper mode (button state is synced in UIDesktopUCP)
             Game.LotControl.ObjectHolder.EyedropperMode = false;
 

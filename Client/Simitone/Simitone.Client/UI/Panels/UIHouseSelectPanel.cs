@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework;
 using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Model;
 using Simitone.Client.UI.Screens;
+using Simitone.Client.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -157,146 +158,19 @@ namespace Simitone.Client.UI.Panels
                 Add(famUI);
                 FamilyDisplay = famUI;
 
-                LotDescription.Caption = GameFacade.Strings.GetString("134", "0", new string[] {
-                    Content.Get().Neighborhood.MainResource.Get<FAMs>(family.ChunkID)?.GetString(0) ?? "?",
-                    "§" + (family.ValueInArch + family.Budget).ToString("##,#0"), //should include lot value eventually
-                    family.FamilyFriends.ToString()
-                    });
-
+                LotDescription.Caption = HouseRollover.Family(family);
                 LotDescription.CaptionStyle.Color = UIStyle.Current.SecondaryText;
 
-                if (moveIn != null)
-                {
-                    SecondaryText.Caption = GameFacade.Strings.GetString("132", "15"); //house occupied
-                    buttonValid = false;
-                }
+                if (moveIn != null) SecondaryText.Caption = HouseRollover.Status(houseID, moveIn, out buttonValid); //house occupied
             } else
             {
                 LotDescription.Y -= 64;
                 LotDescription.Size = new Vector2(LotDescription.Size.X, LotDescription.Size.Y + 65);
-                //LotDescription.Caption = new string(Enumerable.Range(1, 255).Select(x => 'a').ToArray());
                 LotDescription.Caption = nameDesc.Item2;
 
-                //set up the secondary text
-                var zones = neigh.ZoningDictionary;
-                short result = 1;
-                if (!zones.TryGetValue((short)houseID, out result))
-                    result = (short)((houseID >= 81 && houseID <= 89) ? 2 : 1);
-
-                if (result > 0)
-                {
-                    //zone
-                    string str;
-                    if (moveIn != null)
-                    {
-                        str = GameFacade.Strings.GetString("134", "18").Substring(8); //is community, can't move in
-                        buttonValid = false;
-                    }
-                    else
-                    {
-                        str = GameFacade.Strings.GetString("134", "17").Substring(8); //is community
-                    }
-                    SecondaryText.Caption = str;
-                } else
-                {
-                    //show price
-                    var price = house.Get<SIMI>(1)?.PurchaseValue ?? 0;
-                    string str;
-                    if (houseID >= 90 && houseID <= 92)
-                    {
-                        //also requires magicoins
-                        var magicoins = neigh.GetMagicoinsForFamily(family);
-                        var requiredMC = int.Parse(GameFacade.Strings.GetString("134", (32 + Math.Abs(91 - houseID)).ToString()));
-
-                        if (moveIn != null)
-                        {
-                            if (magicoins >= requiredMC)
-                            {
-                                if (moveIn.Budget >= price)
-                                {
-                                    str = GameFacade.Strings.GetString("134", "31", new string[] { "", "",
-                                    "§" + price.ToString("##,#0"),
-                                    requiredMC.ToString()
-                                    });
-                                }
-                                else
-                                {
-                                    //missing simoleons
-                                    str = GameFacade.Strings.GetString("134", "38", new string[] { "", "",
-                                        "§" + price.ToString("##,#0"),
-                                        requiredMC.ToString(),
-                                        moveIn.ChunkParent.Get<FAMs>(moveIn.ChunkID)?.GetString(0) ?? "",
-                                        "§" +moveIn.Budget.ToString("##,#0")
-                                    }).Substring(4);
-                                    buttonValid = false;
-                                }
-                            }
-                            else
-                            {
-                                if (moveIn.Budget >= price)
-                                {
-                                    //missing magicoins
-                                    str = GameFacade.Strings.GetString("134", "36", new string[] { "", "",
-                                        "§" + price.ToString("##,#0"),
-                                        requiredMC.ToString(),
-                                        moveIn.ChunkParent.Get<FAMs>(moveIn.ChunkID)?.GetString(0) ?? "",
-                                        magicoins.ToString()
-                                    }).Substring(4);
-                                }
-                                else
-                                {
-                                    //missing both
-                                    str = GameFacade.Strings.GetString("134", "37", new string[] { "", "",
-                                        "§" + price.ToString("##,#0"),
-                                        requiredMC.ToString(),
-                                        moveIn.ChunkParent.Get<FAMs>(moveIn.ChunkID)?.GetString(0) ?? "",
-                                        magicoins.ToString()
-                                    }).Substring(4);
-                                    buttonValid = false;
-                                }
-                                buttonValid = false;
-                            }
-                        }
-                        else
-                        {
-                            //suggest move in
-                            str = GameFacade.Strings.GetString("134", "29", new string[] { "", "",
-                                "§" + price.ToString("##,#0"),
-                                requiredMC.ToString()
-                            }).Substring(4);
-                        }
-                    }
-                    else
-                    {
-                        if (moveIn != null)
-                        {
-                            if (moveIn.Budget >= price)
-                            {
-                                str = GameFacade.Strings.GetString("134", "5", new string[] { "", "",
-                                    "§" + price.ToString("##,#0"),
-                                    "§" +(moveIn.Budget - price).ToString("##,#0")
-                                }).Substring(4);
-                            }
-                            else
-                            {
-                                str = GameFacade.Strings.GetString("134", "4", new string[] { "", "",
-                                    "§" + price.ToString("##,#0"),
-                                    moveIn.ChunkParent.Get<FAMs>(moveIn.ChunkID)?.GetString(0) ?? "",
-                                    "§" +moveIn.Budget.ToString("##,#0")
-                                }).Substring(4);
-                                buttonValid = false;
-                            }
-                        }
-                        else
-                        {
-                            //suggest move in
-                            str = GameFacade.Strings.GetString("134", "1", new string[] { "", "", "§" + price.ToString("##,#0") }).Substring(4);
-                        }
-                    }
-                        
-                    SecondaryText.Caption = str;
-                    SecondaryText.CaptionStyle.Size = 15;
-                }
+                //a community lot, or the price and whether the family moving in can afford it
+                SecondaryText.Caption = HouseRollover.Status(houseID, moveIn, out buttonValid);
+                if (!HouseRollover.IsCommunity(houseID)) SecondaryText.CaptionStyle.Size = 15;
             }
 
             EnterLot = new UIBigButton(false);

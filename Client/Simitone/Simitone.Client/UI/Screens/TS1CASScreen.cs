@@ -28,6 +28,7 @@ using Simitone.Client.UI.Controls;
 using FSO.SimAntics.Model;
 using FSO.Files.Formats.IFF.Chunks;
 using Simitone.Client.UI.Panels;
+using Simitone.Client.UI.Panels.Desktop;
 using FSO.Client.UI.Controls;
 using Simitone.Client.Utils;
 using FSO.SimAntics.Utils;
@@ -52,6 +53,16 @@ namespace Simitone.Client.UI.Screens
         public List<string> ActiveBodyTex;
 
         public static int NeighTypeFrom = 4;
+        /// <summary>
+        /// Opened from the classic family bin's Create a Family: start on a new family, and go back to the neighbourhood
+        /// (and its bin) when it's done or cancelled.
+        /// </summary>
+        public static bool ClassicNewFamily;
+        /// <summary>
+        /// The game's own Create-a-Family and Create-a-Sim screens, in place of Simitone's panels (which stay as the
+        /// data they edit) and the 3D carousel, with the classic UI.
+        /// </summary>
+        public UIClassicCAS Classic;
         private bool Dead;
 
         private float _FamilySimInterp = -2;
@@ -462,6 +473,12 @@ namespace Simitone.Client.UI.Screens
 
             BackButton.OnButtonClick += GoBack;
             AcceptButton.OnButtonClick += Accept;
+
+            if (ClassicNewFamily && GlobalSettings.Default.TS1ClassicUI && ClassicUIGraphics.Available)
+            {
+                foreach (var elem in new UIElement[] { CASPanel, FamilyPanel, FamiliesPanel, BackButton, AcceptButton }) Remove(elem);
+                Add(Classic = new UIClassicCAS(this));
+            }
         }
 
         private int EditIndex = -1;
@@ -577,6 +594,11 @@ namespace Simitone.Client.UI.Screens
                     } else
                     {
                         SaveFamily();
+                        if (ClassicNewFamily)
+                        {
+                            SetMode(UICASMode.ToNeighborhood);
+                            return;
+                        }
                     }
                     break;
                 case UICASMode.FamilySelect:
@@ -608,6 +630,11 @@ namespace Simitone.Client.UI.Screens
                 else
                 {
                     ClearFamily();
+                    if (ClassicNewFamily)
+                    {
+                        SetMode(UICASMode.ToNeighborhood);
+                        return;
+                    }
                 }
             }
             SetMode((UICASMode)(((int)Mode) - 1));
@@ -620,6 +647,8 @@ namespace Simitone.Client.UI.Screens
                 //todo: animate into this
                 
                 Dead = true;
+                if (ClassicNewFamily) UIClassicNeighbourhood.OpenFamilyBinOnStart = true;
+                ClassicNewFamily = false;
                 var dialog = new UITransDialog("normal", () => {
                     CleanupLastWorld();
                     if (MoveInFamily == null)
@@ -639,6 +668,7 @@ namespace Simitone.Client.UI.Screens
 
             GameFacade.Screens.Tween.To(this, 1f, new Dictionary<string, float> { { "FamilySimInterp", (int)mode-1 } }, TweenQuad.EaseInOut);
             Mode = mode;
+            Classic?.ShowMode(mode);
         }
 
         private void CASPanel_OnRandom()
@@ -677,7 +707,7 @@ namespace Simitone.Client.UI.Screens
                     Cam = fp.Camera;
                     fp.FixedCam = true;
                 }
-                SetMode(UICASMode.FamilySelect);
+                SetMode(ClassicNewFamily ? UICASMode.FamilyEdit : UICASMode.FamilySelect);
                 SetFamilies();
                 Initialized = true;
                 //FamilySimInterp = FamilySimInterp;
@@ -728,7 +758,7 @@ namespace Simitone.Client.UI.Screens
             //AcceptButton.ForceState = disableAccept ? 0 : -1;
             //AcceptButton.Opacity = disableAccept ? 0.5f : 1;
 
-            if (Mode == UICASMode.SimEdit)
+            if (Mode == UICASMode.SimEdit && Classic == null)
                 UpdateCarousel(state);
 
             for (int i=0; i<18; i++)
@@ -842,6 +872,7 @@ namespace Simitone.Client.UI.Screens
             //set this person's body and head
 
             fam.Name = data.Name;
+            var outfits = Outfits(data);
             fam.Avatar.Skeleton = Content.Get().AvatarSkeletons.Get((data.Gender>1) ? "child.skel" : "adult.skel").Clone();
             fam.Avatar.BaseSkeleton = fam.Avatar.Skeleton.Clone();
             fam.Avatar.ReloadSkeleton();
@@ -849,6 +880,15 @@ namespace Simitone.Client.UI.Screens
             fam.SetPersonData(VMPersonDataVariable.PersonsAge, (short)((data.Gender > 1) ? 12 : 21));
             fam.InitBodyData(vm.Context);
 
+            fam.BodyOutfit = new FSO.SimAntics.Model.VMOutfitReference(outfits.Body);
+            fam.HeadOutfit = new FSO.SimAntics.Model.VMOutfitReference(outfits.Head);
+        }
+
+        /// <summary>
+        /// A family member's body (with their hands) and head.
+        /// </summary>
+        public static (Outfit Body, Outfit Head) Outfits(CASFamilyMember data)
+        {
             var oft = new Outfit() { TS1AppearanceID = data.Body + ".apr", TS1TextureID = data.BodyTex };
             var code = (data.Gender > 1) ? "u" : ((data.Gender == 0) ? "m" : "f");
             var hg = data.HandgroupTex;
@@ -872,8 +912,7 @@ namespace Simitone.Client.UI.Screens
                 }
             };
 
-            fam.BodyOutfit = new FSO.SimAntics.Model.VMOutfitReference(oft);
-            fam.HeadOutfit = new FSO.SimAntics.Model.VMOutfitReference(new Outfit() { TS1AppearanceID = data.Head+".apr", TS1TextureID = data.HeadTex });
+            return (oft, new Outfit() { TS1AppearanceID = data.Head + ".apr", TS1TextureID = data.HeadTex });
         }
 
         private SimTemplateCreateInfo CASToNeighGen(CASFamilyMember x)
@@ -886,7 +925,10 @@ namespace Simitone.Client.UI.Screens
             var info = new SimTemplateCreateInfo(code, x.SkinColor);
             info.Name = x.Name;
             info.Bio = x.Bio;
-            info.PersonalityPoints = x.Personality;
+            //the panel lists neat, outgoing, active, playful, nice; the generator takes them in person data order
+            //(nice, active, playful, outgoing, neat)
+            var p = x.Personality;
+            info.PersonalityPoints = new short[] { p[4], p[2], p[3], p[1], p[0] };
 
             info.BodyStringReplace[1] = x.Body + ",BODY=" + x.BodyTex;
             info.BodyStringReplace[2] = x.Head + ",HEAD-HEAD=" + x.HeadTex;
@@ -911,7 +953,8 @@ namespace Simitone.Client.UI.Screens
 
         public void SaveFamily()
         {
-            SimitoneNeighbourGenerator.CreateFamily(FamilyPanel.SecondName.CurrentText, WIPFamily.Count, WIPFamily.Select(CASToNeighGen).ToArray());
+            var family = SimitoneNeighbourGenerator.CreateFamily(FamilyPanel.SecondName.CurrentText, WIPFamily.Count, WIPFamily.Select(CASToNeighGen).ToArray());
+            if (ClassicNewFamily) UIClassicFamilyBin.Reselect = family;
             SetFamilies();
             ClearFamily();
         }
@@ -1005,6 +1048,7 @@ namespace Simitone.Client.UI.Screens
             World = new FSO.LotView.World(GameFacade.GraphicsDevice);
 
             World.Opacity = 1;
+            if (Classic != null) World.Visible = false; //the classic screens cover it
             GameFacade.Scenes.Add(World);
 
             var globalLink = new VMTS1GlobalLinkStub();

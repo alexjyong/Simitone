@@ -28,6 +28,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Panels;
+using Simitone.Client.UI.Panels.Desktop;
 using Simitone.Client.UI.Panels.WorldUI;
 using Simitone.Client.Utils;
 using Simitone.Client.Services;
@@ -204,6 +205,7 @@ namespace Simitone.Client.UI.Screens
 
             if (Content.Get().TS1)
             {
+                RestoreNeighbourhood();
                 NeighSelection(mode);
 
                 // Check for updates from GitHub releases
@@ -228,6 +230,15 @@ namespace Simitone.Client.UI.Screens
             Content.Get().Neighborhood.PreparePersonDataFromObject = PersonGeneratorHelper.PreparePersonDataFromObject;
             Content.Get().Neighborhood.AddMissingNeighbors();
             TS1NeighPanel = new UINeighborhoodSelectionPanel(neighborhoodMode);
+            var classic = GlobalSettings.Default.TS1ClassicUI && ClassicUIGraphics.Available;
+            SimitoneCursors.SetClassic(classic);
+            if (classic)
+            {
+                //the game's banner and house popups, which handle the clicks themselves
+                Add(TS1NeighPanel);
+                Add(new UIClassicNeighbourhood(this, TS1NeighPanel, neighborhoodMode));
+                return;
+            }
             var switcher = new UINeighbourhoodSwitcher(TS1NeighPanel, neighborhoodMode, moveInMode);
             TS1NeighPanel.OnHouseSelect += (house) =>
             {
@@ -258,6 +269,59 @@ namespace Simitone.Client.UI.Screens
             Add(switcher);
         }
 
+        /// <summary>
+        /// Switches to another of the player's neighbourhoods (0 is UserData, 1 UserData2, and so on), from the classic
+        /// neighbourhood screen, which is replaced along with the view.
+        /// </summary>
+        public void SwitchNeighbourhood(int id, UIElement screen)
+        {
+            Remove(TS1NeighPanel);
+            Remove(screen);
+            Content.Get().Neighborhood.InitSpecific(id);
+            GlobalSettings.Default.TS1Neighbourhood = id;
+            GlobalSettings.Default.Save();
+            NeighSelection(4);
+        }
+
+        private static bool NeighbourhoodRestored;
+
+        /// <summary>
+        /// The classic neighbourhood can switch between the player's neighbourhoods, so the game starts in the one played
+        /// last, as the original does. Only once, when the game starts: the setting is kept up to date after that.
+        /// </summary>
+        private static void RestoreNeighbourhood()
+        {
+            if (NeighbourhoodRestored) return;
+            NeighbourhoodRestored = true;
+            var id = GlobalSettings.Default.TS1Neighbourhood;
+            if (!GlobalSettings.Default.TS1ClassicUI || !ClassicUIGraphics.Available || id == 0) return;
+            if (UIClassicNeighbourhood.Neighbourhoods().Contains(id)) Content.Get().Neighborhood.InitSpecific(id);
+        }
+
+        private int BulldozeStep; //0 none; 1 waiting for the lot; then frames since it was emptied
+
+        /// <summary>
+        /// The neighbourhood's Bulldoze: opens the house, empties it (Bulldozer), saves it and returns.
+        /// </summary>
+        public void BulldozeHouse(short house, UIElement switcher)
+        {
+            Bulldozer.Backup(house);
+            BulldozeStep = 1;
+            PlayHouse(house, switcher);
+        }
+
+        private void UpdateBulldoze()
+        {
+            //the house arrives a tick after the lot opens (VMBlueprintRestoreCmd)
+            if (BulldozeStep == 0 || vm == null || !vm.Ready || vm.Context.Blueprint == null || vm.Entities.Count == 0) return;
+            if (BulldozeStep == 1) Bulldozer.Clear(vm);
+            //a few frames for the world to redraw without the house, for the saved thumbnail
+            if (++BulldozeStep < 6) return;
+            BulldozeStep = 0;
+            Save();
+            ExitLot();
+        }
+
         public void PlayHouse(short house, UIElement switcher)
         {
             ActiveFamily = Content.Get().Neighborhood.GetFamilyForHouse((short)house);
@@ -281,7 +345,7 @@ namespace Simitone.Client.UI.Screens
             family.Budget += family.ValueInArch;
             family.ValueInArch = 0;
             Content.Get().Neighborhood.MoveOut(houseID);
-            TS1NeighPanel.SelectHouse(houseID);
+            if (TS1NeighPanel.ClassicClick == null) TS1NeighPanel.SelectHouse(houseID);
         }
 
         public override void GameResized()
@@ -368,6 +432,30 @@ namespace Simitone.Client.UI.Screens
             vm.ResetTickAlign();
         }
 
+        public UndoHistory Undo; //buy and build mode's undo and redo
+
+        private int SpeedBeforeBackground; //the speed to go back to when the window is active again (0: not paused for it)
+
+        /// <summary>
+        /// TS1's Sim In Background option: when it's off, the game pauses while its window isn't active.
+        /// </summary>
+        private void UpdateBackgroundPause()
+        {
+            if (vm == null) return;
+            var pause = !GameFacade.Focus && !GlobalSettings.Default.TS1SimInBackground;
+            if (pause && vm.SpeedMultiplier > 0)
+            {
+                SpeedBeforeBackground = vm.SpeedMultiplier;
+                vm.SpeedMultiplier = 0;
+            }
+            else if (!pause && SpeedBeforeBackground > 0 && vm.SpeedMultiplier >= 0)
+            {
+                //back in live mode, unless the player changed the speed meanwhile
+                if (vm.SpeedMultiplier == 0) vm.SpeedMultiplier = SpeedBeforeBackground;
+                SpeedBeforeBackground = 0;
+            }
+        }
+
         public override void Update(FSO.Common.Rendering.Framework.Model.UpdateState state)
         {
             GameFacade.Game.IsFixedTimeStep = (vm == null || vm.Ready);
@@ -387,6 +475,9 @@ namespace Simitone.Client.UI.Screens
                 GameThread.NextUpdate((FSO.Common.Rendering.Framework.Model.UpdateState ustate) => ChangeSpeedTo(0));
             }
             base.Update(state);
+            UpdateBackgroundPause();
+            UpdateBulldoze();
+            Undo?.Update();
 
             // Update weather effects (sounds and terrain)
             UpdateWeatherEffects();
@@ -577,9 +668,11 @@ namespace Simitone.Client.UI.Screens
             GameFacade.Scenes.Add(World);
 
             var globalLink = new VMTS1GlobalLinkStub();
-            Driver = new VMServerDriver(globalLink);
+            var driver = new UndoDriver(globalLink);
+            Driver = driver;
 
             vm = new VM(new VMContext(World), Driver, new UIHeadlineRendererProvider());
+            driver.History = Undo = new UndoHistory(vm);
             vm.ListenBHAVChanges();
             vm.Init();
 
@@ -645,6 +738,7 @@ namespace Simitone.Client.UI.Screens
 
             Frontend = new UISimitoneFrontend(this);
             this.Add(Frontend);
+            this.Add(new UIPictureInPicture());
         }
 
         public void ShowLoadErrors(List<VMLoadError> errors, bool verbose)
@@ -761,6 +855,7 @@ namespace Simitone.Client.UI.Screens
 
             Frontend = new UISimitoneFrontend(this);
             this.Add(Frontend);
+            this.Add(new UIPictureInPicture());
         }
 
         public void LoadSurrounding(short houseID)
@@ -866,6 +961,9 @@ namespace Simitone.Client.UI.Screens
                 case VMEventType.TS1BuildBuyChange:
                     Frontend?.ModeSwitcher?.UpdateBuildBuy();
                     Frontend?.DesktopUCP?.UpdateBuildBuy();
+                    break;
+                case VMEventType.TS1SpecialEffect:
+                    SpecialEffects.Layer.Handle((FSO.SimAntics.Primitives.VMSpecialEffectEvent)data);
                     break;
             }
         }
@@ -996,6 +1094,12 @@ namespace Simitone.Client.UI.Screens
 
             Content.Get().Neighborhood.SaveHouse(vm.GetGlobalValue(10), iff);
             Content.Get().Neighborhood.SaveNeighbourhood(true);
+            if (GlobalSettings.Default.TS1ExportHTML)
+            {
+                //TS1's Export HTML: the family's web pages, with the lot's picture just taken
+                try { FamilyWebPages.Export(vm, thumb); }
+                catch (Exception) { }
+            }
 
             // Write weather sidecar alongside the save
             var weatherData = vm.Context.Blueprint?.Weather?.WeatherData ?? (short)(1 << 8);

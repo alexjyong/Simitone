@@ -129,8 +129,10 @@ namespace Simitone.Client
             UIScreen.GlobalShowDialog(alert, true);
         }
 
-        public static void EnterCAS()
+        /// <param name="newFamily">Start on a new family, from the classic family bin.</param>
+        public static void EnterCAS(bool newFamily = false)
         {
+            TS1CASScreen.ClassicNewFamily = newFamily;
             //GameThread.NextUpdate((x) =>
             //{
                 var screen = new TS1CASScreen();

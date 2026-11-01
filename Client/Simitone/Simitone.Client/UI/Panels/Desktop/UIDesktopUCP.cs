@@ -9,10 +9,12 @@ using FSO.Content;
 using FSO.HIT;
 using FSO.LotView.RC;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Model;
 using Simitone.Client.UI.Screens;
+using Simitone.Client.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,9 +23,17 @@ using System.Threading.Tasks;
 
 namespace Simitone.Client.UI.Panels.Desktop
 {
+    /// <summary>
+    /// The desktop control panel in the bottom left: modes, floors, walls, camera, speed, clock and money.
+    /// With the TS1ClassicUI setting (and the art in the TS1 install) it uses the original Windows layout and art.
+    /// </summary>
     public class UIDesktopUCP : UICachedContainer
     {
         public UIImage Background;
+        //classic: the swoosh under the selected mode button, and AM/PM
+        public UIImage ModePatch;
+        public UIImage AmPm;
+        public bool Classic;
         public UIImage FriendIcon;
         public UIButton EyedropperButton;
 
@@ -58,6 +68,8 @@ namespace Simitone.Client.UI.Panels.Desktop
         private TS1GameScreen Game;
 
         public Func<UIMainPanelMode, bool> OnModeClick;
+        public event Action OnCameraClick; //classic: the camera button, in live mode
+        public UIButton CameraButton;
 
         public string[] FloorNames = new string[]
         {
@@ -81,6 +93,38 @@ namespace Simitone.Client.UI.Panels.Desktop
         public UIDesktopUCP(TS1GameScreen screen)
         {
             Game = screen;
+            Classic = GlobalSettings.Default.TS1ClassicUI && ClassicUIGraphics.Available;
+            SimitoneCursors.SetClassic(Classic);
+            if (Classic) InitClassic();
+            else InitModern();
+
+            RoofButton.OnButtonClick += (btn) => SetCut(3);
+            WallsUpButton.OnButtonClick += (btn) => SetCut(2);
+            WallsCutButton.OnButtonClick += (btn) => SetCut(1);
+            WallsDownButton.OnButtonClick += (btn) => SetCut(0);
+
+            LiveButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.LIVE);
+            BuyButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.BUY);
+            BuildButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.BUILD);
+            OptionsButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.OPTIONS);
+
+            ZoomInButton.OnButtonClick += ZoomControl;
+            ZoomOutButton.OnButtonClick += ZoomControl;
+            RotateCWButton.OnButtonClick += RotateClockwise;
+            RotateCCWButton.OnButtonClick += RotateCounterClockwise;
+
+            FloorUpButton.OnButtonClick += (b) => { if (Game.Level < 5) Game.Level++; };
+            FloorDownButton.OnButtonClick += (b) => { if (Game.Level > 1) Game.Level--; };
+
+            Size = new Vector2(Background.Width, Background.Height);
+
+            UpdateBuildBuy();
+            UpdateMoneyDisplay();
+            UpdateZoomButton();
+        }
+
+        private void InitModern()
+        {
             var ui = Content.Get().CustomUI;
             var gd = GameFacade.GraphicsDevice;
             var sDir = new Vector3(0, 2, 0.5f);
@@ -214,30 +258,106 @@ namespace Simitone.Client.UI.Panels.Desktop
                 Caption = "1st",
                 CaptionStyle = whiteStyle
             });
+        }
 
-            RoofButton.OnButtonClick += (btn) => SetCut(3);
-            WallsUpButton.OnButtonClick += (btn) => SetCut(2);
-            WallsCutButton.OnButtonClick += (btn) => SetCut(1);
-            WallsDownButton.OnButtonClick += (btn) => SetCut(0);
+        /// <summary>
+        /// The original control panel, laid out like TS1 at 1x: art from UIGraphics.far, positions from the Windows game.
+        /// </summary>
+        private void InitClassic()
+        {
+            Texture2D tex(string name) => ClassicUIGraphics.Get("cpanel/" + name);
+            UIButton btn(string name, int x, int y, string tooltip) =>
+                new UIButton(tex("Buttons/" + name)) { Position = new Vector2(x, y), Tooltip = tooltip };
 
-            LiveButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.LIVE);
-            BuyButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.BUY);
-            BuildButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.BUILD);
-            OptionsButton.OnButtonClick += (btn) => OnModeClick?.Invoke(UIMainPanelMode.OPTIONS);
+            Add(Background = new UIImage(tex("Backgrounds/UniversalBack.TGA")));
+            Add(ModePatch = new UIImage(tex("Backgrounds/LivePatch.bmp")));
 
-            ZoomInButton.OnButtonClick += ZoomControl;
-            ZoomOutButton.OnButtonClick += ZoomControl;
-            RotateCWButton.OnButtonClick += RotateClockwise;
-            RotateCCWButton.OnButtonClick += RotateCounterClockwise;
+            Add(LiveButton = btn("people.bmp", 18, 4, "Live Mode"));
+            Add(BuyButton = btn("objects.bmp", 70, 14, "Buy Mode"));
+            Add(BuildButton = btn("arch.bmp", 119, 41, "Build Mode"));
+            Add(OptionsButton = btn("options.bmp", 197, 125, "Options"));
 
-            FloorUpButton.OnButtonClick += (b) => { if (Game.Level < 5) Game.Level++; };
-            FloorDownButton.OnButtonClick += (b) => { if (Game.Level > 1) Game.Level--; };
+            //the camera's place, shared with the eyedropper: the camera in live mode, the eyedropper in buy and build
+            Add(CameraButton = btn("camera.bmp", 176, 90, "Camera Mode"));
+            CameraButton.OnButtonClick += (b) => OnCameraClick?.Invoke();
+            Add(EyedropperButton = new UIStencilButton(Content.Get().CustomUI.Get("d_live_eyedropper.png").Get(GameFacade.GraphicsDevice))
+            {
+                Position = new Vector2(176, 90),
+                Tooltip = "Eyedropper Tool (E)"
+            });
+            EyedropperButton.OnButtonClick += ToggleEyedropper;
+            EyedropperButton.Visible = false;
 
-            Size = new Vector2(Background.Width, Background.Height);
+            Add(FloorUpButton = btn("Lev2.BMP", 5, 75, "Floor Up"));
+            Add(FloorDownButton = btn("Lev1.BMP", 6, 90, "Floor Down"));
 
-            UpdateBuildBuy();
-            UpdateMoneyDisplay();
-            UpdateZoomButton();
+            Add(RoofButton = btn("LevRoof.bmp", 34, 77, "Roof"));
+            Add(WallsUpButton = btn("nocut.bmp", 56, 78, "Walls Up"));
+            Add(WallsCutButton = btn("dynacut.bmp", 81, 83, "Walls Cutaway"));
+            Add(WallsDownButton = btn("nowall.bmp", 104, 94, "Walls Down"));
+
+            Add(ZoomInButton = btn("ZoomIn.bmp", 25, 103, "Zoom In"));
+            Add(ZoomOutButton = btn("ZoomOut.bmp", 25, 148, "Zoom Out"));
+            //TS1 has its "rotleft" art on the right; the buttons turn the same way as the modern panel's
+            Add(RotateCWButton = btn("rotright.bmp", 8, 126, "Rotate Clockwise"));
+            Add(RotateCCWButton = btn("rotleft.bmp", 44, 126, "Rotate Counter-Clockwise"));
+
+            //same order as the modern panel: normal, fast, ultra fast, pause
+            SpeedButtons = new UIButton[]
+            {
+                btn("Speed1.bmp", 108, 135, "Normal Speed"),
+                btn("Speed2.bmp", 122, 135, "Fast"),
+                btn("Speed3.bmp", 143, 135, "Ultra Fast"),
+                btn("pause.bmp", 86, 135, "Pause"),
+            };
+            //pause has a second row whose selected frame is red, shown while paused
+            SpeedButtons[3].ButtonFrames = 2;
+            SpeedButtons[3].ButtonFrame = 1;
+            for (int i = 0; i < 4; i++)
+            {
+                Add(SpeedButtons[i]);
+                var speed = i + 1;
+                SpeedButtons[i].OnButtonClick += (b) => SwitchSpeed(speed);
+            }
+
+            var green = ClassicFont.Style(10);
+            green.Color = new Color(48, 232, 96);
+
+            Add(AmPm = new UIImage(tex("Buttons/AMPM.BMP")) { Position = new Vector2(104, 123), SourceRectangle = new Rectangle(0, 0, 18, 7) });
+            Add(TimeLabel = new UILabel()
+            {
+                Position = new Vector2(125, 119),
+                Size = new Vector2(40, 14),
+                Alignment = TextAlignment.Middle | TextAlignment.Left,
+                Caption = "12:00",
+                CaptionStyle = green
+            });
+            Add(MoneyLabel = new UILabel()
+            {
+                Position = new Vector2(112, 162),
+                Size = new Vector2(70, 14),
+                Alignment = TextAlignment.Middle | TextAlignment.Right,
+                Caption = "§0",
+                CaptionStyle = green
+            });
+            Add(FriendsLabel = new UILabel()
+            {
+                Position = new Vector2(98, 162),
+                Size = new Vector2(12, 14),
+                Alignment = TextAlignment.Middle | TextAlignment.Center,
+                Caption = "0",
+                CaptionStyle = green
+            });
+
+            //the modern panel's text shadows and floor name have no place in the classic one
+            TimeLabelShadow = new UILabel();
+            FriendsLabelShadow = new UILabel();
+            FloorLabel = new UILabel();
+            FloorLabelShadow = new UILabel();
+
+            //lots open in live mode
+            LiveButton.Selected = true;
+            SetModePatch(UIMainPanelMode.LIVE);
         }
 
         private FSO.LotView.Utils.Camera.ICameraController GetActiveCamera()
@@ -278,17 +398,20 @@ namespace Simitone.Client.UI.Panels.Desktop
             var min = vm.Context.Clock.Minutes;
             var hour = vm.Context.Clock.Hours;
 
-            string suffix = (hour > 11) ? "PM" : "AM";
+            var pm = hour > 11;
+            string suffix = pm ? "PM" : "AM";
             hour %= 12;
             if (hour == 0) hour = 12;
 
-            var text = hour.ToString() + ":" + min.ToString().PadLeft(2, '0') + " " + suffix;
+            var text = hour.ToString() + ":" + min.ToString().PadLeft(2, '0');
+            if (!Classic) text += " " + suffix;
 
             if (text != LastClock)
             {
                 LastClock = text;
                 TimeLabel.Caption = text;
                 TimeLabelShadow.Caption = text;
+                if (AmPm != null) AmPm.SourceRectangle = new Rectangle(pm ? 18 : 0, 0, 18, 7);
             }
 
             if (Game.Level != LastFloor)
@@ -429,9 +552,15 @@ namespace Simitone.Client.UI.Panels.Desktop
             BuyButton.Selected = mode == UIMainPanelMode.BUY;
             BuildButton.Selected = mode == UIMainPanelMode.BUILD;
             OptionsButton.Selected = mode == UIMainPanelMode.OPTIONS;
+            if (Classic) SetModePatch(mode);
 
             // Show eyedropper in BUY and BUILD modes
             EyedropperButton.Visible = (mode == UIMainPanelMode.BUY || mode == UIMainPanelMode.BUILD);
+            if (CameraButton != null)
+            {
+                CameraButton.Visible = mode == UIMainPanelMode.LIVE;
+                CameraButton.Selected = false;
+            }
             // Reset selection when changing modes
             if (!EyedropperButton.Visible)
             {
@@ -439,6 +568,47 @@ namespace Simitone.Client.UI.Panels.Desktop
                 if (Game.LotControl?.ObjectHolder != null)
                     Game.LotControl.ObjectHolder.EyedropperMode = false;
             }
+        }
+
+        /// <summary>
+        /// The swoosh that joins the selected mode button to the panel (classic).
+        /// </summary>
+        /// <summary>
+        /// Classic camera mode: the camera button lit, with its swoosh joining it to the camera strip.
+        /// </summary>
+        public void SetCamera(bool on)
+        {
+            if (CameraButton == null) return;
+            CameraButton.Selected = on;
+            if (!on)
+            {
+                SetModePatch(UIMainPanelMode.LIVE);
+                return;
+            }
+            var tex = ClassicUIGraphics.Get("cpanel/Backgrounds/CameraPatch.bmp");
+            ModePatch.Texture = tex;
+            ModePatch.SetSize(tex.Width, tex.Height);
+            ModePatch.Position = new Vector2(167, 76); //its crescent, near the top, cups the camera button
+            Invalidate();
+        }
+
+        private void SetModePatch(UIMainPanelMode mode)
+        {
+            //each patch has a crescent that cups its button, placed under the button
+            string name;
+            Vector2 pos;
+            switch (mode)
+            {
+                case UIMainPanelMode.BUY: name = "BuyPatch.bmp"; pos = new Vector2(63, 34); break;
+                case UIMainPanelMode.BUILD: name = "BuildPatch.bmp"; pos = new Vector2(113, 54); break;
+                case UIMainPanelMode.OPTIONS: name = "OptionsPatch.bmp"; pos = new Vector2(185, 80); break;
+                default: name = "LivePatch.bmp"; pos = new Vector2(11, 28); break;
+            }
+            var tex = ClassicUIGraphics.Get("cpanel/Backgrounds/" + name);
+            ModePatch.Texture = tex;
+            ModePatch.SetSize(tex.Width, tex.Height); //a new texture keeps the old size otherwise
+            ModePatch.Position = pos;
+            Invalidate();
         }
 
         public void DisplayChange(int change)

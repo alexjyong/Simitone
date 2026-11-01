@@ -82,6 +82,14 @@ namespace Simitone.Client.UI.Panels
 
         public TS1Provider Provider;
         public event Action<int> OnHouseSelect;
+        /// <summary>
+        /// The mouse moved onto (true) or off (false) a house.
+        /// </summary>
+        public event Action<int, bool> OnHouseHover;
+        /// <summary>
+        /// With the classic UI, clicking a house calls this instead of zooming in on it and opening its panel.
+        /// </summary>
+        public Action<int> ClassicClick;
         public HITSound BgSound;
         public Dictionary<int, Vector2> HousePositions;
 
@@ -180,7 +188,7 @@ namespace Simitone.Client.UI.Panels
                 var loc = locations.GetString(i).Split(',');
                 var num = int.Parse(loc[0].TrimStart());
                 if (num == 99) continue;
-                var button = new UINeighborhoodHouseButton(num, SelectHouse, config.Scale);
+                var button = new UINeighborhoodHouseButton(num, SelectHouse, config.Scale, (h, on) => OnHouseHover?.Invoke(h, on));
                 button.Position = new Vector2(int.Parse(loc[1].TrimStart()), int.Parse(loc[2].TrimStart()));
                 HousePositions[num] = button.Position;
                 buttons.Add(button);
@@ -222,6 +230,11 @@ namespace Simitone.Client.UI.Panels
 
         public void SelectHouse(int house)
         {
+            if (ClassicClick != null)
+            {
+                ClassicClick(house);
+                return;
+            }
             if (LastHS != null && LastHS.HouseID == house)
             {
                 ResetZoom();
@@ -340,7 +353,7 @@ namespace Simitone.Client.UI.Panels
         private THMB Offsets;
         public float AlphaTime { get; set; }
 
-        public UINeighborhoodHouseButton(int houseNumber, Action<int> selectionCallback, float scale)
+        public UINeighborhoodHouseButton(int houseNumber, Action<int> selectionCallback, float scale, Action<int, bool> hoverCallback = null)
         {
             if (houseNumber == 71) { }
             AlphaTime = 0;
@@ -371,10 +384,14 @@ namespace Simitone.Client.UI.Panels
                         case UIMouseEventType.MouseOver:
                             GameFacade.Screens.Tween.To(this, 0.5f, new Dictionary<string, float>() { { "AlphaTime", 1f } });
                             HITVM.Get().PlaySoundEvent(FSO.Client.UI.Model.UISounds.NeighborhoodRollover);
-                            Hovered = true; break;
+                            Hovered = true;
+                            hoverCallback?.Invoke(houseNumber, true);
+                            break;
                         case UIMouseEventType.MouseOut:
                             GameFacade.Screens.Tween.To(this, 0.5f, new Dictionary<string, float>() { { "AlphaTime", 0f } });
-                            Hovered = false; break;
+                            Hovered = false;
+                            hoverCallback?.Invoke(houseNumber, false);
+                            break;
                     }
                 });
         }
