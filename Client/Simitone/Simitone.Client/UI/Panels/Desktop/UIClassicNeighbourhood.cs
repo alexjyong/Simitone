@@ -24,7 +24,8 @@ namespace Simitone.Client.UI.Panels.Desktop
     /// its buttons, and a popup about the house under the mouse. Clicking a house plays it; the family button opens the
     /// family bin, which can send a family to move in (the moving van cursor), and the bulldozer evicts a family or
     /// bulldozes an empty house (Bulldozer), as the other towns' bulldozer does their lots. Unleashed's Rezone does both
-    /// as needed, then makes an empty lot residential or community (LotZoning). The other
+    /// as needed, then makes an empty lot residential or community (LotZoning), and Import Family brings in the family
+    /// files in the Import folder (FamilyImport). The other
     /// towns are reached from the main neighbourhood's banner, and each has a button to return to it.
     /// </summary>
     public class UIClassicNeighbourhood : UIContainer
@@ -115,6 +116,7 @@ namespace Simitone.Client.UI.Panels.Desktop
             RezoneButton = (main && Tex("NghUI/Rezone.bmp") != null)
                 ? left("NghUI/Rezone.bmp", Str(151, 10), () => SetClicking((Clicking == ClickMode.Rezone) ? ClickMode.Normal : ClickMode.Rezone))
                 : null;
+            if (main) left("NghUI/Import.bmp", Str(151, 6), ImportFamilies);
 
             //right, from the far end: quit, the exported web pages, and the other towns
             x = BarWidth - 14;
@@ -377,6 +379,76 @@ namespace Simitone.Client.UI.Panels.Desktop
             UIScreen.GlobalShowDialog(alert, true);
         }
 
+        /// <summary>
+        /// Import Family: each family file in the Import folder is offered in turn, in the game's words: where its house
+        /// goes (or that it goes to the family bin) and who's in it.
+        /// </summary>
+        private void ImportFamilies()
+        {
+            SetClicking(ClickMode.Normal);
+            var files = FamilyImport.Find();
+            if (files.Count == 0)
+            {
+                Alert(Str(143, 8), "There are no families to import. Put a family file (.FAM) in the Import folder: " + FamilyImport.Folder());
+                return;
+            }
+            var neigh = Content.Get().Neighborhood;
+            var imported = false;
+            void offer(int i)
+            {
+                if (i >= files.Count)
+                {
+                    if (imported)
+                    {
+                        //the new houses' thumbnails
+                        Bulldozer.Forget();
+                        Panel.PopulateScreen(Mode);
+                    }
+                    return;
+                }
+                var fam = files[i];
+                if (fam.AlreadyHere())
+                {
+                    AlertThen(Str(143, 8), "The " + fam.Name + " family is already in this neighborhood, so it can't be imported again.", () => offer(i + 1));
+                    return;
+                }
+                var lot = fam.Lot();
+                var occupant = (lot == 0) ? null : neigh.GetFamilyForHouse((short)lot);
+                string where;
+                if (lot == 0) where = Str(143, 1);
+                else if (occupant != null) where = Str(143, 2).Replace("$family", HouseRollover.FamilyName(occupant));
+                else where = Str(143, Bulldozer.IsEmpty(lot) ? 3 : 4);
+                var message = Str(143, 0).Replace("$family", fam.Name) + "\r\n\r\n" + where.Replace("$lot", lot.ToString())
+                    + "\r\n\r\n" + Str(143, 5) + "\r\n" + string.Join(", ", fam.Members());
+                UIClassicAlert alert = null;
+                alert = new UIClassicAlert(new UIAlertOptions
+                {
+                    Title = Str(143, 8),
+                    Message = message,
+                    Buttons = new UIAlertButton[]
+                    {
+                        new UIAlertButton(UIAlertButtonType.Yes, (b) =>
+                        {
+                            alert.Close();
+                            try
+                            {
+                                fam.Import(lot);
+                                imported = true;
+                                offer(i + 1);
+                            }
+                            catch (Exception e)
+                            {
+                                AlertThen(Str(143, 8), "The " + fam.Name + " family couldn't be imported: " + e.Message, () => offer(i + 1));
+                            }
+                        }, Str(143, 6)),
+                        new UIAlertButton(UIAlertButtonType.No, (b) => { alert.Close(); offer(i + 1); }, Str(143, 7))
+                    }
+                }, null, false);
+                UIScreen.GlobalShowDialog(alert, true);
+            }
+            offer(0);
+        }
+
         private void Confirm(string title, string message, Action yes)
         {
             UIClassicAlert alert = null;
@@ -389,10 +461,17 @@ namespace Simitone.Client.UI.Panels.Desktop
             UIScreen.GlobalShowDialog(alert, true);
         }
 
-        private void Alert(string title, string message)
+        private void Alert(string title, string message) => AlertThen(title, message, null);
+
+        private void AlertThen(string title, string message, Action then)
         {
             UIClassicAlert alert = null;
-            alert = new UIClassicAlert(new UIAlertOptions { Title = title, Message = message }, null, false);
+            alert = new UIClassicAlert(new UIAlertOptions
+            {
+                Title = title,
+                Message = message,
+                Buttons = UIAlertButton.Ok((b) => { alert.Close(); then?.Invoke(); })
+            }, null, false);
             UIScreen.GlobalShowDialog(alert, true);
         }
 

@@ -9,7 +9,6 @@ using Simitone.Client.UI.Screens;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Simitone.Client.Utils
 {
@@ -21,9 +20,6 @@ namespace Simitone.Client.Utils
     /// </summary>
     public static class TutorialReset
     {
-        //the family's records in Tutorial.FAM, which a house file doesn't have
-        private static readonly string[] FamilyChunks = { "FAMI", "FAMs", "NBRS", "uChr", "EXPi" };
-
         /// <summary>
         /// Asks first, with the game's explanation of what's lost.
         /// </summary>
@@ -47,30 +43,6 @@ namespace Simitone.Client.Utils
             var options = new UIAlertOptions { Title = GameFacade.Strings.GetString("145", "69"), Message = message, Buttons = buttons(close) };
             alert = ClassicUIGraphics.Available ? new UIClassicAlert(options, null, false) : (UIElement)new UIAlert(options);
             UIScreen.GlobalShowDialog(alert, true);
-        }
-
-        /// <summary>
-        /// Tutorial.FAM without the family's chunks: the house file. It's copied chunk by chunk, as FreeSO only reads
-        /// (and so can only write) the chunk types it knows. The resource map is left out, as it would point at the
-        /// chunks taken out; FreeSO doesn't use it, and doesn't write one either.
-        /// </summary>
-        private static byte[] WithoutFamily(byte[] fam)
-        {
-            using (var output = new MemoryStream())
-            {
-                output.Write(fam, 0, 60);
-                output.Write(new byte[4], 0, 4);
-                var pos = 64;
-                while (pos + 76 <= fam.Length)
-                {
-                    var type = Encoding.ASCII.GetString(fam, pos, 4);
-                    var size = (fam[pos + 4] << 24) | (fam[pos + 5] << 16) | (fam[pos + 6] << 8) | fam[pos + 7];
-                    if (size < 76 || pos + size > fam.Length) break;
-                    if (!FamilyChunks.Contains(type) && type != "rsmp") output.Write(fam, pos, size);
-                    pos += size;
-                }
-                return output.ToArray();
-            }
         }
 
         private static void Reset(TS1GameScreen game)
@@ -105,7 +77,7 @@ namespace Simitone.Client.Utils
             if (File.Exists(housePath)) File.Copy(housePath, Path.Combine(backup, Path.GetFileName(housePath)));
             File.Copy(Path.Combine(nhood.UserPath, "Neighborhood.iff"), Path.Combine(backup, "Neighborhood.iff"));
 
-            File.WriteAllBytes(housePath, WithoutFamily(File.ReadAllBytes(famPath)));
+            File.WriteAllBytes(housePath, FamilyImport.HouseOf(File.ReadAllBytes(famPath)));
 
             //the Newbies, found by their Sims
             var family = nhood.MainResource.List<FAMI>()?.FirstOrDefault(x => x.FamilyGUIDs.OrderBy(g => g).SequenceEqual(start.FamilyGUIDs.OrderBy(g => g)));
