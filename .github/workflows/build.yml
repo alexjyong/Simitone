@@ -117,7 +117,7 @@ jobs:
 
   build-linux:
     if: ${{ inputs.build_linux }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Build Linux
 
     steps:
