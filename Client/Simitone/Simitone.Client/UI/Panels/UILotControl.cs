@@ -36,6 +36,7 @@ using Simitone.Client.UI.Panels.LotControls;
 using FSO.Client.UI.Panels.LotControls;
 using FSO.UI.Panels.LotControls;
 using Simitone.Client.UI.Controls;
+using Simitone.Client.Utils;
 
 namespace Simitone.Client.UI.Panels
 {
@@ -194,6 +195,7 @@ namespace Simitone.Client.UI.Panels
         void vm_OnDialog(FSO.SimAntics.Model.VMDialogInfo info)
         {
             if (info != null && ((info.DialogID == LastDialogID && info.DialogID != 0 && info.Block))) return;
+            if (info != null && TestMode.HandleDialog(vm, info)) return;
             //return if same dialog as before, or not ours
             if ((info == null || info.Block) && BlockingDialog != null)
             {
