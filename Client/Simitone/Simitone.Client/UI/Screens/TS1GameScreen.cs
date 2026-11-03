@@ -301,6 +301,42 @@ namespace Simitone.Client.UI.Screens
 
         private int SwitchLot = -1;
 
+        // As in TS1: while none of the household's Sims are on the lot (all at work, school...),
+        // run at ultra speed, then go back to the previous speed when one of them returns.
+        private bool AutoFastForward;
+        private int SpeedBeforeAutoFastForward;
+        private bool AutoFastForwardDeclined; // the user changed speed while everyone was away
+
+        private void UpdateAutoFastForward()
+        {
+            var family = vm?.TS1State?.CurrentFamily;
+            if (vm == null || !vm.Ready || family == null) return;
+            var present = vm.Context.ObjectQueries.Avatars.Any(x => !x.Dead && family.RuntimeSubset.Contains(x.Object.OBJ.GUID));
+
+            if (present) AutoFastForwardDeclined = false;
+
+            if (!AutoFastForward)
+            {
+                // only while running: never override pause (0), menus (-1) or speed changes the user made
+                if (!present && !AutoFastForwardDeclined && vm.SpeedMultiplier > 0 && vm.SpeedMultiplier != 10)
+                {
+                    SpeedBeforeAutoFastForward = vm.SpeedMultiplier;
+                    ChangeSpeedTo(3);
+                    AutoFastForward = true;
+                }
+            }
+            else if (vm.SpeedMultiplier > 0 && vm.SpeedMultiplier != 10)
+            {
+                AutoFastForward = false; // the user picked a speed themselves; leave it until someone is home
+                AutoFastForwardDeclined = true;
+            }
+            else if (present && vm.SpeedMultiplier == 10)
+            {
+                ChangeSpeedTo((SpeedBeforeAutoFastForward == 3) ? 2 : 1);
+                AutoFastForward = false;
+            }
+        }
+
         public void ChangeSpeedTo(int speed)
         {
             //0 speed is 0x
@@ -389,6 +425,7 @@ namespace Simitone.Client.UI.Screens
                 GameThread.NextUpdate((FSO.Common.Rendering.Framework.Model.UpdateState ustate) => ChangeSpeedTo(0));
             }
             base.Update(state);
+            UpdateAutoFastForward();
 
             // Update weather effects (sounds and terrain)
             UpdateWeatherEffects();

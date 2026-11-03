@@ -201,7 +201,7 @@ namespace Simitone.Client.UI.Panels
             if (config.BGSound != null)
             {
                 BgSound = HITVM.Get().PlaySoundEvent(config.BGSound);
-                BgSound.AddOwner(-25);
+                BgSound?.AddOwner(-25); // null when sound is disabled (-nosound)
             }
             Mode = mode;
             Zoom = Zoom;
