@@ -543,6 +543,8 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 
 # Attributions
 
+* <a target="_blank" href="https://github.com/sithtoast">sithtoast</a> - Linux build fix for the CI (<a target="_blank" href="https://github.com/alexjyong/Simitone/pull/49">#49</a>) and expansion pack catalog sorts (<a target="_blank" href="https://github.com/alexjyong/FreeSO/pull/12">FreeSO #12</a>)
+
 * Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
 
 * Icon for Free Will option: <a target="_blank" href="https://icons8.com/icon/13KBHI5xdOT3/creativity-and-resourcefulness">Creativity And Resourcefulness</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
