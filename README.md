@@ -543,7 +543,7 @@ Further questions can be directed at my PR manager, uh, ... burglar cop.
 
 # Attributions
 
-* <a target="_blank" href="https://github.com/sithtoast">sithtoast</a> - Linux build fix for the CI (<a target="_blank" href="https://github.com/alexjyong/Simitone/pull/49">#49</a>) and expansion pack catalog sorts (<a target="_blank" href="https://github.com/alexjyong/FreeSO/pull/12">FreeSO #12</a>)
+* <a target="_blank" href="https://github.com/sithtoast">sithtoast</a> - Linux build fix for the CI (<a target="_blank" href="https://github.com/alexjyong/Simitone/pull/49">#49</a>), expansion pack catalog sorts (<a target="_blank" href="https://github.com/alexjyong/FreeSO/pull/12">FreeSO #12</a>), the fixes for exceptions on lots with Sims (<a target="_blank" href="https://github.com/alexjyong/Simitone/pull/34">#34</a>, <a target="_blank" href="https://github.com/alexjyong/FreeSO/pull/8">FreeSO #8</a>) and the test mode for automated runs (<a target="_blank" href="https://github.com/alexjyong/Simitone/pull/44">#44</a>)
 
 * Icon for Eyedropper tool: <a target="_blank" href="https://icons8.com/icon/78728/color-dropper">eyedropper</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
 
