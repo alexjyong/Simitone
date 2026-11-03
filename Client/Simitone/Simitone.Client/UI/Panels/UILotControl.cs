@@ -320,6 +320,11 @@ namespace Simitone.Client.UI.Panels
                 var thumb = World.GetObjectThumb(objComps, entity.MultitileGroup.GetBasePositions(), GameFacade.GraphicsDevice);
                 alert.SetIcon(thumb, 256, 256);
             }
+            else if (info.IconNeighborGUID != 0)
+            {
+                var head = Model.UIIconCache.GetNeighbor(info.IconNeighborGUID);
+                if (head != null) alert.SetIcon(head, 256, 256);
+            }
         }
 
         private void HouseSelected(int house)

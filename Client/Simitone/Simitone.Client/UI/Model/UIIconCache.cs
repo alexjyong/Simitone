@@ -3,8 +3,11 @@ using FSO.Common.Rendering.Framework;
 using FSO.Common.Rendering.Framework.Camera;
 using FSO.Common.Utils;
 using FSO.Content;
+using FSO.LotView.Model;
 using FSO.SimAntics;
+using FSO.SimAntics.Engine.TSOTransaction;
 using FSO.SimAntics.Model;
+using FSO.SimAntics.NetPlay.Drivers;
 using FSO.Vitaboy;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -47,6 +50,31 @@ namespace Simitone.Client.UI.Model
                 else return obj.GetIcon(GameFacade.GraphicsDevice, 0);
             }
             return null;
+        }
+
+        //neighbours are usually off-lot, so render the head in a throwaway VM like UIHouseFamilyList does
+        public static Texture2D GetNeighbor(uint guid)
+        {
+            var world = new FSO.LotView.World(GameFacade.GraphicsDevice);
+            world.Initialize(GameFacade.Scenes);
+            var context = new VMContext(world);
+            var vm = new VM(context, new VMServerDriver(new VMTS1GlobalLinkStub()), new VMNullHeadlineProvider());
+            vm.Init();
+            var blueprint = new Blueprint(1, 1);
+            context.Blueprint = blueprint;
+            context.Architecture = new VMArchitecture(1, 1, blueprint, vm.Context);
+            try
+            {
+                var sim = vm.Context.CreateObjectInstance(guid, LotTilePos.OUT_OF_WORLD, Direction.NORTH, true)?.BaseObject;
+                if (sim == null) return null;
+                var head = GetObject(sim);
+                sim.Delete(true, vm.Context);
+                return head;
+            }
+            finally
+            {
+                world.Dispose();
+            }
         }
 
         public static Texture2D GenHeadTex(VMAvatar ava)
