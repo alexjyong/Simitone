@@ -311,7 +311,13 @@ namespace Simitone.Client.UI.Panels
             }
 
             var entity = info.Icon;
-            if (entity is VMGameObject)
+            //the dialog's icon type: 0 auto, 1 none, 2 neighbor, 3 indexed (the object's BMP_ 5000 + index), 4 named
+            var iconType = ((int)(info.Operand?.Flags ?? 0) >> 1) & 7;
+            if (iconType == 1) return;
+            var picture = (iconType == 3) ? entity?.Object.Resource.Get<FSO.Files.Formats.IFF.Chunks.BMP>((ushort)(5000 + info.Operand.IconNameStringID)) : null;
+            if (picture != null)
+                alert.SetIcon(picture.GetTexture(GameFacade.GraphicsDevice), 256, 256); //e.g. the phone's prank call and money chance pictures
+            else if (entity is VMGameObject)
             {
                 var objects = entity.MultitileGroup.Objects;
                 ObjectComponent[] objComps = new ObjectComponent[objects.Count];
