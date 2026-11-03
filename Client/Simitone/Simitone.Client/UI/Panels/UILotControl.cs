@@ -36,6 +36,7 @@ using Simitone.Client.UI.Panels.LotControls;
 using FSO.Client.UI.Panels.LotControls;
 using FSO.UI.Panels.LotControls;
 using Simitone.Client.UI.Controls;
+using Simitone.Client.Utils;
 
 namespace Simitone.Client.UI.Panels
 {
@@ -194,6 +195,7 @@ namespace Simitone.Client.UI.Panels
         void vm_OnDialog(FSO.SimAntics.Model.VMDialogInfo info)
         {
             if (info != null && ((info.DialogID == LastDialogID && info.DialogID != 0 && info.Block))) return;
+            if (info != null && TestMode.HandleDialog(vm, info)) return;
             //return if same dialog as before, or not ours
             if ((info == null || info.Block) && BlockingDialog != null)
             {
@@ -309,7 +311,13 @@ namespace Simitone.Client.UI.Panels
             }
 
             var entity = info.Icon;
-            if (entity is VMGameObject)
+            //the dialog's icon type: 0 auto, 1 none, 2 neighbor, 3 indexed (the object's BMP_ 5000 + index), 4 named
+            var iconType = ((int)(info.Operand?.Flags ?? 0) >> 1) & 7;
+            if (iconType == 1) return;
+            var picture = (iconType == 3) ? entity?.Object.Resource.Get<FSO.Files.Formats.IFF.Chunks.BMP>((ushort)(5000 + info.Operand.IconNameStringID)) : null;
+            if (picture != null)
+                alert.SetIcon(picture.GetTexture(GameFacade.GraphicsDevice), 256, 256); //e.g. the phone's prank call and money chance pictures
+            else if (entity is VMGameObject)
             {
                 var objects = entity.MultitileGroup.Objects;
                 ObjectComponent[] objComps = new ObjectComponent[objects.Count];
@@ -319,6 +327,11 @@ namespace Simitone.Client.UI.Panels
                 }
                 var thumb = World.GetObjectThumb(objComps, entity.MultitileGroup.GetBasePositions(), GameFacade.GraphicsDevice);
                 alert.SetIcon(thumb, 256, 256);
+            }
+            else if (info.IconNeighborGUID != 0)
+            {
+                var head = Model.UIIconCache.GetNeighbor(info.IconNeighborGUID);
+                if (head != null) alert.SetIcon(head, 256, 256);
             }
         }
 

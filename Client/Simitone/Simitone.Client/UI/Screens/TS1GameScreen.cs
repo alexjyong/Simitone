@@ -256,6 +256,7 @@ namespace Simitone.Client.UI.Screens
             };
             Add(TS1NeighPanel);
             Add(switcher);
+            if (TestMode.TakeLot(out var testLot)) PlayHouse(testLot, switcher);
         }
 
         public void PlayHouse(short house, UIElement switcher)
@@ -410,6 +411,7 @@ namespace Simitone.Client.UI.Screens
             
             Visible = World?.Visible != false && World?.State.Cameras.HideUI != true;
             GameFacade.Game.IsMouseVisible = Visible;
+            TestMode.Update(this);
 
             var nofocus = state.InputManager.GetFocus() == null;
             if (nofocus && state.NewKeys.Contains(Keys.D1)) ChangeSpeedTo(1);
