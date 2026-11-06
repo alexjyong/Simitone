@@ -97,7 +97,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels.Catalog
                 }
                 var bmp = obj.Resource.Get<BMP>(obj.OBJ.CatalogStringsID);
                 if (bmp != null) IconCache[GUID] = bmp.GetTexture(GameFacade.GraphicsDevice);
-                else IconCache[GUID] = null;
+                else IconCache[GUID] = UIIconCache.RenderCatalogThumb(GUID); //no catalog picture: draw the object, as the game does
             }
             return IconCache[GUID];
         }
