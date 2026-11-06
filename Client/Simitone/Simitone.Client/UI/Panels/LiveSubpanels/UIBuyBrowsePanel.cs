@@ -1097,7 +1097,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     Control = typeof(UITerrainRaiser),
                     ResID = 0,
-                    Res = new UICatalogTerrainResProvider(),
+                    Res = new Catalog.UICatalogTS1TerrainResProvider(),
                     Parameters = new List<int> { }
                 }
             });
@@ -1114,7 +1114,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     Control = typeof(UITerrainFlatten),
                     ResID = 1,
-                    Res = new UICatalogTerrainResProvider(),
+                    Res = new Catalog.UICatalogTS1TerrainResProvider(),
                     Parameters = new List<int> { }
                 }
             });
@@ -1131,7 +1131,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     Control = typeof(UIGrassPaint),
                     ResID = 2,
-                    Res = new UICatalogTerrainResProvider(),
+                    Res = new Catalog.UICatalogTS1TerrainResProvider(),
                     Parameters = new List<int> { }
                 }
             });
