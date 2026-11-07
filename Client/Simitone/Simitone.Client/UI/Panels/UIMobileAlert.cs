@@ -26,6 +26,7 @@ namespace Simitone.Client.UI.Panels
 
         private List<UIButton> Buttons;
         private UITextBox TextBox;
+        private bool TextBoxFocused;
 
         public string ResponseText
         {
@@ -92,6 +93,22 @@ namespace Simitone.Client.UI.Panels
             {
                 TextBox = new UITextBox();
                 TextBox.MaxChars = options.MaxChars;
+                //TSO's text box background isn't in the TS1 files, so it would be invisible
+                var bg = new Texture2D(GameFacade.GraphicsDevice, 1, 1);
+                bg.SetData(new Color[] { Color.White * 0.15f });
+                TextBox.SetBackgroundTexture(bg, 0, 0, 0, 0);
+                TextBox.TextMargin = new Rectangle(12, 10, 12, 10);
+                TextBox.Alignment = TextAlignment.Center;
+                TextBox.TextStyle = TextBox.TextStyle.Clone();
+                TextBox.TextStyle.Size = 25;
+                TextBox.TextStyle.Color = UIStyle.Current.SecondaryText;
+                //enter confirms, like the first button
+                var confirm = (options.Buttons.Length > 0) ? options.Buttons[0].Handler : null;
+                TextBox.OnEnterPress += (elem) =>
+                {
+                    if (confirm != null) confirm(Buttons[0]);
+                    else HandleClose();
+                };
                 this.Add(TextBox);
             }
 
@@ -112,6 +129,16 @@ namespace Simitone.Client.UI.Panels
 
             h = Math.Max(h, Math.Max((int)IconSpace.Y - 25, m_MessageText == null ? 0 : m_MessageText.BoundingBox.Height) + 105);
 
+            //between the message and the buttons (it used to be placed under the first button).
+            //the message's measured height falls short of its last line, so leave about a line's height.
+            if (m_Options.TextEntry)
+            {
+                TextBox.X = 80;
+                TextBox.Y = h + 45;
+                TextBox.SetSize(w - 160, 50);
+                h += 95;
+            }
+
             if (Buttons.Count > 0)
             {
                 h += 175;
@@ -119,14 +146,6 @@ namespace Simitone.Client.UI.Panels
             else
             {
                 h += 32;
-            }
-
-            if (m_Options.TextEntry)
-            {
-                TextBox.X = 32;
-                TextBox.Y = h - 54;
-                TextBox.SetSize(w - 64, 25);
-                h += 45;
             }
 
             h = ResetButtons(h, true);
@@ -260,6 +279,12 @@ namespace Simitone.Client.UI.Panels
         public override void Update(UpdateState state)
         {
             base.Update(state);
+            if (TextBox != null && !TextBoxFocused)
+            {
+                //type straight away, without clicking the box first
+                state.InputManager.SetFocus(TextBox);
+                TextBoxFocused = true;
+            }
             var off = ((Closing) ? 1 : -1) * (1 - InterpolatedAnimation) * Width;
             var newIX = TargetIX + off;
             if (Icon.X != newIX)
