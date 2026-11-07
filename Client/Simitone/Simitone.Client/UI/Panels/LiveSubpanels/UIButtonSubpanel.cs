@@ -29,7 +29,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 _InitShow = value;
             }
         }
-        public UIButtonSubpanel(TS1GameScreen game, UICatFunc[] funcs) : base(game)
+        public UIButtonSubpanel(TS1GameScreen game, UICatFunc[] funcs, float spacing = 120f) : base(game)
         {
             for (int i = 0; i < funcs.Length; i++)
             {
@@ -51,8 +51,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 subbutton.Position = new Vector2(-50, 16);
                 Add(subbutton);
 
-                GameFacade.Screens.Tween.To(label, 0.5f, new Dictionary<string, float>() { { "X", 50 + i * 120f - 27 } }, TweenQuad.EaseOut);
-                GameFacade.Screens.Tween.To(subbutton, 0.5f, new Dictionary<string, float>() { { "X", 50 + i * 120f } }, TweenQuad.EaseOut);
+                GameFacade.Screens.Tween.To(label, 0.5f, new Dictionary<string, float>() { { "X", 50 + i * spacing - 27 } }, TweenQuad.EaseOut);
+                GameFacade.Screens.Tween.To(subbutton, 0.5f, new Dictionary<string, float>() { { "X", 50 + i * spacing } }, TweenQuad.EaseOut);
                 GameFacade.Screens.Tween.To(this, 0.5f, new Dictionary<string, float>() { { "InitShow", 1f } }, TweenQuad.EaseOut);
             }
 
