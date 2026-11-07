@@ -51,6 +51,13 @@ namespace Simitone.Client
 
             FSOEnvironment.DPIScaleFactor = GlobalSettings.Default.DPIScaleFactor;
 
+            // MonoGame otherwise picks Reach, which on DirectX caps textures at 2048px. The 2D world
+            // buffers are the screen size + a 512px scroll margin, so larger windows/fullscreen crashed.
+            if (GraphicsAdapter.DefaultAdapter.IsProfileSupported(GraphicsProfile.HiDef))
+            {
+                Graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            }
+
             if (!FSOEnvironment.SoftwareKeyboard)
             {
                 Graphics.SynchronizeWithVerticalRetrace = true;
@@ -76,11 +83,18 @@ namespace Simitone.Client
         bool newChange = false;
         void Window_ClientSizeChanged(object sender, EventArgs e)
         {
-            if (newChange || !GlobalSettings.Default.Windowed) return;
+            // also handled in (borderless) fullscreen: the usable area can be smaller than the display
+            // mode, e.g. beside the notch on MacBooks, and only arrives as a resize after the switch.
+            if (newChange) return;
             if (Window.ClientBounds.Width == 0 || Window.ClientBounds.Height == 0) return;
+            ApplyBackBufferSize(Window.ClientBounds.Width, Window.ClientBounds.Height);
+        }
+
+        private void ApplyBackBufferSize(int width, int height)
+        {
             newChange = true;
-            var width = Math.Max(1, Window.ClientBounds.Width);
-            var height = Math.Max(1, Window.ClientBounds.Height);
+            width = Math.Max(1, width);
+            height = Math.Max(1, height);
             Graphics.PreferredBackBufferWidth = width;
             Graphics.PreferredBackBufferHeight = height;
             Graphics.ApplyChanges();
@@ -125,16 +139,7 @@ namespace Simitone.Client
             GraphicsModeControl.ChangeMode(initialMode);
             GraphicsModeControl.ModeChanged += SaveGraphicsModePreference;
 
-            FSO.LotView.WorldConfig.Current = new FSO.LotView.WorldConfig()
-            {
-                LightingMode = settings.LightingMode,
-                SmoothZoom = settings.SmoothZoom,
-                SurroundingLots = settings.SurroundingLotMode,
-                AA = settings.AntiAlias,
-                Directional = settings.DirectionalLight3D,
-                Complex = settings.ComplexShaders,
-                EnableTransitions = settings.EnableTransitions
-            };
+            UpdateWorldConfig();
 
             OperatingSystem os = Environment.OSVersion;
             PlatformID pid = os.Platform;
@@ -210,6 +215,63 @@ namespace Simitone.Client
             {
                 GameFacade.GraphicsDeviceManager.ToggleFullScreen();
             }
+        }
+
+        /// <summary>
+        /// Rebuild the world rendering config (lighting, AA, shaders) from GlobalSettings.
+        /// Call World.ChangedWorldConfig afterwards to apply it to a loaded lot.
+        /// </summary>
+        public static void UpdateWorldConfig()
+        {
+            var settings = GlobalSettings.Default;
+            FSO.LotView.WorldConfig.Current = new FSO.LotView.WorldConfig()
+            {
+                LightingMode = settings.LightingMode,
+                SmoothZoom = settings.SmoothZoom,
+                SurroundingLots = settings.SurroundingLotMode,
+                AA = settings.AntiAlias,
+                Directional = settings.DirectionalLight3D,
+                Complex = settings.ComplexShaders,
+                EnableTransitions = settings.EnableTransitions
+            };
+        }
+
+        public void SetRefreshRate(int hz)
+        {
+            GlobalSettings.Default.TargetRefreshRate = hz;
+            TargetElapsedTime = new TimeSpan(10000000 / hz);
+            FSOEnvironment.RefreshRate = hz;
+        }
+
+        /// <summary>
+        /// Switch between windowed (at width x height UI units) and borderless fullscreen.
+        /// </summary>
+        public void SetDisplayMode(bool windowed, int width, int height)
+        {
+            GlobalSettings.Default.Windowed = windowed;
+            int bufWidth, bufHeight;
+            if (windowed)
+            {
+                bufWidth = (int)(width * FSOEnvironment.DPIScaleFactor);
+                bufHeight = (int)(height * FSOEnvironment.DPIScaleFactor);
+            }
+            else
+            {
+                var mode = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+                bufWidth = mode.Width;
+                bufHeight = mode.Height;
+            }
+
+            newChange = true;
+            Graphics.IsFullScreen = !windowed;
+            Graphics.PreferredBackBufferWidth = bufWidth;
+            Graphics.PreferredBackBufferHeight = bufHeight;
+            Graphics.ApplyChanges();
+            newChange = false;
+
+            var bounds = Window.ClientBounds;
+            if (bounds.Width > 0 && bounds.Height > 0) ApplyBackBufferSize(bounds.Width, bounds.Height);
+            else ApplyBackBufferSize(bufWidth, bufHeight);
         }
 
         private void SaveGraphicsModePreference(GlobalGraphicsMode obj)

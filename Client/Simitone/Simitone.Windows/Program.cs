@@ -54,7 +54,16 @@ namespace Simitone.Windows
             bool pathProvidedViaCommandLine = false;
 
 
-            FSOEnvironment.Enable3D = false;
+            // Set FSOEnvironment.UserDir before anything touches GlobalSettings.Default (the 3D mode
+            // check below and the -lang/-hz arguments), so it loads config.ini from the right place
+            if (!linux)
+            {
+                FSOEnvironment.UserDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone/").Replace('\\', '/');
+                Directory.CreateDirectory(FSOEnvironment.UserDir);
+            }
+
+            // 3D mode is remembered from the graphics options (or a previous -3d launch)
+            FSOEnvironment.Enable3D = GlobalSettings.Default.GlobalGraphicsMode > 0;
             bool ide = false;
             bool aa = false;
             bool jit = false;
@@ -112,13 +121,6 @@ namespace Simitone.Windows
                 }
             }
             #endregion
-
-            // Set FSOEnvironment.UserDir early so GlobalSettings can load correctly
-            if (!linux)
-            {
-                FSOEnvironment.UserDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone/").Replace('\\', '/');
-                Directory.CreateDirectory(FSOEnvironment.UserDir);
-            }
 
             // If no path provided via command line, check if we need to configure installation
             if (!pathProvidedViaCommandLine && !linux)
@@ -308,19 +310,24 @@ namespace Simitone.Windows
                 if (GlobalSettings.Default.LanguageCode == 0) GlobalSettings.Default.LanguageCode = 1;
                 FSO.Files.Formats.IFF.Chunks.STR.DefaultLangCode = (FSO.Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.LanguageCode;
 
-                // Set runtime settings (these may have been set during first-time config or command line)
-                if (string.IsNullOrEmpty(GlobalSettings.Default.StartupPath))
+                // Set runtime settings (these may have been set during first-time config or command line).
+                // An explicit -path always wins: the saved paths default to a placeholder (D:/Games/The Sims/).
+                if (pathProvidedViaCommandLine || string.IsNullOrEmpty(GlobalSettings.Default.StartupPath))
                     GlobalSettings.Default.StartupPath = path;
-                if (string.IsNullOrEmpty(GlobalSettings.Default.TS1HybridPath))
+                if (pathProvidedViaCommandLine || string.IsNullOrEmpty(GlobalSettings.Default.TS1HybridPath))
                     GlobalSettings.Default.TS1HybridPath = path;
                 
                 GlobalSettings.Default.TS1HybridEnable = true;
                 FSO.Content.Content.TS1SteamInstall = GlobalSettings.Default.TS1IsSteamInstall;
                 GlobalSettings.Default.ClientVersion = "0";
-                GlobalSettings.Default.LightingMode = 3;
-                GlobalSettings.Default.AntiAlias = aa ? 1 : 0;
-                GlobalSettings.Default.ComplexShaders = true;
-                GlobalSettings.Default.EnableTransitions = true;
+                // Simitone defaults on first run only; afterwards these come from config.ini
+                // (changed in Options > Graphics), with -aa still forcing antialiasing on.
+                if (GlobalSettings.Default.LightingMode < 0)
+                {
+                    GlobalSettings.Default.LightingMode = 3;
+                    GlobalSettings.Default.ComplexShaders = true;
+                }
+                if (aa) GlobalSettings.Default.AntiAlias = 1;
 
                 // Save the updated settings to config.ini
                 GlobalSettings.Default.Save();
