@@ -812,14 +812,7 @@ namespace Simitone.Client.UI.Screens
             // AND ChunkID > 0 (exclude "Default Family" which is ChunkID=0 with 0 members)
             // AND FamilyGUIDs.Length > 0 (must have at least one member)
             var families = all.Where(x => x.HouseNumber == 0 && x.ChunkID > 0 && x.ChunkID < 1000 && x.FamilyGUIDs.Length > 0).ToList();
-            
-            File.AppendAllText("simitone_debug.log", $"[SetFamilies] Families being added to CAS panel ({families.Count} total):\n");
-            foreach (var fam in families)
-            {
-                File.AppendAllText("simitone_debug.log", 
-                    $"  - ChunkID={fam.ChunkID}, HouseNumber={fam.HouseNumber}, Unknown={fam.Unknown}, Members={fam.FamilyGUIDs.Length}\n");
-            }
-            
+
             FamiliesPanel.UpdateFamilies(families, vm);
         }
 
