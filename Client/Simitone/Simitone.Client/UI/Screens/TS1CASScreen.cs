@@ -785,7 +785,20 @@ namespace Simitone.Client.UI.Screens
                             var neigh = Content.Get().Neighborhood;
                             var fami = selectedFamily;
                             var fams = neigh.MainResource.Get<FAMs>(fami.ChunkID);
-                            
+
+                            // Detach the members first, like the engine's remove-from-family call does.
+                            // Otherwise they keep pointing at this family's chunk ID, which gets reused
+                            // by the next family created and would pull them in as phantom members.
+                            foreach (var guid in fami.FamilyGUIDs)
+                            {
+                                var nid = neigh.GetNeighborIDForGUID(guid);
+                                if (nid == null) continue;
+                                var member = neigh.GetNeighborByID(nid.Value);
+                                if (member?.PersonData != null && member.PersonData[(int)VMPersonDataVariable.TS1FamilyNumber] == fami.ChunkID)
+                                    member.PersonData[(int)VMPersonDataVariable.TS1FamilyNumber] = 0;
+                            }
+                            fami.FamilyGUIDs = new uint[0];
+
                             fami.ChunkParent.FullRemoveChunk(fami);
                             if (fams != null) fams.ChunkParent.FullRemoveChunk(fams);
                             
@@ -812,14 +825,7 @@ namespace Simitone.Client.UI.Screens
             // AND ChunkID > 0 (exclude "Default Family" which is ChunkID=0 with 0 members)
             // AND FamilyGUIDs.Length > 0 (must have at least one member)
             var families = all.Where(x => x.HouseNumber == 0 && x.ChunkID > 0 && x.ChunkID < 1000 && x.FamilyGUIDs.Length > 0).ToList();
-            
-            File.AppendAllText("simitone_debug.log", $"[SetFamilies] Families being added to CAS panel ({families.Count} total):\n");
-            foreach (var fam in families)
-            {
-                File.AppendAllText("simitone_debug.log", 
-                    $"  - ChunkID={fam.ChunkID}, HouseNumber={fam.HouseNumber}, Unknown={fam.Unknown}, Members={fam.FamilyGUIDs.Length}\n");
-            }
-            
+
             FamiliesPanel.UpdateFamilies(families, vm);
         }
 
