@@ -530,9 +530,19 @@ Download .NET:
 
 # Contributing
 
-If you do wanna contribute, I do recommend sending your PRs to [upstream](https://github.com/riperiperi/Simitone). They will be brought down here once merged.
+Make a PR against the simitone-forked branch in this repo, and if needed, a PR against my fork of [FreeSO](https://github.com/alexjyong/FreeSO). Please test out all changes and if possible, post screenshots, videos, logs, whatever makes sense to show your changes working. Please be prepared to answer any and all questions.
 
-If upstream is ever dead (but this is still active) and/or you can't/won't contribute to upstream for whatever reason, make all your PRs against the [alex-main](https://github.com/alexjyong/Simitone/tree/alex-main) branch, as this branch is just for gathering up changes and updates that aren't available in upstream and packaging them for folks to enjoy. Don't make changes from this branch please.
+Please have a quick summary in your PR. Long descriptions are fine, but you should also have a quick executive summary/TLDR or something at the top explaining what you did in simple terms. 
+
+# AI Policy
+
+Just to be upfront and to get it out of the way, AI-assisted coding is in this project. If that's not your thing, understandable, and have a nice day. 
+
+As for AI-assisted contributions, standard common sense policies apply. You are still responsible for all changes, be able to explain what your change does and such, and ofc test it. If it doesn't work, it won't be accepted. :)
+
+Bonus points if you can demonstrate that you were using open-weight and/or locally hosted AI in your project. (ofc, other rules still apply.)
+
+If you choose to use AI, recommend using [ponytail](https://github.com/dietrichgebert/ponytail) with your changes.
 
 
 # Why is it called Simitone?
