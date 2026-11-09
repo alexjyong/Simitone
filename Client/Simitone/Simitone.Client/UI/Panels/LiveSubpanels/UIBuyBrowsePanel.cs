@@ -853,6 +853,12 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 {
                     elem.DisplayName = elem.Special.Res?.GetName(elem.Special.ResID);
                 }
+                else if (elem.Item.CatalogName != null)
+                {
+                    //read when the objects were scanned at startup ("" = the object has no catalog name), so there's
+                    //no need to load the object here
+                    elem.DisplayName = (elem.Item.CatalogName == "") ? null : elem.Item.CatalogName;
+                }
                 else if (elem.Item.GUID != 0 && elem.Item.GUID != uint.MaxValue)
                 {
                     var worldObj = Content.Get().WorldObjects.Get(elem.Item.GUID);
@@ -863,7 +869,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                     }
                 }
                 // Fall back to Item.CatalogName or Item.Name when DisplayName is null (handled by ToString)
-                elem.DisplayName = elem.DisplayName ?? elem.Item.CatalogName;
+                if (string.IsNullOrEmpty(elem.DisplayName) && !string.IsNullOrEmpty(elem.Item.CatalogName)) elem.DisplayName = elem.Item.CatalogName;
             }
             //if we're not build mode, init the subcategory selection
             if (build) return;
