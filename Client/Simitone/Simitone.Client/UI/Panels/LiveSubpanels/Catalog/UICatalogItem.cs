@@ -23,7 +23,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels.Catalog
         public Texture2D Outline;
         public bool Outlined;
 
-        public UILabel PriceLabel;
+        public UILabel PriceLabel, CategoryLabel;
         private UIBuyBrowsePanel BudgetProvider;
 
         public override void Draw(UISpriteBatch SBatch)
@@ -62,7 +62,32 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels.Catalog
             PriceLabel.Caption = "§" + elem.Item.Price.ToString();
             Add(PriceLabel);
 
+            if (elem.CategoryName != null)
+            {
+                //a search result: say which category it's from, in small text under the price
+                PriceLabel.Position = new Vector2(0, 103);
+                CategoryLabel = new UILabel();
+                CategoryLabel.Alignment = TextAlignment.Center | TextAlignment.Middle;
+                CategoryLabel.Position = new Vector2(0, 117);
+                CategoryLabel.Size = new Vector2(90, 1);
+                CategoryLabel.CaptionStyle = CategoryLabel.CaptionStyle.Clone();
+                CategoryLabel.CaptionStyle.Color = UIStyle.Current.Text * 0.6f;
+                CategoryLabel.CaptionStyle.Size = 10;
+                //"Wall & Fence Tool" is a tool's name, so drop the "Tool", and cut anything still too wide for the tile
+                var category = elem.CategoryName.EndsWith(" Tool") ? elem.CategoryName.Substring(0, elem.CategoryName.Length - 5) : elem.CategoryName;
+                CategoryLabel.Caption = Fit(category, CategoryLabel.CaptionStyle, 86);
+                Add(CategoryLabel);
+            }
+
             BudgetProvider = budgetProvider;
+        }
+
+        /// <summary>The text, cut short with an ellipsis if it's wider than a width.</summary>
+        private static string Fit(string text, TextStyle style, float width)
+        {
+            if (style.MeasureString(text).X <= width) return text;
+            while (text.Length > 1 && style.MeasureString(text + "…").X > width) text = text.Substring(0, text.Length - 1);
+            return text + "…";
         }
 
         public override void Selected()

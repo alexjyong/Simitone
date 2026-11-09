@@ -171,7 +171,7 @@ namespace Simitone.Client.UI.Panels
             CatalogSearchField = new UITextBox();
             CatalogSearchField.SetSize(230, 32);
             CatalogSearchField.Position = new Vector2(263, -32);
-            CatalogSearchField.TextMargin = new Rectangle(8, 8, 8, 8);
+            CatalogSearchField.TextMargin = new Rectangle(34, 8, 32, 8); //room for the icons
             CatalogSearchField.Visible = false;
             CatalogSearchField.OnChange += (elem) =>
             {
@@ -181,8 +181,8 @@ namespace Simitone.Client.UI.Panels
 
             SearchPlaceholder = new UILabel();
             SearchPlaceholder.Caption = "Search selected category\u2026";
-            SearchPlaceholder.Position = new Vector2(271, -24);
-            SearchPlaceholder.Size = new Vector2(214, 20);
+            SearchPlaceholder.Position = new Vector2(297, -24);
+            SearchPlaceholder.Size = new Vector2(184, 20);
             SearchPlaceholder.CaptionStyle = SearchPlaceholder.CaptionStyle.Clone();
             SearchPlaceholder.CaptionStyle.Size = 12;
             SearchPlaceholder.CaptionStyle.Color = UIStyle.Current.Text * 0.4f;
@@ -380,15 +380,41 @@ namespace Simitone.Client.UI.Panels
             }
         }
 
+        private bool SearchFocused, SearchClearHover;
+        /// <summary>Test mode: draw the search box as if it had the keyboard focus.</summary>
+        internal bool TestFocus;
+
+        private Rectangle SearchClearRect => new Rectangle((int)(CatalogSearchField.X + CatalogSearchField.Size.X - 30), (int)CatalogSearchField.Y + 4, 24, 24);
+
+        /// <summary>Test mode: type into the catalog search box (empty text clears it).</summary>
+        internal void SetSearchText(string text)
+        {
+            CatalogSearchField.CurrentText = text;
+            (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter(text);
+        }
+
+        /// <summary>The catalog search box: a pill with a magnifier, and a clear button while there's text.</summary>
+        private void DrawSearchBox(UISpriteBatch batch)
+        {
+            UISearchArt.Ensure();
+            var field = CatalogSearchField;
+            var style = UIStyle.Current;
+            DrawLocalTexture(batch, SearchFocused ? UISearchArt.BoxFocused : UISearchArt.Box, null, new Vector2(field.X, field.Y), Vector2.One);
+            DrawLocalTexture(batch, UISearchArt.Magnifier, null, new Vector2(field.X + 11, field.Y + 8), Vector2.One,
+                SearchFocused ? style.ActiveSelection : style.Text * 0.55f);
+            if (field.HasText)
+            {
+                var clear = SearchClearRect;
+                DrawLocalTexture(batch, UISearchArt.Clear, null, new Vector2(clear.X + 4, clear.Y + 4), Vector2.One,
+                    SearchClearHover ? style.Text : style.Text * 0.55f);
+            }
+        }
+
         public override void Draw(UISpriteBatch batch)
         {
             if (CatalogSearchField != null && CatalogSearchField.Visible)
             {
-                // Draw a solid background behind the search field so it's readable against any backdrop
-                DrawLocalTexture(batch, WhitePx, null,
-                    new Vector2(CatalogSearchField.X - 2, CatalogSearchField.Y - 2),
-                    new Vector2(CatalogSearchField.Size.X + 4, CatalogSearchField.Size.Y + 4),
-                    UIStyle.Current.TitleBg);
+                DrawSearchBox(batch);
             }
 
             if (CurWidth > 211)
@@ -437,32 +463,31 @@ namespace Simitone.Client.UI.Panels
             // Update search placeholder visibility
             if (CatalogSearchField != null && CatalogSearchField.Visible)
             {
-                // In build mode, FullCategory has wrong data until a subcategory is chosen.
-                // Disable and explain the field so it doesn't appear broken.
-                var browsePanel = SubPanel as UIBuyBrowsePanel;
-                bool buildNeedsSubcat = browsePanel != null
-                    && browsePanel.ChoosingSub
-                    && browsePanel.Mode == UICatalogMode.Build;
-
-                if (buildNeedsSubcat)
-                {
-                    SearchPlaceholder.Caption = "Select a subcategory first\u2026";
-                    CatalogSearchField.Mode = UITextEditMode.ReadOnly;
-                    CatalogSearchField.Opacity = 0.45f;
-                    SearchPlaceholder.Visible = true;
-                }
-                else
-                {
-                    SearchPlaceholder.Caption = "Search selected category\u2026";
-                    CatalogSearchField.Mode = UITextEditMode.Editor;
-                    CatalogSearchField.Opacity = 1f;
-                    SearchPlaceholder.Visible = !CatalogSearchField.HasText;
-                }
+                //searches every item for the mode, from the front page or any category
+                SearchPlaceholder.Caption = "Search all items\u2026";
+                CatalogSearchField.Mode = UITextEditMode.Editor;
+                CatalogSearchField.Opacity = 1f;
+                SearchPlaceholder.Visible = !CatalogSearchField.HasText;
 
                 var searchFocused = state.InputManager.GetFocus() == CatalogSearchField;
+                SearchFocused = searchFocused || TestFocus;
 
                 // Click outside the search field → remove focus
                 var leftDown = state.MouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
+
+                //the clear (x) button: shown while there's text, and clears it
+                SearchClearHover = false;
+                if (CatalogSearchField.HasText)
+                {
+                    var mouse = GlobalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
+                    SearchClearHover = SearchClearRect.Contains((int)mouse.X, (int)mouse.Y);
+                    if (SearchClearHover && leftDown && !_lastLeftButtonDown)
+                    {
+                        CatalogSearchField.CurrentText = "";
+                        (SubPanel as UIBuyBrowsePanel)?.ApplyNameFilter("");
+                        state.InputManager.SetFocus(CatalogSearchField);
+                    }
+                }
                 if (searchFocused && leftDown && !_lastLeftButtonDown)
                 {
                     var localMouse = GlobalPoint(new Vector2(state.MouseState.X, state.MouseState.Y));
