@@ -822,10 +822,13 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             InitCategory(Category, false);
         }
 
-        public void InitCategory(sbyte category, bool build)
+        /// <summary>
+        /// Every entry of a catalog category, with its display name: the objects, plus the walls, floors and tools the
+        /// game keeps elsewhere. The Add... methods fill FullCategory, so it's put back as it was afterwards.
+        /// </summary>
+        private List<UICatalogElement> CreateElements(sbyte category)
         {
-            //start by populating with entries from the catalog
-            if (!build) ((UIMainPanel)Parent)?.Switcher?.MainButton?.RestoreImage();
+            var previous = FullCategory;
             var catalog = Content.Get().WorldCatalog;
 
             var items = catalog.GetItemsByCategory(category);
@@ -871,6 +874,16 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
                 // Fall back to Item.CatalogName or Item.Name when DisplayName is null (handled by ToString)
                 if (string.IsNullOrEmpty(elem.DisplayName) && !string.IsNullOrEmpty(elem.Item.CatalogName)) elem.DisplayName = elem.Item.CatalogName;
             }
+            var created = FullCategory;
+            FullCategory = previous;
+            return created;
+        }
+
+        public void InitCategory(sbyte category, bool build)
+        {
+            //start by populating with entries from the catalog
+            if (!build) ((UIMainPanel)Parent)?.Switcher?.MainButton?.RestoreImage();
+            FullCategory = CreateElements(category);
             //if we're not build mode, init the subcategory selection
             if (build) return;
 
@@ -1213,12 +1226,45 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
             }
         }
 
+        /// <summary>Every item in the catalog for this mode, built once, with the category each belongs to.</summary>
+        private List<UICatalogElement> SearchElements;
+
+        private List<UICatalogElement> SearchPool()
+        {
+            if (SearchElements != null) return SearchElements;
+            var pool = new List<UICatalogElement>();
+            var categories = (Mode == UICatalogMode.Build)
+                ? new sbyte[] { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 }
+                : Enumerable.Range(0, 8).Select(x => (sbyte)x).ToArray();
+            foreach (var category in categories)
+            {
+                var name = CategoryNameOf(category);
+                foreach (var elem in CreateElements(category))
+                {
+                    if (Mode != UICatalogMode.Build && GetSubsort(elem.Item) == 0) continue; //not sold on this kind of lot
+                    elem.CategoryName = name;
+                    pool.Add(elem);
+                }
+            }
+            return SearchElements = pool;
+        }
+
+        private string CategoryNameOf(sbyte category)
+        {
+            if (Mode == UICatalogMode.Build)
+            {
+                foreach (var group in BuildCategories)
+                    foreach (var sub in group)
+                        if (sub.MaskBit == category) return GameFacade.Strings.GetString(sub.StrTable.ToString(), sub.StrInd.ToString());
+                return null;
+            }
+            //buy mode's categories, named in string table 150 (seating first, in the game's own order)
+            var strings = new[] { 8, 9, 12, 11, 13, 10, 15, 14 };
+            return (category >= 0 && category < strings.Length) ? GameFacade.Strings.GetString("150", strings[category].ToString()) : null;
+        }
+
         public void ApplyNameFilter(string term)
         {
-            // In Build mode, FullCategory contains wrong (buy-mode) items until a subcategory
-            // is chosen, so skip filtering. In Buy mode, FullCategory is valid immediately.
-            if (ChoosingSub && Mode == UICatalogMode.Build) return;
-
             if (string.IsNullOrEmpty(term))
             {
                 ActiveSearchTerm = null;
@@ -1244,8 +1290,8 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
 
             ActiveSearchTerm = term;
 
-            // Search within the current category's items only
-            FilterCategory = (FullCategory ?? Enumerable.Empty<UICatalogElement>())
+            // The whole catalog for this mode, from the front page or any category
+            FilterCategory = SearchPool()
                 .Where(elem => elem.Item.GUID != uint.MaxValue &&
                                (elem.DisplayName?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
                                 elem.Item.Name?.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -1315,6 +1361,7 @@ namespace Simitone.Client.UI.Panels.LiveSubpanels
         public int CalcPrice;
         public UISpecialCatalogElement Special;
         public string DisplayName; // CTSS catalog display name (e.g. "Soma Plasma TV"); null until resolved
+        public string CategoryName; //set on search results, which come from every category
 
         public override string ToString()
         {

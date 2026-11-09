@@ -327,6 +327,12 @@ namespace Simitone.Client.Utils
                     }
                     Log("names: " + total + " catalog items, " + same + " the same (" + noName + " have no name), " + (total - same) + " differ" + (odd.Count > 0 ? ": " + string.Join("; ", odd) : ""));
                     break;
+                case "type":
+                    screen.Frontend.MainPanel.SetSearchText(arg); //typing into the catalog search box (no text clears it)
+                    break;
+                case "focus":
+                    screen.Frontend.MainPanel.TestFocus = arg != "off"; //draw the search box as focused
+                    break;
                 case "quit":
                     Quitting = true;
                     GameFacade.Game.Exit();
