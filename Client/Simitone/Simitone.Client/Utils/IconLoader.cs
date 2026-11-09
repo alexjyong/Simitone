@@ -21,7 +21,7 @@ namespace Simitone.Client.Utils
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 return "libSDL2-2.0.so.0";
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                return "libSDL2.dylib";
+                return "libSDL2-2.0.0.dylib";
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return "SDL2.dll";
             else
@@ -40,7 +40,7 @@ namespace Simitone.Client.Utils
             uint Bmask,
             uint Amask);
 
-        [DllImport("libSDL2.dylib", EntryPoint = "SDL_CreateRGBSurfaceFrom", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libSDL2-2.0.0.dylib", EntryPoint = "SDL_CreateRGBSurfaceFrom", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SDL_CreateRGBSurfaceFrom_macOS(
             IntPtr pixels,
             int width,
@@ -86,7 +86,7 @@ namespace Simitone.Client.Utils
         [DllImport("libSDL2-2.0.so.0", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_FreeSurface_Linux(IntPtr surface);
 
-        [DllImport("libSDL2.dylib", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libSDL2-2.0.0.dylib", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_FreeSurface_macOS(IntPtr surface);
 
         [DllImport("SDL2.dll", EntryPoint = "SDL_FreeSurface", CallingConvention = CallingConvention.Cdecl)]
@@ -105,7 +105,7 @@ namespace Simitone.Client.Utils
         [DllImport("libSDL2-2.0.so.0", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_SetWindowIcon_Linux(IntPtr window, IntPtr icon);
 
-        [DllImport("libSDL2.dylib", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libSDL2-2.0.0.dylib", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_SetWindowIcon_macOS(IntPtr window, IntPtr icon);
 
         [DllImport("SDL2.dll", EntryPoint = "SDL_SetWindowIcon", CallingConvention = CallingConvention.Cdecl)]
