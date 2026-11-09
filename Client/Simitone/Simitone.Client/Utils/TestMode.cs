@@ -5,6 +5,8 @@ using FSO.SimAntics.NetPlay.Model.Commands;
 using FSO.SimAntics.Primitives;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Simitone.Client.UI.Panels;
+using Simitone.Client.UI.Panels.LiveSubpanels;
 using Simitone.Client.UI.Screens;
 using System;
 using System.Collections.Generic;
@@ -73,7 +75,7 @@ namespace Simitone.Client.Utils
             house = (short)Lot;
             if (Lot <= 0) return false;
             Lot = 0;
-            Log("playing house " + house);
+            Log("playing house " + house + " (" + (long)(DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds + " ms after the game started)");
             return true;
         }
 
@@ -180,6 +182,15 @@ namespace Simitone.Client.Utils
         ///   shot name                  save a screenshot as name.png
         ///   sims                       log the Sims on the lot and what each is doing
         ///   log message                write a line to the log
+        ///   mode buy                   switch to live, buy, build or options mode
+        ///   category 1                 open that category of the current mode
+        ///   subcategory 1 1            open a Build catalog subcategory (category, then its index)
+        ///   search lamp                type this into the catalog search
+        ///   time category 1            run a step and log how long it took
+        ///   namecheck                  compare every catalog item's saved name with the name from loading its object
+        ///   scanreport                 log how the startup object scan went (catalog index use) and a fingerprint of its result
+        ///   catcount                   log how many catalog items each category has
+        ///   frames 30                  log how long the next 30 frames take (slowest and average)
         ///   quit                       exit without saving
         /// </summary>
         private static void RunCommand(TS1GameScreen screen, string cmd)
@@ -243,6 +254,84 @@ namespace Simitone.Client.Utils
                 case "sims":
                     Log("sims on lot: " + string.Join(", ", vm.Context.ObjectQueries.Avatars.OfType<VMAvatar>()
                         .Select(x => x.Name + " (" + (x.Thread.ActiveAction?.Name ?? "idle") + ")")));
+                    break;
+                case "mode":
+                    screen.Frontend.SwitchMode((UIMainPanelMode)Enum.Parse(typeof(UIMainPanelMode), arg, true));
+                    break;
+                case "category":
+                    screen.Frontend.MainPanel.Switcher_OnCategorySelect(int.Parse(arg));
+                    break;
+                case "subcategory":
+                    var browse = screen.Frontend.MainPanel.SubPanel as UIBuyBrowsePanel;
+                    if (browse == null) throw new Exception("no catalog open");
+                    var sub = arg.Split(' ');
+                    browse.InitSubcategory(UIBuyBrowsePanel.BuildCategories[int.Parse(sub[0])][int.Parse(sub[1])]);
+                    break;
+                case "search":
+                    var catalog = screen.Frontend.MainPanel.SubPanel as UIBuyBrowsePanel;
+                    if (catalog == null) throw new Exception("no catalog open");
+                    catalog.ApplyNameFilter(arg);
+                    break;
+                case "time":
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    RunCommand(screen, arg);
+                    Log("took " + watch.Elapsed.TotalMilliseconds.ToString("0.0", CultureInfo.InvariantCulture) + " ms: " + arg);
+                    break;
+                case "frames":
+                    //log how long the next N frames take (the slowest and the average), e.g. right after a search
+                    var count = int.Parse(arg);
+                    var clock = System.Diagnostics.Stopwatch.StartNew();
+                    var times = new List<double>();
+                    var lastFrame = 0.0;
+                    Waiting = (s) =>
+                    {
+                        var now = clock.Elapsed.TotalMilliseconds;
+                        times.Add(now - lastFrame);
+                        lastFrame = now;
+                        if (times.Count < count) return false;
+                        Log("frames: slowest " + times.Max().ToString("0.0", CultureInfo.InvariantCulture) + " ms, average "
+                            + times.Average().ToString("0.0", CultureInfo.InvariantCulture) + " ms over " + count);
+                        return true;
+                    };
+                    break;
+                case "catcount":
+                    //how many catalog items each category has (custom content shows up here)
+                    var cat = FSO.Content.Content.Get().WorldCatalog;
+                    Log("catalog: " + string.Join(", ", Enumerable.Range(0, 30).Select(c => c + "=" + cat.GetItemsByCategory((sbyte)c).Count).Where(x => !x.EndsWith("=0"))));
+                    break;
+                case "scanreport":
+                    //how the object scan at startup went, and a fingerprint of what it found (to compare runs)
+                    var scanned = FSO.Content.Content.Get().WorldObjects as FSO.Content.TS1.TS1ObjectProvider;
+                    Log("scan: " + FSO.Content.TS1.TS1ObjectProvider.LastScanReport + " | fingerprint " + scanned?.ScanFingerprint());
+                    break;
+                case "namecheck":
+                    //compares every catalog item's name from the scan (the catalog index) with the name the old way gave:
+                    //loading the whole object and asking its resources
+                    var wc = FSO.Content.Content.Get().WorldCatalog;
+                    var wo = FSO.Content.Content.Get().WorldObjects;
+                    int total = 0, same = 0, noName = 0; var odd = new List<string>();
+                    for (sbyte c = 0; c < 30; c++)
+                    {
+                        foreach (var item in wc.GetItemsByCategory(c))
+                        {
+                            total++;
+                            string oldName = null;
+                            var go = wo.Get(item.GUID);
+                            if (go != null) oldName = go.Resource.Get<FSO.Files.Formats.IFF.Chunks.CTSS>(go.OBJ.CatalogStringsID)?.GetString(0);
+                            var newName = string.IsNullOrEmpty(item.CatalogName) ? null : item.CatalogName;
+                            if (string.IsNullOrEmpty(oldName)) oldName = null;
+                            if (oldName == null) noName++;
+                            if (oldName == newName) same++;
+                            else if (odd.Count < 8) odd.Add(item.GUID.ToString("x8") + " old '" + oldName + "' new '" + newName + "'");
+                        }
+                    }
+                    Log("names: " + total + " catalog items, " + same + " the same (" + noName + " have no name), " + (total - same) + " differ" + (odd.Count > 0 ? ": " + string.Join("; ", odd) : ""));
+                    break;
+                case "type":
+                    screen.Frontend.MainPanel.SetSearchText(arg); //typing into the catalog search box (no text clears it)
+                    break;
+                case "focus":
+                    screen.Frontend.MainPanel.TestFocus = arg != "off"; //draw the search box as focused
                     break;
                 case "quit":
                     Quitting = true;

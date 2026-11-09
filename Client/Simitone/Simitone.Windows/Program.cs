@@ -308,10 +308,11 @@ namespace Simitone.Windows
                 if (GlobalSettings.Default.LanguageCode == 0) GlobalSettings.Default.LanguageCode = 1;
                 FSO.Files.Formats.IFF.Chunks.STR.DefaultLangCode = (FSO.Files.Formats.IFF.Chunks.STRLangCode)GlobalSettings.Default.LanguageCode;
 
-                // Set runtime settings (these may have been set during first-time config or command line)
-                if (string.IsNullOrEmpty(GlobalSettings.Default.StartupPath))
+                // Set runtime settings (these may have been set during first-time config or command line).
+                // A path from the command line overrides the saved one.
+                if (pathProvidedViaCommandLine || string.IsNullOrEmpty(GlobalSettings.Default.StartupPath))
                     GlobalSettings.Default.StartupPath = path;
-                if (string.IsNullOrEmpty(GlobalSettings.Default.TS1HybridPath))
+                if (pathProvidedViaCommandLine || string.IsNullOrEmpty(GlobalSettings.Default.TS1HybridPath))
                     GlobalSettings.Default.TS1HybridPath = path;
                 
                 GlobalSettings.Default.TS1HybridEnable = true;
