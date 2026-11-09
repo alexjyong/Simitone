@@ -178,10 +178,12 @@ namespace Simitone.Client.UI.Panels
             for (int i = 0; i < locations.Length; i++)
             {
                 var loc = locations.GetString(i).Split(',');
-                var num = int.Parse(loc[0].TrimStart());
+                //non-English language sets can carry untranslated placeholder strings instead of "num, x, y" (Maxis data)
+                if (loc.Length < 3 || !int.TryParse(loc[0].TrimStart(), out var num)
+                    || !int.TryParse(loc[1].TrimStart(), out var x) || !int.TryParse(loc[2].TrimStart(), out var y)) continue;
                 if (num == 99) continue;
                 var button = new UINeighborhoodHouseButton(num, SelectHouse, config.Scale);
-                button.Position = new Vector2(int.Parse(loc[1].TrimStart()), int.Parse(loc[2].TrimStart()));
+                button.Position = new Vector2(x, y);
                 HousePositions[num] = button.Position;
                 buttons.Add(button);
             }
