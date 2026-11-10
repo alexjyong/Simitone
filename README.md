@@ -8,7 +8,7 @@
 Alternative C# Frontend for The Sims 1, based off of FreeSO. http://freeso.org 
 (***REQUIRES*** a legitimate copy of The Sims: Complete Collection)
 
-**Supported Platforms:** Windows, Linux. MacOS builds but DOES NOT WORK. PRs are welcome!
+**Supported Platforms:** Windows, Linux, macOS (Apple Silicon tested; see [MACOS_NOTES.md](MACOS_NOTES.md)).
 
 ![image](https://user-images.githubusercontent.com/6294155/68995217-112b2680-0883-11ea-9f92-1acc839a7ec0.png)
 
@@ -38,7 +38,7 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 
 ## Prerequisites
 - **The Sims: Complete Collection** or **The Sims: Legacy Collection**
-- Windows Or Linux (Tested with Ubuntu and Linux Mint) (MacOS is currently not functional! PRs welcome!)
+- Windows, Linux (Tested with Ubuntu and Linux Mint) or macOS 12+ (Tested on Apple Silicon)
 - For Windows [.NET 9.0 Runtime and ASP.Net Core runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). (Note if this isn't installed, Windows will prompt you to download them with a link.)
 
 ## Quick Install Windows
@@ -127,19 +127,24 @@ TS1InstallationConfigured=true
 ```
 
 
-## Quick Install Linux / macOS (Note at time of writing, macOS is currently untested. HELP WANTED!)
+## Quick Install Linux / macOS
 
 1. **Download** the [latest self-contained release](https://github.com/alexjyong/Simitone/releases/latest/) for your operating system
 2. **Extract** the archive to your preferred location
-3. **Run** `./Simitone`
+3. **Run** `./Simitone` (Linux) or open `Simitone.app` (macOS)
 
 **Package Structure:**
 ```
-Simitone-Linux-x64/          (or Simitone-macOS-x64, Simitone-macOS-arm64)
+Simitone-Linux-x64/
   Simitone              <- Run this!
-  simitone.desktop      <- Linux only: for desktop integration
+  simitone.desktop      <- For desktop integration
   lib/                  <- Game files (don't modify)
+
+Simitone-macOS-arm64/        (or Simitone-macOS-x64)
+  Simitone.app          <- Double-click this
 ```
+
+On macOS, a downloaded (unsigned) `Simitone.app` may be reported as damaged. Clear the quarantine flag with `xattr -cr Simitone.app`.
 
 ### First-Time Setup
 
@@ -242,6 +247,7 @@ Simitone finds The Sims 1 installation in this priority order:
      - Steam: `~/Library/Application Support/Steam/steamapps/common/The Sims/`
      - Wine (default prefix): `~/.wine/drive_c/Program Files/Maxis/The Sims/`
      - Wine (x86 prefix): `~/.wine/drive_c/Program Files (x86)/Maxis/The Sims/`
+     - CrossOver bottles: `~/Library/Application Support/CrossOver/Bottles/*/drive_c/Program Files (x86)/Maxis/The Sims/` (and Steam inside a bottle)
      - Fallback location: `game1/`
 
    - **Windows:** Automatically scans these locations in order:
@@ -438,13 +444,13 @@ This is useful when:
 - You want to verify a clean build works
 
 
-### Building from Source (Linux/MacOS) (Note that running the game on MacOS is untested!)
+### Building from Source (Linux/MacOS)
 ```bash
 # Install runtime dependencies
 sudo apt install libsdl2-2.0-0 libopenal1  # Ubuntu/Debian/WSL
 sudo dnf install SDL2 openal-soft          # Fedora
 sudo pacman -S sdl2 openal                 # Arch
-brew install sdl2                          # macOS
+brew install dotnet@9                      # macOS (SDL2/OpenAL come from NuGet)
 
 # Build
 ./build-mac-linux.sh
@@ -457,9 +463,16 @@ cd Client/Simitone/Simitone.Desktop/bin/Release/net9.0/
 ./Simitone -path"/fully/qualified/path/to/The Sims/"
 
 # If you made a self-contained release, run it like so:
-cd publish/Simitone-Linux-x64/   # or Simitone-macOS-x64, Simitone-macOS-arm64
+cd publish/Simitone-Linux-x64/
 ./Simitone -path"/fully/qualified/path/to/The Sims/"
+
+# macOS self-contained release:
+open publish/Simitone-macOS-arm64/Simitone.app
 ```
+
+On macOS the build output also contains `Simitone.app` next to the bare `Simitone` executable.
+The bare executable can't show the installation picker dialog (Eto.Forms requires an app bundle),
+so it falls back to a native folder prompt. See [MACOS_NOTES.md](MACOS_NOTES.md) for details.
 
 ## Troubleshooting
 
