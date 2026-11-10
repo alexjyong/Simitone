@@ -731,10 +731,20 @@ namespace Simitone.Client.UI.Screens
             
             if (!external)
             {
-                if (!Downtown && ActiveFamily != null)
+                // Old Town/Vacation whole-family trips set LotTransitInfo = 1; a date uses > 1 and
+                // must stay caller-only. The lot's script only spawns the caller, so activate the
+                // household here and let VerifyFamily add the missing members (and pets).
+                var tripInProgress = (Content.Get().Neighborhood?.GameState?.LotTransitInfo ?? 0) == 1;
+                if (ActiveFamily != null && (!Downtown || tripInProgress))
                 {
                     ActiveFamily.SelectWholeFamily();
                     vm.TS1State.ActivateFamily(vm, ActiveFamily);
+                    var tripScreen = this;
+                    GameThread.NextUpdate((state) =>
+                    {
+                        if (tripScreen.vm != null)
+                            tripScreen.vm.TS1State.VerifyFamily(tripScreen.vm);
+                    });
                 }
                 BlueprintReset(lotName, null);
                 // Read saved weather state now; apply it deferred in UpdateWeatherEffects
