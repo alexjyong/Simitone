@@ -27,6 +27,28 @@
     <PackageReference Include="Eto.Platform.Mac64" Version="2.8.4" />
   </ItemGroup>
 
+  <!-- Eto.Platform.Mac64 otherwise tries to auto-publish a .app bundle on every build and
+       fails when no RuntimeIdentifier is given (plain `dotnet build`). -->
+  <!-- Copy NuGet assemblies (Eto, MonoGame) and their runtimes/osx/native dylibs (SDL2, OpenAL)
+       into the build output so `./Simitone` runs straight from bin/ without publishing. -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <MacAutoPublishBundle>False</MacAutoPublishBundle>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- Eto.Mac only runs inside an .app bundle, so the install-picker dialog needs Simitone.app
+         (built next to the bare executable, using Info.plist from this folder). -->
+    <MacBundleName>Simitone</MacBundleName>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Content Include="Mac/Icon.icns" Link="Icon.icns" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+  <!-- Inside a .app, MonoGame's TitleContainer roots content at Contents/Resources, while FSO reads
+       Content/ relative to the executable in Contents/MacOS. Link the two instead of copying. -->
+  <Target Name="MacLinkBundleContent" AfterTargets="MacFinishBundle" Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Exec Command="ln -sfn ../MacOS/Content &quot;$(OutputContents)Resources/Content&quot;" />
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\FreeSO\Other\libs\MSDFData\MSDFData.csproj" />
     <ProjectReference Include="..\..\..\FreeSO\TSOClient\FSO.SimAntics.JIT\FSO.SimAntics.JIT.csproj" />
