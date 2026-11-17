@@ -100,6 +100,8 @@ namespace Simitone.Client
                     "IOException" => "I/O error",
                     "CatalogError" => "catalog error",
                     "DecodeError" => "decode failed",
+                    "DuplicateKey" => "duplicate name",
+                    "MissingSoundFile" => "missing .hsm/.hit",
                     _ => file.ErrorType
                 };
                 message.AppendLine($"• {file.Filename} ({shortReason})");

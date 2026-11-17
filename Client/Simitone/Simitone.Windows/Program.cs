@@ -365,12 +365,56 @@ namespace Simitone.Windows
             var exception = e.ExceptionObject;
             if (exception is OutOfMemoryException)
             {
-                MessageBox.Show(e.ExceptionObject.ToString(), "Out of Memory! FreeSO needs to close.");
+                ShowErrorDialog(e.ExceptionObject.ToString(), "Out of Memory! FreeSO needs to close.", "Out of Memory! FreeSO needs to close.");
             }
             else
             {
-                MessageBox.Show(e.ExceptionObject.ToString(), "A fatal error occured! Screenshot this dialog and post it on the Github repo issue tracker!");
+                ShowErrorDialog(e.ExceptionObject.ToString(), "A fatal error occured! Copy this text and post it on the Github repo issue tracker!", "A fatal error occured! Screenshot this dialog and post it on the Github repo issue tracker!");
             }
+        }
+
+        /// <summary>
+        /// Like MessageBox.Show, but the text can be selected and copied. Falls back to a plain MessageBox if that fails.
+        /// </summary>
+        private static void ShowErrorDialog(string text, string title, string fallbackTitle)
+        {
+            // the exception can come from any thread, and WPF needs an STA thread for its controls.
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    using (var form = new System.Windows.Forms.Form())
+                    {
+                        var box = new System.Windows.Forms.TextBox
+                        {
+                            Text = text,
+                            Multiline = true,
+                            ReadOnly = true,
+                            ScrollBars = System.Windows.Forms.ScrollBars.Both,
+                            WordWrap = false,
+                            Dock = System.Windows.Forms.DockStyle.Fill
+                        };
+                        var ok = new System.Windows.Forms.Button { Text = "OK", Dock = System.Windows.Forms.DockStyle.Bottom, Height = 32, DialogResult = System.Windows.Forms.DialogResult.OK };
+                        form.Text = title;
+                        form.Size = new System.Drawing.Size(760, 440);
+                        form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+                        form.TopMost = true;
+                        form.AcceptButton = ok;
+                        form.Controls.Add(box);
+                        form.Controls.Add(ok);
+                        box.Select(0, 0);
+                        form.ShowDialog();
+                    }
+                }
+                catch
+                {
+                    // plain message box can't be copied from, so the title shouldn't say to
+                    MessageBox.Show(text, fallbackTitle);
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
         }
 
         public static Tuple<byte[], int, int> BitmapReader(Stream str)
