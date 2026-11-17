@@ -206,23 +206,37 @@ namespace Simitone.Windows
                         }
                         catch (Exception ex)
                         {
-                            // GUI failed, show console error
-                            Console.WriteLine("GUI unavailable. Could not find The Sims 1 installation.");
-                            Console.WriteLine("Please use the -path argument to specify the location:");
-                            Console.WriteLine("  ./Simitone -path\"/path/to/The Sims/\"");
-                            Console.WriteLine();
-                            Console.WriteLine("Common locations:");
-                            if (linux && Directory.Exists("/Users"))
+                            // Eto.Mac only works inside an .app bundle; when run as a bare executable,
+                            // fall back to the native AppleScript folder picker.
+                            var macPath = (linux && Directory.Exists("/Users")) ? MacChooseFolder() : null;
+                            if (macPath != null)
                             {
-                                Console.WriteLine("  Steam: ~/Library/Application Support/Steam/steamapps/common/The Sims/");
-                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                                path = macPath;
+                                SaveInstallationConfig(path, false);
+                                Console.WriteLine($"Selected: {path}");
                             }
-                            else if (linux)
+                            else
                             {
-                                Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
-                                Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                                // GUI failed, show console error
+                                Console.WriteLine($"GUI unavailable ({ex.Message}). Could not find The Sims 1 installation.");
+                                Console.Error.WriteLine(ex);
+                                Console.WriteLine("Please use the -path argument to specify the location:");
+                                Console.WriteLine("  ./Simitone -path\"/path/to/The Sims/\"");
+                                Console.WriteLine();
+                                Console.WriteLine("Common locations:");
+                                if (linux && Directory.Exists("/Users"))
+                                {
+                                    Console.WriteLine("  Steam: ~/Library/Application Support/Steam/steamapps/common/The Sims/");
+                                    Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                                    Console.WriteLine("  CrossOver: ~/Library/Application Support/CrossOver/Bottles/<bottle>/drive_c/Program Files (x86)/Maxis/The Sims/");
+                                }
+                                else if (linux)
+                                {
+                                    Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
+                                    Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
+                                }
+                                Environment.Exit(1);
                             }
-                            Environment.Exit(1);
                         }
                     }
                     else if (installations.Count == 1)
@@ -280,7 +294,8 @@ namespace Simitone.Windows
                         catch (Exception ex)
                         {
                             // GUI failed, fall back to console selection
-                            Console.WriteLine("GUI unavailable, using console selection:");
+                            Console.WriteLine($"GUI unavailable ({ex.Message}), using console selection:");
+                            Console.Error.WriteLine(ex);
                             Console.WriteLine();
                             for (int i = 0; i < installations.Count; i++)
                             {
@@ -360,6 +375,41 @@ namespace Simitone.Windows
                 Console.WriteLine("  Steam Play/Proton: ~/.steam/steam/steamapps/common/The Sims/");
                 Console.WriteLine("  Wine: ~/.wine/drive_c/Program Files/Maxis/The Sims/");
                 Environment.Exit(1);
+            }
+        }
+
+        /// <summary>
+        /// Ask for The Sims folder with the native macOS folder picker (via osascript).
+        /// Returns a normalized path ending in '/', or null if cancelled or invalid.
+        /// </summary>
+        private static string MacChooseFolder()
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo("/usr/bin/osascript")
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                };
+                psi.ArgumentList.Add("-e");
+                psi.ArgumentList.Add("POSIX path of (choose folder with prompt \"Select your The Sims 1 installation folder (the one containing GameData):\")");
+                using (var proc = System.Diagnostics.Process.Start(psi))
+                {
+                    var result = proc.StandardOutput.ReadToEnd().Trim();
+                    proc.WaitForExit();
+                    if (proc.ExitCode != 0 || string.IsNullOrEmpty(result)) return null;
+                    if (!result.EndsWith("/")) result += "/";
+                    if (!File.Exists(Path.Combine(result, "GameData", "Behavior.iff")))
+                    {
+                        Console.WriteLine($"'{result}' does not look like a The Sims 1 installation (no GameData/Behavior.iff).");
+                        return null;
+                    }
+                    return result;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
