@@ -59,6 +59,30 @@ namespace Simitone.Windows.GameLocator
                 installations.Add(("Wine - Default Prefix (x86)", winePath32, TS1InstallationType.Wine));
             }
 
+            // Check CrossOver bottles (disc installs and Steam inside a bottle)
+            var bottlesDir = Path.Combine(homeDir, "Library/Application Support/CrossOver/Bottles/");
+            if (Directory.Exists(bottlesDir))
+            {
+                foreach (var bottle in Directory.GetDirectories(bottlesDir))
+                {
+                    var bottleName = Path.GetFileName(bottle);
+                    foreach (var programFiles in new[] { "Program Files (x86)", "Program Files" })
+                    {
+                        var discPath = Path.Combine(bottle, "drive_c", programFiles, "Maxis/The Sims/");
+                        if (File.Exists(Path.Combine(discPath, "GameData", "Behavior.iff")))
+                        {
+                            installations.Add(($"CrossOver - {bottleName}", discPath, TS1InstallationType.Wine));
+                        }
+
+                        var bottleSteamPath = Path.Combine(bottle, "drive_c", programFiles, "Steam/steamapps/common/The Sims/");
+                        if (File.Exists(Path.Combine(bottleSteamPath, "GameData", "Behavior.iff")))
+                        {
+                            installations.Add(($"CrossOver Steam - {bottleName}", bottleSteamPath, TS1InstallationType.Steam));
+                        }
+                    }
+                }
+            }
+
             // Check fallback location
             if (File.Exists(Path.Combine("game1/", "GameData", "Behavior.iff")))
             {
