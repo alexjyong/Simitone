@@ -256,23 +256,10 @@ if [[ "$(uname)" == "Linux" ]]; then
     fi
 fi
 
-# Check dependencies on macOS
+# macOS needs no extra packages: universal SDL2 and OpenAL dylibs come from the
+# MonoGame.Library.SDL / MonoGame.Library.OpenAL NuGet packages.
 if [[ "$(uname)" == "Darwin" ]]; then
-    # Check for SDL2 (required for MonoGame)
-    if ! brew list sdl2 &> /dev/null; then
-        echo ""
-        echo "SDL2 not found. SDL2 is required for MonoGame."
-        read -p "Would you like to install SDL2 now? (Y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            brew install sdl2
-        fi
-    else
-        echo "✓ SDL2 found"
-    fi
-    
-    # OpenAL is included with macOS
-    echo "✓ OpenAL (built-in on macOS)"
+    echo "✓ SDL2 and OpenAL (bundled via NuGet)"
 fi
 
 echo ""
@@ -307,19 +294,9 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     echo ""
     echo "Step 3: Publishing self-contained build with launcher..."
     
-    # Check for C compiler (required for native launcher)
-    if [[ "$(uname)" == "Darwin" ]]; then
-        if ! command -v clang &> /dev/null; then
-            echo ""
-            echo "ERROR: clang not found. Required for building the native launcher."
-            echo ""
-            echo "Install Xcode Command Line Tools with:"
-            echo "  xcode-select --install"
-            echo ""
-            exit 1
-        fi
-        CC="clang"
-    else
+    # Check for C compiler (required for the native launcher, which only Linux uses;
+    # macOS ships Simitone.app instead)
+    if [[ "$(uname)" != "Darwin" ]]; then
         if ! command -v gcc &> /dev/null; then
             echo ""
             echo "ERROR: gcc not found. Required for building the native launcher."
@@ -332,12 +309,12 @@ if [[ "$PUBLISH" == "--publish" ]]; then
             exit 1
         fi
         CC="gcc"
+        echo "✓ C compiler found: $CC"
     fi
-    echo "✓ C compiler found: $CC"
     
-    # Detect architecture
-    ARCH="$(uname -m)"
-    if [[ "$ARCH" == "x86_64" ]]; then
+    # Detect architecture (SIMITONE_ARCH=x64|arm64 overrides, e.g. to build Intel on Apple Silicon)
+    ARCH="${SIMITONE_ARCH:-$(uname -m)}"
+    if [[ "$ARCH" == "x86_64" || "$ARCH" == "x64" ]]; then
         RID_ARCH="x64"
     elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
         RID_ARCH="arm64"
@@ -373,6 +350,135 @@ if [[ "$PUBLISH" == "--publish" ]]; then
         /p:TreatWarningsAsErrors=false \
         /p:WarningsAsErrors=""
     
+    # Remove files Simitone doesn't need from a published directory ($1)
+    prune_published_files() {
+        local LIB="$1"
+        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
+        echo "  Removing unused TSO content files..."
+        # TSO object/patch data — Simitone uses TS1 game FAR files instead
+        rm -rf "$LIB/Content/Objects"
+        rm -rf "$LIB/Content/Patch"
+        # TSO avatar IFFs — TS1 avatar data comes from game FAR files
+        rm -rf "$LIB/Content/Avatar"
+        # FreeSO mesh overrides for TSO objects
+        rm -rf "$LIB/Content/MeshReplace"
+        # OpenGL ES2 shaders — desktop always uses GLVer 3+
+        rm -rf "$LIB/Content/iOS"
+        # TSO online city data
+        rm -rf "$LIB/Content/Cities"
+        # FreeSO lot blueprint
+        rm -rf "$LIB/Content/Blueprints"
+        # Server-only
+        rm -rf "$LIB/DatabaseScripts"
+        rm -rf "$LIB/MailTemplates"
+        # SimAntics visual debugger resources
+        rm -rf "$LIB/IDERes"
+        # .NET locale satellite assemblies (Roslyn/IDE strings — not game content)
+        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
+            rm -rf "$LIB/$locale"
+        done
+        # Keep only target-platform native runtimes — drop android, iOS, and other-platform dirs
+        if [ -d "$LIB/runtimes" ]; then
+            for d in "$LIB/runtimes/"/*/; do
+                dirname="$(basename "$d")"
+                if [[ "$PLATFORM_NAME" == "Linux" ]]; then
+                    [[ "$dirname" == linux* || "$dirname" == unix* ]] || rm -rf "$d"
+                elif [[ "$PLATFORM_NAME" == "macOS" ]]; then
+                    [[ "$dirname" == osx* || "$dirname" == unix* ]] || rm -rf "$d"
+                fi
+            done
+        fi
+    }
+
+    # Sign a macOS app bundle. SIMITONE_SIGN_IDENTITY selects the certificate (e.g.
+    # "Developer ID Application: Name (TEAMID)"); without it the app is signed ad hoc.
+    # Real identities get Hardened Runtime and a secure timestamp, as notarization requires.
+    # Ad hoc builds can't use Hardened Runtime: its library validation rejects ad hoc signed
+    # libraries ("different Team IDs"), so the .NET host couldn't load its own runtime.
+    sign_mac_app() {
+        local app="$1"
+        local identity="${SIMITONE_SIGN_IDENTITY:--}"
+        local entitlements="$SCRIPT_DIR/Client/Simitone/Simitone.Desktop/Mac/Simitone.entitlements"
+        local opts=(--force --sign "$identity")
+        [[ "$identity" != "-" ]] && opts+=(--options runtime --timestamp)
+
+        echo "  Signing with: $([[ "$identity" == "-" ]] && echo "ad hoc" || echo "$identity")"
+        # every nested file first (dylibs, managed .dlls, .json), then the bundle and its executable
+        find "$app/Contents/MacOS" -type f ! -path "$app/Contents/MacOS/Simitone" -print0 \
+            | xargs -0 -n 40 codesign "${opts[@]}" 2>&1 | grep -v "replacing existing signature" || true
+        codesign "${opts[@]}" --entitlements "$entitlements" "$app"
+        codesign --verify --deep --strict "$app"
+        echo "✓ Signature verified"
+    }
+
+    # macOS: Eto.Platform.Mac64 has already wrapped the self-contained publish in Simitone.app
+    # (Eto.Mac only works from inside an .app bundle), so ship that instead of launcher + lib/.
+    if [[ "$PLATFORM_NAME" == "macOS" ]]; then
+        echo ""
+        echo "Step 3b: Packaging Simitone.app..."
+        APP_DIR="$TEMP_PUBLISH_DIR/Simitone.app"
+        if [[ ! -d "$APP_DIR" ]]; then
+            echo "ERROR: $APP_DIR was not created by the publish step"
+            exit 1
+        fi
+        mkdir -p "$FINAL_DIR"
+        mv "$APP_DIR" "$FINAL_DIR/"
+        # Eto's publish step copies the half-built bundle into itself; drop the nested copy
+        rm -rf "$FINAL_DIR/Simitone.app/Contents/MacOS/Simitone.app"
+        prune_published_files "$FINAL_DIR/Simitone.app/Contents/MacOS"
+        rm -rf "$TEMP_PUBLISH_DIR"
+
+        # A signed bundle may only hold code in Contents/MacOS, so move the game data to
+        # Contents/Resources (Program.cs switches the working directory there at startup).
+        APP="$FINAL_DIR/Simitone.app"
+        rm -f "$APP/Contents/Resources/Content" # development builds symlink this instead
+        for item in Content Resources version.txt dao.xml; do
+            if [[ -e "$APP/Contents/MacOS/$item" ]]; then mv "$APP/Contents/MacOS/$item" "$APP/Contents/Resources/"; fi
+        done
+        # 3D mode creates this if missing, which would modify the signed bundle
+        mkdir -p "$APP/Contents/Resources/Content/MeshReplace"
+
+        # Homebrew's source-built .NET (brew install dotnet) ships runtime libraries linked against
+        # Homebrew (e.g. brotli), which only exist on this Mac. Refuse to package those.
+        local_deps=""
+        for lib in "$APP/Contents/MacOS/"*.dylib; do
+            own_id="$(otool -D "$lib" | tail -n +2)"
+            bad="$(otool -L "$lib" | tail -n +2 | awk '{print $1}' | grep -v -x -F "$own_id" | grep -E '^/opt/homebrew/|^/usr/local/(opt|Cellar)/' || true)"
+            [[ -n "$bad" ]] && local_deps+="  $(basename "$lib") -> $bad"$'\n'
+        done
+        if [[ -n "$local_deps" ]]; then
+            echo ""
+            echo "ERROR: the bundled .NET runtime depends on Homebrew libraries and won't run on other Macs:"
+            echo -n "$local_deps"
+            echo "Build with Microsoft's .NET SDK instead (https://dotnet.microsoft.com/download), e.g.:"
+            echo "  curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 9.0"
+            echo "  export DOTNET_ROOT=\$HOME/.dotnet PATH=\$HOME/.dotnet:\$PATH"
+            exit 1
+        fi
+
+        # Clear extended attributes before signing: codesign stores the signatures of the
+        # non-Mach-O files in Contents/MacOS (managed .dlls, .json) in extended attributes.
+        xattr -cr "$APP" 2>/dev/null || true
+        sign_mac_app "$APP"
+        echo "✓ Simitone.app ($(du -sh "$APP" | cut -f1))"
+
+        echo ""
+        echo "========================================"
+        echo "  Publish Complete!"
+        echo "========================================"
+        echo ""
+        echo "Output: $SCRIPT_DIR/$FINAL_DIR/Simitone.app"
+        echo ""
+        echo "To run: open \"$FINAL_DIR/Simitone.app\""
+        echo "   or:  \"$FINAL_DIR/Simitone.app/Contents/MacOS/Simitone\" -path\"/path/to/The Sims/\""
+        echo ""
+        if [[ -z "$SIMITONE_SIGN_IDENTITY" ]]; then
+            echo "NOTE: this build is signed ad hoc. After downloading it, macOS asks to approve it once"
+            echo "      (System Settings > Privacy & Security > Open Anyway)."
+        fi
+        exit 0
+    fi
+
     # Step 3b: Build the native C launcher
     echo ""
     echo "Step 3b: Building native launcher..."
@@ -402,41 +508,7 @@ if [[ "$PUBLISH" == "--publish" ]]; then
     # Move all published files to lib/
     mv "$TEMP_PUBLISH_DIR"/* "$FINAL_DIR/lib/"
 
-    # Remove unused TSO/server content (not needed in TS1/Simitone mode)
-    echo "  Removing unused TSO content files..."
-    # TSO object/patch data — Simitone uses TS1 game FAR files instead
-    rm -rf "$FINAL_DIR/lib/Content/Objects"
-    rm -rf "$FINAL_DIR/lib/Content/Patch"
-    # TSO avatar IFFs — TS1 avatar data comes from game FAR files
-    rm -rf "$FINAL_DIR/lib/Content/Avatar"
-    # FreeSO mesh overrides for TSO objects
-    rm -rf "$FINAL_DIR/lib/Content/MeshReplace"
-    # OpenGL ES2 shaders — desktop always uses GLVer 3+
-    rm -rf "$FINAL_DIR/lib/Content/iOS"
-    # TSO online city data
-    rm -rf "$FINAL_DIR/lib/Content/Cities"
-    # FreeSO lot blueprint
-    rm -rf "$FINAL_DIR/lib/Content/Blueprints"
-    # Server-only
-    rm -rf "$FINAL_DIR/lib/DatabaseScripts"
-    rm -rf "$FINAL_DIR/lib/MailTemplates"
-    # SimAntics visual debugger resources
-    rm -rf "$FINAL_DIR/lib/IDERes"
-    # .NET locale satellite assemblies (Roslyn/IDE strings — not game content)
-    for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
-        rm -rf "$FINAL_DIR/lib/$locale"
-    done
-    # Keep only target-platform native runtimes — drop android, iOS, and other-platform dirs
-    if [ -d "$FINAL_DIR/lib/runtimes" ]; then
-        for d in "$FINAL_DIR/lib/runtimes/"/*/; do
-            dirname="$(basename "$d")"
-            if [[ "$PLATFORM_NAME" == "Linux" ]]; then
-                [[ "$dirname" == linux* || "$dirname" == unix* ]] || rm -rf "$d"
-            elif [[ "$PLATFORM_NAME" == "macOS" ]]; then
-                [[ "$dirname" == osx* || "$dirname" == unix* ]] || rm -rf "$d"
-            fi
-        done
-    fi
+    prune_published_files "$FINAL_DIR/lib"
 
     # Copy .desktop file for Linux
     if [[ "$(uname)" != "Darwin" ]]; then
