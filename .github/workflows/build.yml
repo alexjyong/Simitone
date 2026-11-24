@@ -204,85 +204,29 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
-    - name: Install dependencies
+    # build-mac-linux.sh --publish builds a self-contained Simitone.app (Eto.Forms needs an app bundle
+    # for the installation picker). SIMITONE_ARCH picks the target, so one Apple Silicon runner builds both.
+    - name: Publish macOS Intel app
+      env:
+        SIMITONE_ARCH: x64
+      run: ./build-mac-linux.sh ${{ inputs.configuration || 'Release' }} --publish
+
+    - name: Publish macOS Apple Silicon app
+      env:
+        SIMITONE_ARCH: arm64
+      run: ./build-mac-linux.sh ${{ inputs.configuration || 'Release' }} --publish
+
+    # upload-artifact drops executable bits and symlinks (Contents/Resources/Content is a symlink),
+    # so zip each bundle with ditto first, which preserves them
+    - name: Zip app bundles
       run: |
-        brew install sdl2
-
-    - name: Restore dependencies
-      run: dotnet restore Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -r osx-x64 /p:TreatWarningsAsErrors=false /p:WarningsAsErrors="" /p:NoWarn=NU1605
-
-    - name: Build macOS
-      run: dotnet build Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj -c ${{ inputs.configuration || 'Release' }} -r osx-x64 --no-restore /p:TreatWarningsAsErrors=false /p:WarningsAsErrors="" /p:NoWarn=NU1605
-
-    - name: Publish macOS Intel (self-contained)
-      run: |
-        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-          -c ${{ inputs.configuration || 'Release' }} \
-          -r osx-x64 \
-          --self-contained true \
-          -o publish/osx-x64 \
-          /p:TreatWarningsAsErrors=false \
-          /p:WarningsAsErrors=""
-
-    - name: Publish macOS ARM (self-contained)
-      run: |
-        dotnet publish Client/Simitone/Simitone.Desktop/Simitone.Desktop.csproj \
-          -c ${{ inputs.configuration || 'Release' }} \
-          -r osx-arm64 \
-          --self-contained true \
-          -o publish/osx-arm64 \
-          /p:TreatWarningsAsErrors=false \
-          /p:WarningsAsErrors=""
-
-    - name: Build macOS Launcher (Native C) for Intel
-      run: |
-        mkdir -p publish/launcher-native-x64
-        clang -O2 -target x86_64-apple-macos10.12 Client/Simitone/Simitone.Launcher/launcher.c -o publish/launcher-native-x64/Simitone
-
-    - name: Build macOS Launcher (Native C) for ARM
-      run: |
-        mkdir -p publish/launcher-native-arm64
-        clang -O2 -target arm64-apple-macos11 Client/Simitone/Simitone.Launcher/launcher.c -o publish/launcher-native-arm64/Simitone
-
-    - name: Create macOS Intel release structure
-      run: |
-        mkdir -p release/Simitone-macOS-x64/lib
-        cp publish/launcher-native-x64/Simitone release/Simitone-macOS-x64/Simitone
-        chmod +x release/Simitone-macOS-x64/Simitone
-        cp -r publish/osx-x64/* release/Simitone-macOS-x64/lib/
-        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
-        for d in Content/Objects Content/Patch Content/Avatar Content/MeshReplace Content/iOS Content/Cities Content/Blueprints DatabaseScripts MailTemplates IDERes; do
-          rm -rf "release/Simitone-macOS-x64/lib/$d"
+        for arch in x64 arm64; do
+          test -x "publish/Simitone-macOS-$arch/Simitone.app/Contents/MacOS/Simitone"
+          file "publish/Simitone-macOS-$arch/Simitone.app/Contents/MacOS/Simitone"
+          mkdir -p "release/Simitone-macOS-$arch"
+          ditto -c -k --keepParent "publish/Simitone-macOS-$arch/Simitone.app" "release/Simitone-macOS-$arch/Simitone-macOS-$arch.zip"
         done
-        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
-          rm -rf "release/Simitone-macOS-x64/lib/$locale"
-        done
-        # Keep only osx* and unix* native runtimes
-        if [ -d release/Simitone-macOS-x64/lib/runtimes ]; then
-          for d in release/Simitone-macOS-x64/lib/runtimes/*/; do
-            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
-          done
-        fi
-
-    - name: Create macOS ARM release structure
-      run: |
-        mkdir -p release/Simitone-macOS-arm64/lib
-        cp publish/launcher-native-arm64/Simitone release/Simitone-macOS-arm64/Simitone
-        chmod +x release/Simitone-macOS-arm64/Simitone
-        cp -r publish/osx-arm64/* release/Simitone-macOS-arm64/lib/
-        # Remove unused TSO/server content (not needed in TS1/Simitone mode)
-        for d in Content/Objects Content/Patch Content/Avatar Content/MeshReplace Content/iOS Content/Cities Content/Blueprints DatabaseScripts MailTemplates IDERes; do
-          rm -rf "release/Simitone-macOS-arm64/lib/$d"
-        done
-        for locale in ru ja fr de it pl ko es pt-BR tr cs zh-Hans zh-Hant sv ro hu; do
-          rm -rf "release/Simitone-macOS-arm64/lib/$locale"
-        done
-        # Keep only osx* and unix* native runtimes
-        if [ -d release/Simitone-macOS-arm64/lib/runtimes ]; then
-          for d in release/Simitone-macOS-arm64/lib/runtimes/*/; do
-            case "$(basename "$d")" in osx*|unix*) ;; *) rm -rf "$d" ;; esac
-          done
-        fi
+        ls -la release/*
 
     - name: Upload macOS Intel artifacts
       uses: actions/upload-artifact@v4
@@ -297,4 +241,3 @@ jobs:
         name: Simitone-macOS-arm64-${{ inputs.configuration || 'Release' }}
         path: release/Simitone-macOS-arm64/
         if-no-files-found: error
-
